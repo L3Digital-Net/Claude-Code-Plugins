@@ -23651,19 +23651,82 @@ async function endSession(state, options) {
   await removeWorktree(repoRoot, state.worktreePath);
   const lockPath = path16.join(state.pluginPath, ".pth", "active-session.lock");
   await fs11.rm(lockPath, { force: true });
-  return [
-    `PTH session ended.`,
-    ``,
-    `Branch:       ${state.branch}`,
-    `Tests saved:  ${testStore.count()} \u2192 ~/.pth/${state.pluginName.replace(/[^a-z0-9-]/gi, "-").toLowerCase()}/tests/`,
-    `Iterations:   ${state.iteration}`,
-    `Final status: ${state.passingCount} passing, ${state.failingCount} failing`,
-    ``,
-    `Persistent store: ~/.pth/${state.pluginName.replace(/[^a-z0-9-]/gi, "-").toLowerCase()}/`,
-    `Session report:   ${sessionDir}/SESSION-REPORT.md`,
-    `Branch ${state.branch} remains in your repo with full fix history.`,
-    `Review: git log ${state.branch}  (run from ${state.pluginPath})`
-  ].join("\n");
+  return buildEndSummary({
+    state,
+    iterationHistory: options.iterationHistory,
+    exportedResults: options.exportedResults,
+    fixHistory,
+    sessionDir,
+    testCount: testStore.count()
+  });
+}
+function buildEndSummary(opts) {
+  const { state, iterationHistory: iterationHistory2, exportedResults, fixHistory, sessionDir, testCount } = opts;
+  const slug = state.pluginName.replace(/[^a-z0-9-]/gi, "-").toLowerCase();
+  const lines = [];
+  lines.push(`PTH session ended.`);
+  lines.push(``);
+  lines.push(`Plugin: ${state.pluginName}    Mode: ${state.pluginMode}    Iterations: ${state.iteration}`);
+  lines.push(`Branch: ${state.branch}`);
+  if (iterationHistory2.length > 0) {
+    lines.push(``);
+    lines.push(`\u2500\u2500 Convergence \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500`);
+    lines.push(` Iter  Passing  Failing  Fixes`);
+    iterationHistory2.forEach((s, i2) => {
+      const iter = String(i2 + 1).padStart(4);
+      const pass = String(s.passing).padStart(7);
+      const fail = String(s.failing).padStart(8);
+      const fixes = String(s.fixesApplied).padStart(6);
+      lines.push(`${iter}  ${pass}  ${fail}  ${fixes}`);
+    });
+  }
+  lines.push(``);
+  lines.push(`\u2500\u2500 Fixes Applied (${fixHistory.length}) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500`);
+  if (fixHistory.length === 0) {
+    lines.push(`  (no fixes applied this session)`);
+  } else {
+    for (const fix of fixHistory) {
+      lines.push(`  ${fix.commitHash}  ${fix.commitTitle}`);
+      if (fix.filesChanged.length > 0) {
+        lines.push(`             Files: ${fix.filesChanged.join(", ")}`);
+      }
+      const testRef = fix.trailers["PTH-Test"];
+      if (testRef) lines.push(`             Test:  ${testRef}`);
+    }
+    const fileCounts = /* @__PURE__ */ new Map();
+    for (const fix of fixHistory) {
+      for (const f of fix.filesChanged) {
+        fileCounts.set(f, (fileCounts.get(f) ?? 0) + 1);
+      }
+    }
+    if (fileCounts.size > 0) {
+      lines.push(``);
+      lines.push(`\u2500\u2500 Files Modified (${fileCounts.size} unique) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500`);
+      for (const [file, count2] of [...fileCounts.entries()].sort()) {
+        lines.push(`  ${file}${count2 > 1 ? `  (${count2} fixes)` : ""}`);
+      }
+    }
+  }
+  const failing = exportedResults.filter((r) => r.latestStatus === "failing");
+  const passing = exportedResults.filter((r) => r.latestStatus === "passing");
+  lines.push(``);
+  lines.push(`\u2500\u2500 Test Results (${testCount} total) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500`);
+  lines.push(`  \u2713 ${passing.length} passing`);
+  lines.push(`  \u2717 ${failing.length} failing`);
+  if (failing.length > 0) {
+    lines.push(``);
+    lines.push(`  Still failing:`);
+    for (const r of failing) {
+      const reason = r.latestResult?.failureReason;
+      lines.push(`    \u2717 ${r.testName}${reason ? `
+        \u21B3 ${reason}` : ""}`);
+    }
+  }
+  lines.push(``);
+  lines.push(`Persistent store: ~/.pth/${slug}/`);
+  lines.push(`Session report:   ${sessionDir}/SESSION-REPORT.md`);
+  lines.push(`Branch ${state.branch} remains with full fix history.`);
+  return lines.join("\n");
 }
 function buildCommitMessage(title, trailers) {
   const lines = Object.entries(trailers).map(([k, v]) => `${k}: ${v}`).join("\n");

@@ -13,8 +13,7 @@ import { scanPlugin, buildSnapshot } from '../persistence/plugin-scanner.js';
 import { analyzeGap } from '../persistence/gap-analyzer.js';
 import { buildReportContent } from './report-generator.js';
 import { getFixHistory } from '../fix/tracker.js';
-import type { GapAnalysisResult, EndSessionOptions } from '../persistence/types.js';
-import type { ToolSnapshotEntry } from '../persistence/types.js';
+import type { GapAnalysisResult, EndSessionOptions, ExportedResults, ToolSnapshotEntry } from '../persistence/types.js';
 
 // In-memory state shared with server.ts.
 // iterationHistory: server.ts pushes a snapshot each time pth_get_iteration_status is called
@@ -388,19 +387,103 @@ export async function endSession(state: SessionState, options: EndSessionOptions
   const lockPath = path.join(state.pluginPath, '.pth', 'active-session.lock');
   await fs.rm(lockPath, { force: true });
 
-  return [
-    `PTH session ended.`,
-    ``,
-    `Branch:       ${state.branch}`,
-    `Tests saved:  ${testStore.count()} → ~/.pth/${state.pluginName.replace(/[^a-z0-9-]/gi, '-').toLowerCase()}/tests/`,
-    `Iterations:   ${state.iteration}`,
-    `Final status: ${state.passingCount} passing, ${state.failingCount} failing`,
-    ``,
-    `Persistent store: ~/.pth/${state.pluginName.replace(/[^a-z0-9-]/gi, '-').toLowerCase()}/`,
-    `Session report:   ${sessionDir}/SESSION-REPORT.md`,
-    `Branch ${state.branch} remains in your repo with full fix history.`,
-    `Review: git log ${state.branch}  (run from ${state.pluginPath})`,
-  ].join('\n');
+  return buildEndSummary({
+    state,
+    iterationHistory: options.iterationHistory,
+    exportedResults: options.exportedResults,
+    fixHistory,
+    sessionDir,
+    testCount: testStore.count(),
+  });
+}
+
+interface EndSummaryOptions {
+  state: SessionState;
+  iterationHistory: Array<{ passing: number; failing: number; fixesApplied: number }>;
+  exportedResults: ExportedResults[];
+  fixHistory: import('../fix/types.js').FixRecord[];
+  sessionDir: string;
+  testCount: number;
+}
+
+function buildEndSummary(opts: EndSummaryOptions): string {
+  const { state, iterationHistory, exportedResults, fixHistory, sessionDir, testCount } = opts;
+  const slug = state.pluginName.replace(/[^a-z0-9-]/gi, '-').toLowerCase();
+  const lines: string[] = [];
+
+  lines.push(`PTH session ended.`);
+  lines.push(``);
+  lines.push(`Plugin: ${state.pluginName}    Mode: ${state.pluginMode}    Iterations: ${state.iteration}`);
+  lines.push(`Branch: ${state.branch}`);
+
+  // ── Convergence table ──
+  if (iterationHistory.length > 0) {
+    lines.push(``);
+    lines.push(`── Convergence ─────────────────────────────────────────────`);
+    lines.push(` Iter  Passing  Failing  Fixes`);
+    iterationHistory.forEach((s, i) => {
+      const iter = String(i + 1).padStart(4);
+      const pass = String(s.passing).padStart(7);
+      const fail = String(s.failing).padStart(8);
+      const fixes = String(s.fixesApplied).padStart(6);
+      lines.push(`${iter}  ${pass}  ${fail}  ${fixes}`);
+    });
+  }
+
+  // ── Fixes applied ──
+  lines.push(``);
+  lines.push(`── Fixes Applied (${fixHistory.length}) ─────────────────────────────────────`);
+  if (fixHistory.length === 0) {
+    lines.push(`  (no fixes applied this session)`);
+  } else {
+    for (const fix of fixHistory) {
+      lines.push(`  ${fix.commitHash}  ${fix.commitTitle}`);
+      if (fix.filesChanged.length > 0) {
+        lines.push(`             Files: ${fix.filesChanged.join(', ')}`);
+      }
+      const testRef = fix.trailers['PTH-Test'];
+      if (testRef) lines.push(`             Test:  ${testRef}`);
+    }
+
+    // Unique files changed across all fixes — surfaces the blast radius at a glance
+    const fileCounts = new Map<string, number>();
+    for (const fix of fixHistory) {
+      for (const f of fix.filesChanged) {
+        fileCounts.set(f, (fileCounts.get(f) ?? 0) + 1);
+      }
+    }
+    if (fileCounts.size > 0) {
+      lines.push(``);
+      lines.push(`── Files Modified (${fileCounts.size} unique) ──────────────────────────────────`);
+      for (const [file, count] of [...fileCounts.entries()].sort()) {
+        lines.push(`  ${file}${count > 1 ? `  (${count} fixes)` : ''}`);
+      }
+    }
+  }
+
+  // ── Test results ──
+  const failing = exportedResults.filter(r => r.latestStatus === 'failing');
+  const passing = exportedResults.filter(r => r.latestStatus === 'passing');
+  lines.push(``);
+  lines.push(`── Test Results (${testCount} total) ─────────────────────────────────────`);
+  lines.push(`  ✓ ${passing.length} passing`);
+  lines.push(`  ✗ ${failing.length} failing`);
+  if (failing.length > 0) {
+    lines.push(``);
+    lines.push(`  Still failing:`);
+    for (const r of failing) {
+      const reason = r.latestResult?.failureReason;
+      lines.push(`    ✗ ${r.testName}${reason ? `\n        ↳ ${reason}` : ''}`);
+    }
+  }
+
+  // ── Footer ──
+  lines.push(``);
+  lines.push(`Persistent store: ~/.pth/${slug}/`);
+  lines.push(`Session report:   ${sessionDir}/SESSION-REPORT.md`);
+  lines.push(`Branch ${state.branch} remains with full fix history.`);
+
+  return lines.join('\n');
 }
 
 function buildCommitMessage(title: string, trailers: Record<string, string>): string {
