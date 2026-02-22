@@ -1,217 +1,220 @@
-# Home Assistant Development
+# Home Assistant Dev
 
-A comprehensive Claude Code plugin for Home Assistant integration development. Provides skills, agents, and commands aligned with the official [Home Assistant Developer Documentation](https://developers.home-assistant.io/) and the [Integration Quality Scale](https://developers.home-assistant.io/docs/core/integration-quality-scale/).
+A comprehensive Claude Code plugin for building, reviewing, and debugging Home Assistant custom integrations — covering all 52 Integration Quality Scale rules, HACS compliance, and HA 2025+ patterns.
 
 ## Summary
 
-This plugin brings deep Home Assistant integration expertise into Claude Code — covering the full development lifecycle from scaffolding a new integration through HACS publishing. Skills load automatically when Claude detects relevant context, providing current guidance on async patterns, entity platforms, config flows, the DataUpdateCoordinator, and all 52 Integration Quality Scale rules. Includes three specialized agents and five validation scripts.
+This plugin provides every layer of tooling needed for HA integration development: two interactive commands for generating complete integrations at configurable quality tiers, 27 skills that auto-activate on contextually relevant conversations, three specialized subagents for development, code review, and debugging, automated validation hooks that fire on every write, and an MCP server that connects live to a Home Assistant instance for state queries, service calls, documentation search, and code pattern detection.
 
 ## Principles
 
-**[P1] Skills Over Monolith** — Knowledge is partitioned into 27 focused skills rather than one large document. Each skill loads only when Claude detects relevant context, minimising context cost on every task.
+**Act on Intent** — Commands collect requirements up front (type, IoT class, platforms, tier) and generate the full integration without mid-task confirmation gates. Gate only on the initial "confirm before writing" step where scope is first established.
 
-**[P2] IQS Compliance from Day One** — Integration Quality Scale coverage (all 52 rules) is a first-class requirement, not a post-publication concern. The plugin guides toward Gold tier from the first line of code.
+**Scope Fidelity** — `generate-integration` produces every required file for the selected quality tier in one pass — manifest, coordinator, config flow, entity files, translations, and optionally diagnostics and discovery — without sub-task confirmations.
 
-**[P3] Modern Patterns Only** — The plugin tracks and enforces current HA APIs. Deprecated code paths (`hass.data`, `OptionsFlow.__init__`, etc.) are flagged and replaced — the plugin never silently tolerates outdated patterns.
+**Use the Full Toolkit** — Commands use `AskUserQuestion` with bounded choices (not open-ended prompts) for integration type, IoT class, platforms, and target tier. Multi-select for non-exclusive options like platforms and optional features.
 
-**[P4] Safety for Live Connections** — The MCP server connects to live Home Assistant instances in read-mostly mode. Destructive service calls require explicit dry-run bypass. The plugin never risks unintended home automation state changes.
+**Succeed Quietly, Fail Transparently** — The PostToolUse hook runs validation silently on every write and surfaces warnings only when issues are found. MCP tool errors return structured `isError: true` responses with the full error message.
 
-**[P5] Quality by Example** — Abstract guidance is backed by three concrete reference integrations at Bronze, Silver, and Gold tier — copy-paste starting points that already meet their tier requirements in full.
+## Requirements
+
+- Claude Code (any recent version)
+- Python 3.12+ (HA 2025+ requires Python 3.13 for new integrations)
+- Home Assistant development environment for integration testing (optional — required only for MCP server live connection features)
+- Node.js 18+ (bundled MCP server is pre-built; no `npm install` needed post-install)
 
 ## Installation
 
-```bash
-# Add the L3DigitalNet marketplace
+```
 /plugin marketplace add L3DigitalNet/Claude-Code-Plugins
-
-# Install the plugin
 /plugin install home-assistant-dev@l3digitalnet-plugins
 ```
 
-Or for local development:
+For local development:
+
 ```bash
-git clone https://github.com/L3DigitalNet/Claude-Code-Plugins.git
-claude --plugin-dir ./Claude-Code-Plugins/plugins/home-assistant-dev
+claude --plugin-dir ./plugins/home-assistant-dev
 ```
 
-## Installation Notes
+### Post-Install Steps
 
-Verify the plugin loaded correctly after installation:
-```bash
-/plugin list
-/skills    # Shows all available skills including the 27 ha-* skills
+The MCP server ships as a pre-built bundle (`mcp-server/dist/server.bundle.cjs`) — no `npm install` is required after plugin installation. The server registers automatically as `ha-dev-mcp` via `.mcp.json`.
+
+To connect to a live Home Assistant instance, call `ha_connect` with your instance URL and a long-lived access token.
+
+## How It Works
+
+```mermaid
+flowchart TD
+    A[User] -->|/generate-integration| B[generate-integration command]
+    A -->|/scaffold-integration| C[scaffold-integration command]
+    A -->|Natural language about HA| D{Skill auto-activation}
+
+    B --> E[Collects type / IoT class / platforms / tier]
+    C --> F[Collects domain / type / platforms]
+
+    E --> G[ha-integration-dev agent]
+    F --> G
+
+    D --> H[Relevant skill loads into context]
+    H --> G
+
+    G -->|Writes files| I[custom_components/domain/]
+    I -->|PostToolUse hook fires| J[post-write-hook.sh dispatcher]
+
+    J -->|manifest.json| K[validate-manifest.py]
+    J -->|strings.json / config_flow.py| L[validate-strings.py]
+    J -->|*.py in custom_components| M[check-patterns.py]
+
+    A -->|Code review request| N[ha-integration-reviewer agent]
+    A -->|Debug / error| O[ha-integration-debugger agent]
+
+    A -->|ha_connect| P[MCP Server: ha-dev-mcp]
+    P --> Q[Live HA: states / services / devices / logs]
+    P --> R[Docs search and code examples]
+    P --> S[Validate manifest / strings / patterns]
 ```
-
-Validation scripts (`scripts/`) require Python 3.13+ and are run directly from the plugin cache directory or the source tree.
 
 ## Usage
 
-Skills trigger automatically based on your prompts — no manual invocation needed:
+**Starting a new integration:** Use `/home-assistant-dev:generate-integration` for a fully guided experience with quality-tier selection, or `/home-assistant-dev:scaffold-integration` for a faster Silver-tier scaffold. Both commands collect requirements interactively and confirm before writing any files.
 
-```
-"Create a new integration for my smart thermostat"
-→ Loads ha-integration-scaffold, ha-config-flow, ha-coordinator
+**Skills auto-activate** when your conversation mentions relevant HA concepts — e.g., discussing `DataUpdateCoordinator` loads the coordinator skill, mentioning HACS loads the HACS metadata skill. You do not need to invoke skills manually.
 
-"My entities are showing unavailable"
-→ Loads ha-debugging, ha-coordinator
+**Agents** are spawned automatically by commands but can also be addressed directly: "act as ha-integration-reviewer and review my config_flow.py" or "use ha-integration-debugger to diagnose this error."
 
-"Prepare my integration for HACS"
-→ Loads ha-hacs, ha-quality-review
-```
+**Validation** runs automatically on every write to integration files via the PostToolUse hook. Warnings appear inline in the agent response when issues are detected.
 
-For interactive workflows, use the commands directly:
-```
-/home-assistant-dev:generate-integration
-/home-assistant-dev:ha-quality-review
-```
+**MCP tools** are available to Claude as `ha-dev-mcp` once connected. Call `ha_connect` with your HA URL and token to enable live integration features.
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/home-assistant-dev:scaffold-integration` | Scaffold a new integration interactively with guided prompts |
-| `/home-assistant-dev:generate-integration` | Generate a complete integration from a description |
-| `/home-assistant-dev:ha-quality-review` | Run a full Integration Quality Scale assessment |
+| `generate-integration` | Fully guided generation of a complete integration. Collects type, IoT class, platforms, optional features (options flow, reauth, diagnostics, discovery), and target quality tier (Bronze/Silver/Gold). Generates all required files plus HACS metadata. |
+| `scaffold-integration` | Faster scaffold targeting Silver tier. Collects domain, integration type, platforms, and GitHub username, then generates the standard file set without tier selection. |
+
+Invoke as `/home-assistant-dev:generate-integration` or `/home-assistant-dev:scaffold-integration`.
 
 ## Skills
 
-Skills are automatically invoked when Claude detects relevant context:
+Skills load automatically when conversation content matches their trigger patterns. All 27 are listed below, grouped by domain area.
 
-| Skill | Description |
-|-------|-------------|
-| `ha-architecture` | Core HA internals: event bus, state machine, service registry, and integration loading |
-| `ha-entity-lifecycle` | Entity lifecycle and device/entity registries — async_added_to_hass, device_info, identifiers |
-| `ha-integration-scaffold` | Scaffold integrations with correct file structure |
-| `ha-config-flow` | Config flow for initial integration setup — user step, unique_id, discovery |
-| `ha-options-flow` | Options flow for post-setup preferences, and reauth when credentials expire |
-| `ha-coordinator` | DataUpdateCoordinator patterns and error handling |
-| `ha-entity-platforms` | Entity platforms (sensor, switch, light, cover, climate, etc.) |
-| `ha-service-actions` | Service actions in Python and YAML |
-| `ha-async-patterns` | Async Python patterns for Home Assistant |
-| `ha-testing` | pytest patterns with the hass fixture |
-| `ha-debugging` | Troubleshooting and diagnostics |
-| `ha-yaml-automations` | YAML automations — triggers, conditions, and actions |
-| `ha-scripts` | YAML scripts — callable, reusable action sequences with optional parameters |
-| `ha-blueprints` | YAML blueprints — reusable automation templates with configurable inputs |
-| `ha-quality-review` | Integration Quality Scale (all 52 rules) |
-| `ha-hacs` | HACS metadata — hacs.json, manifest.json fields, and repository structure |
-| `ha-hacs-publishing` | Publish to HACS — GitHub Actions, release workflow, brands submission |
-| `ha-diagnostics` | Diagnostics implementation (Gold tier) |
-| `ha-migration` | Integration upgrade guide — entry point for version migration and deprecation fixes |
-| `ha-config-migration` | Config entry version migration — VERSION, MINOR_VERSION, async_migrate_entry |
-| `ha-deprecation-fixes` | Fix deprecation warnings for HA 2024.x/2025.x compatibility |
-| `ha-documentation` | README and documentation generation |
-| `ha-repairs` | Repair issues and fix flows (Gold tier) |
-| `ha-device-triggers` | Device triggers — allow automations to fire on hardware events |
-| `ha-device-conditions-actions` | Device conditions and actions for automation — device_condition.py, device_action.py |
-| `ha-websocket-api` | Custom WebSocket API commands |
-| `ha-recorder` | Statistics and history integration |
+### Core Integration Architecture
+
+| Skill | When it activates |
+|-------|-------------------|
+| `ha-architecture` | Questions about the `hass` object, event bus, state machine, service registry, or how integrations load |
+| `ha-integration-scaffold` | Creating a new custom component, scaffolding, or starting an integration |
+| `ha-async-patterns` | Mentioning `async`, `await`, `executor`, blocking code, or performance in HA |
+| `ha-entity-lifecycle` | Entity registration, `async_added_to_hass`, `device_info`, identifiers, or restoring state |
+
+### Data Flow and Polling
+
+| Skill | When it activates |
+|-------|-------------------|
+| `ha-coordinator` | Mentioning coordinator, `DataUpdateCoordinator`, polling, `_async_update_data`, `_async_setup`, `UpdateFailed` |
+| `ha-entity-platforms` | Creating entities, adding platforms, implementing sensors, switches, lights, climate, or any HA entity type |
+| `ha-service-actions` | Calling services, `hass.services.async_call`, `turn_on`, `turn_off`, or service action registration |
+
+### Setup and Configuration
+
+| Skill | When it activates |
+|-------|-------------------|
+| `ha-config-flow` | Creating or debugging `config_flow.py`, the setup wizard, `unique_id` handling, or `strings.json` |
+| `ha-options-flow` | Adding or fixing an options flow or reauth flow after initial setup |
+| `ha-config-migration` | Incrementing `VERSION` or `MINOR_VERSION`, implementing `async_migrate_entry`, migrating entry data |
+| `ha-migration` | Upgrading an integration to a newer HA version or resolving migration warnings (entry point to `ha-config-migration` and `ha-deprecation-fixes`) |
+| `ha-deprecation-fixes` | Encountering deprecated imports, type annotations, or patterns for HA 2024.x/2025.x |
+
+### Quality, Review, and Compliance
+
+| Skill | When it activates |
+|-------|-------------------|
+| `ha-quality-review` | Reviewing against the IQS, quality check, assessing for core PR or HACS submission (covers all 52 rules across Bronze/Silver/Gold/Platinum) |
+| `ha-hacs` | Preparing or validating HACS metadata files (`hacs.json`, manifest fields, repository structure) |
+| `ha-hacs-publishing` | Publishing to HACS — GitHub Actions validation, release workflow, brand submission |
+| `ha-testing` | Writing tests, pytest, `hass` fixture, mocks, or preparing for core submission |
+| `ha-debugging` | Errors, debug, tracebacks, unavailable entities, `ConfigEntryNotReady`, `UpdateFailed` |
+
+### Advanced Features
+
+| Skill | When it activates |
+|-------|-------------------|
+| `ha-diagnostics` | Implementing `diagnostics.py`, debug information download, or redacting sensitive data (Gold IQS requirement) |
+| `ha-repairs` | Implementing repair issues, issue registry, user notifications, or actionable alerts (Gold IQS requirement) |
+| `ha-device-triggers` | Implementing `device_trigger.py`, automations triggered by hardware events like button presses or motion |
+| `ha-device-conditions-actions` | Implementing `device_condition.py` or `device_action.py` for automation conditions and actions |
+| `ha-websocket-api` | Custom WebSocket API commands, frontend integration, or real-time data to custom panels |
+| `ha-recorder` | History, statistics, long-term stats, recorder exclusion, or historical data queries |
+
+### YAML Authoring
+
+| Skill | When it activates |
+|-------|-------------------|
+| `ha-yaml-automations` | Writing or fixing YAML automations, choosing trigger types, or structuring automation logic |
+| `ha-scripts` | Creating YAML scripts — reusable, callable action sequences with parameters |
+| `ha-blueprints` | Building blueprints, defining blueprint inputs, or creating shareable automation templates |
+| `ha-documentation` | Generating README, HACS info pages, or HA docs pages for an integration |
 
 ## Agents
 
 | Agent | Description |
 |-------|-------------|
-| `ha-integration-dev` | Full integration development — scaffolding, entities, config flow, coordinator |
-| `ha-integration-reviewer` | Code review against all 52 Integration Quality Scale rules |
-| `ha-integration-debugger` | Systematic debugging with structured diagnostics |
+| `ha-integration-dev` | Full integration development specialist. Enforces DataUpdateCoordinator, config flow, `runtime_data`, unique IDs, and device info patterns. Guides through architecture decisions and produces complete working examples. Loaded skills: `ha-architecture`, `ha-integration-scaffold`, `ha-config-flow`, `ha-coordinator`, `ha-entity-platforms`, `ha-service-actions`, `ha-async-patterns`. |
+| `ha-integration-reviewer` | Code reviewer against Integration Quality Scale standards. Runs `ruff` and `mypy` if available, then produces a structured report with Critical Issues, Warnings, and Suggestions — each with specific before/after code examples. Loaded skills: `ha-quality-review`, `ha-testing`, `ha-debugging`. |
+| `ha-integration-debugger` | Systematic debugging specialist. Categorizes issues (config flow, coordinator, entity, async, import), isolates root cause, provides targeted before/after fixes, and suggests regression tests. Loaded skills: `ha-debugging`, `ha-coordinator`, `ha-async-patterns`. |
 
-## Validation Scripts
+## Hooks
 
-Scripts that run automatically via hooks or on demand from your integration directory:
+| Hook | Event | What it does |
+|------|-------|-------------|
+| `post-write-hook.sh` | `PostToolUse` (Write, Edit, MultiEdit, NotebookEdit) | Dispatcher that reads the modified file path from stdin JSON and routes to the appropriate validation script. Validates `manifest.json` only for paths under `custom_components/` or `integrations/`. Runs `validate-strings.py` on `strings.json` and `config_flow.py`. Runs `check-patterns.py` on any `.py` file under `custom_components/`. Validation failures surface as warnings in the agent context; the hook never blocks writes. |
 
-| Script | Description |
-|--------|-------------|
-| `validate-manifest.py` | Validates required fields, iot_class, version |
-| `validate-strings.py` | Syncs config_flow.py steps with strings.json |
-| `check-patterns.py` | Detects 20+ anti-patterns and deprecations |
-| `lint-integration.sh` | Runs ruff, mypy, and all validators |
-| `generate-docs.py` | Generates README and info.md from code |
+## MCP Server
 
-```bash
-python scripts/validate-manifest.py custom_components/my_integration/manifest.json
-python scripts/check-patterns.py custom_components/my_integration/
-bash scripts/lint-integration.sh custom_components/my_integration/
-```
+The `ha-dev-mcp` MCP server (`mcp-server/dist/server.bundle.cjs`) provides 12 tools across three categories. It ships as a pre-built esbuild bundle and requires no post-install steps.
 
-## What This Plugin Knows
+### Home Assistant Tools (require `ha_connect` first)
 
-### Home Assistant 2025+ Requirements
+| Tool | Description |
+|------|-------------|
+| `ha_connect` | Connect to a Home Assistant instance via WebSocket using URL and long-lived access token |
+| `ha_get_states` | Query entity states, filterable by domain, entity ID, or area |
+| `ha_get_services` | List available services, filterable by domain |
+| `ha_call_service` | Call a HA service — dry-run by default, with a configurable safety blocklist for destructive services |
+| `ha_get_devices` | Query the device registry, filterable by manufacturer, model, or integration |
+| `ha_get_logs` | Retrieve HA logs filtered by integration domain, log level, line count, or timestamp |
 
-- Python 3.13 required (HA 2025.2+)
-- Modern type syntax (`list[str]` not `List[str]`)
-- `from __future__ import annotations` everywhere
-- Config flow mandatory (no YAML-only)
-- `entry.runtime_data` instead of `hass.data[DOMAIN]`
+### Documentation Tools
 
-### Integration Quality Scale
+| Tool | Description |
+|------|-------------|
+| `docs_search` | Full-text search across pre-indexed HA developer documentation (core, frontend, architecture, API sections) |
+| `docs_fetch` | Fetch a specific documentation page by path |
+| `docs_examples` | Retrieve canonical code examples for patterns: coordinator, config_flow, entity, service, sensor, switch, binary_sensor, light, climate |
 
-The plugin covers all 52 IQS rules across 4 tiers:
+### Validation Tools
 
-| Tier | Rules | Key Requirements |
-|------|-------|------------------|
-| **Bronze** | 18 | Config flow, unique IDs, tests, branding |
-| **Silver** | 10 | Error handling, reauth, options, unload |
-| **Gold** | 21 | Diagnostics, repairs, translations, discovery |
-| **Platinum** | 3 | Async library, websession injection, strict typing |
-
-### Deprecation Coverage
-
-- ServiceInfo import relocation (2025.1 → 2026.2)
-- `hass.data[DOMAIN]` → `entry.runtime_data`
-- OptionsFlow `__init__` deprecation
-- VacuumActivity enum migration
-- Camera WebRTC changes
-- Type annotation modernization
-
-## Directory Structure
-
-```
-home-assistant-dev/
-├── .claude-plugin/
-│   └── plugin.json
-├── skills/                    # 27 skills
-├── agents/                    # 3 agents
-├── commands/                  # 3 commands
-├── scripts/                   # 5 validation scripts
-├── hooks/                     # Automation hooks
-├── examples/                  # 3 reference integrations
-│   ├── polling-hub/           # Gold tier reference with DataUpdateCoordinator
-│   ├── minimal-sensor/        # Bronze tier starter
-│   └── push-integration/      # Silver tier push-based
-├── templates/                 # CI, testing, and docs templates
-├── README.md
-├── CHANGELOG.md
-└── LICENSE
-```
+| Tool | Description |
+|------|-------------|
+| `validate_manifest` | Validate a `manifest.json` file against HACS or core requirements |
+| `validate_strings` | Validate `strings.json` and check sync with `config_flow.py` step names |
+| `check_patterns` | Scan a file or directory for 20+ known anti-patterns and deprecations |
 
 ## Planned Features
 
-- **Live HA instance integration** — connect to a running HA instance via REST API to inspect real entity states during development
-- **Auto-test generation** — generate pytest test stubs from a finished integration's config flow and coordinator code
-- **IQS progress dashboard** — interactive checklist showing which Quality Scale rules are satisfied vs. outstanding for the current integration
-- **More deprecation tracking** — auto-detect and suggest fixes for newly deprecated APIs as HA versions advance
+No unreleased features are currently staged in the changelog.
 
-## Known Issues
+## Known Limitations
 
-- **IQS rule coverage may lag** — the 52 rules tracked reflect HA up to the 2025.x cycle; new rules added in future HA releases will need skill updates before they appear in quality reviews
-- **`generate-integration` can time out on large specs** — very detailed generation prompts may hit context limits; break the request into multiple passes using the scaffold command followed by targeted skill invocations
-- **Scripts require a Python environment** — validation scripts must be run in an environment where `python3` is available; they are not installed as executables
-- **`ha-quality-review` skill is read-only** — the skill identifies rule violations but does not auto-fix them; apply fixes manually or invoke the relevant implementation skills
+- **Live HA connection is optional.** MCP HA tools require a running Home Assistant instance and a valid long-lived access token. Skills and commands function fully without a live connection.
+- **`ha_call_service` dry-runs by default.** Set `dry_run: false` explicitly to execute service calls against a real instance.
+- **Targets HA 2025.2+ / Python 3.13.** Generated code uses modern type syntax (`list[str]`, `X | None`) and 2025 import paths. Earlier HA versions may require adjustments to generated imports (see `ha-deprecation-fixes` skill).
+- **Validation scripts require Python 3.** The PostToolUse hook calls `python3` — if your environment uses `python`, the hook silently skips validation.
 
-## References
+## Links
 
-- [Home Assistant Developer Docs](https://developers.home-assistant.io/)
-- [Integration Quality Scale](https://developers.home-assistant.io/docs/core/integration-quality-scale/)
-- [Creating an Integration](https://developers.home-assistant.io/docs/creating_component_index/)
-- [Config Flow](https://developers.home-assistant.io/docs/config_entries_config_flow_handler/)
-- [DataUpdateCoordinator](https://developers.home-assistant.io/docs/integration_fetching_data/)
-- [HACS Documentation](https://hacs.xyz/docs/publish/integration/)
-- [Home Assistant Brands](https://github.com/home-assistant/brands)
-
-## Contributing
-
-Contributions welcome! Please ensure changes align with the official Home Assistant developer documentation.
-
-## License
-
-MIT License — see [LICENSE](LICENSE)
+- Repository: [L3DigitalNet/Claude-Code-Plugins](https://github.com/L3DigitalNet/Claude-Code-Plugins)
+- Changelog: [CHANGELOG.md](CHANGELOG.md)
+- Issues: [GitHub Issues](https://github.com/L3DigitalNet/Claude-Code-Plugins/issues)

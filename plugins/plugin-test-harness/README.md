@@ -1,62 +1,100 @@
-# Plugin Test Harness (PTH)
+# Plugin Test Harness
 
-An MCP-based iterative testing framework for Claude Code plugins and MCP servers. Drives a tight test/fix/reload loop — generating tests, recording pass/fail results, applying source fixes, reloading the target plugin, and retesting — until your plugin converges to a stable, passing state.
+An iterative MCP-based test harness for Claude Code plugins and MCP servers.
 
 ## Summary
 
-PTH treats plugin testing as an iterative convergence problem rather than a one-shot process. Each session creates a dedicated git branch and git worktree in the target plugin's repository, giving you a complete audit trail of every test added and fix applied. Sessions persist to disk and can be resumed after interruption. Claude drives the loop interactively — you can inspect results, override decisions, or add tests at any point.
+Plugin Test Harness (PTH) runs a structured test/fix/reload loop against a target plugin entirely inside Claude Code. It creates a git session branch and worktree, auto-discovers tool schemas from the live MCP server, generates test cases, executes them via Claude, and applies code fixes — iterating until convergence. Test suites and session artifacts persist across sessions in `~/.pth/PLUGIN_NAME/` so state is never lost when a session ends or a process restarts.
 
 ## Principles
 
-**[P1] Claude's Judgment, Not Mechanical Rules** — No rigid enforcement gates or hard-coded safety thresholds. Claude assesses risk, decides approval workflows, and manages safety contextually — because tests span wildly varying plugin domains and environment configurations where rigid rules would be either too restrictive or too permissive.
+**[P1] Act on Intent** — Invoking a session tool is consent to its full scope. Session gates block only the narrow pre-session window; once a session is active, all tools operate without confirmation.
 
-**[P2] Convergence Over Single-Pass** — Testing is an iterative convergence problem. PTH drives successive test/fix/reload cycles and measures the trend (improving, plateaued, oscillating, declining) across iterations. A plugin is not done when the first run passes.
+**[P2] Scope Fidelity** — Each tool does exactly one thing: generate, record, fix, reload, or inspect. No tool performs a superset of its stated scope without being asked.
 
-**[P3] Durable Session Assets** — The git branch and test definitions are the session's durable assets. If the environment fails catastrophically, the session can always be resumed from these.
+**[P3] Succeed Quietly, Fail Transparently** — Normal iterations emit compact summaries. On critical failures (build error, git conflict, missing tool) PTH stops immediately and surfaces raw output alongside a recovery plan.
 
-**[P4] Transparent Errors** — PTH always surfaces raw error output alongside its own interpretation. Exceptions are never silently swallowed; Claude always has enough context to decide the next step.
+**[P4] Use the Full Toolkit** — The convergence trend (`improving`, `plateaued`, `oscillating`, `declining`) is a structured signal, not prose — enabling Claude to pick the right next action without guessing.
 
-**[P5] Audit Trail by Default** — Every fix is committed to the session branch immediately. The full debug history is always recoverable via `git log` — no extra logging or manual export required.
+**[P5] Convergence is the Contract** — Sessions iterate toward zero failing tests without check-ins. PTH surfaces the trend and a recommended next action at each iteration boundary; the AI drives toward the goal.
+
+**[P6] Composable, Focused Units** — Each MCP tool is independently callable. Orchestration is assembled at runtime by the AI agent, not baked into PTH itself.
+
+## Requirements
+
+- Node.js 20+
+- Target plugin must be on the local filesystem inside a git repository
+- For `mcp` mode: target server must be startable via its `.mcp.json` (PTH spawns the server to discover tool schemas)
+- For `plugin` mode: target plugin must have a `.claude-plugin/` directory
 
 ## Installation
 
-```bash
+```
 /plugin marketplace add L3DigitalNet/Claude-Code-Plugins
 /plugin install plugin-test-harness@l3digitalnet-plugins
 ```
 
-## Installation Notes
-
-After installation, navigate to the plugin cache directory and install Node.js dependencies:
+For local development:
 
 ```bash
-cd ~/.claude/plugins/<marketplace>/plugin-test-harness
-npm install
+claude --plugin-dir ./plugins/plugin-test-harness
 ```
 
-The `dist/` directory ships prebuilt — a build step is only required if you modify the TypeScript source.
+### Post-Install Steps
+
+PTH is distributed with a pre-built `dist/` directory. If you are running from source or a clean checkout, build first:
+
+```bash
+cd ~/.claude/plugins/cache/l3digitalnet-plugins/plugin-test-harness/<version>/
+npm install
+npm run build
+```
+
+## How It Works
+
+```mermaid
+flowchart TD
+    User([User]) -->|"pth_preflight"| Preflight[Check path, git, build system, lock]
+    Preflight -->|"pth_start_session"| Start[Create branch + worktree\nDetect mode, load saved tests\nRun gap analysis]
+    Start --> Generate[pth_generate_tests\nAuto-discover schemas\nUpsert test suite]
+    Generate --> Run[Claude executes each test\nagainst live plugin tools]
+    Run -->|"pth_record_result × N"| Record[Record pass / fail / skipped\nUpdate session state]
+    Record -->|"pth_get_iteration_status"| Iter{Convergence\ntrend?}
+    Iter -->|improving| Run
+    Iter -->|plateaued / oscillating / declining| Fix[pth_apply_fix\nWrite + commit files]
+    Fix -->|"pth_reload_plugin"| Reload[Build → sync cache → kill process\nClaude Code restarts server]
+    Reload --> Run
+    Iter -->|all passing| End[pth_end_session\nPersist artifacts, remove worktree]
+    End --> Report((~/.pth/PLUGIN/\nSESSION-REPORT.md))
+```
 
 ## Usage
 
-PTH operates as an iterative loop. Start with a preflight check, then cycle through generate → run → record → fix → reload until convergence:
+### Starting a session
 
 ```
-pth_preflight       → verify target plugin path, git repo, and session lock status
-pth_start_session   → create session branch + git worktree, detect plugin mode
-pth_generate_tests  → auto-generate tests (MCP: spawns server to fetch schemas; plugin: scans hooks)
-[Run tests — call each tool and evaluate output]
-pth_record_result   → record pass/fail for each test
-pth_get_iteration_status → check convergence trend and iteration table
-pth_apply_fix       → write file changes and commit to session branch
-pth_reload_plugin   → rebuild, sync to cache, restart MCP server
-[Repeat from pth_generate_tests or pth_record_result]
-pth_end_session     → persist tests, generate SESSION-REPORT.md, close worktree
+Call pth_preflight with the absolute path to your plugin.
+Then call pth_start_session to create the session branch.
+Call pth_generate_tests — schemas are auto-discovered.
+Execute each test by calling the plugin's tools, then pth_record_result.
+Call pth_get_iteration_status to checkpoint and see the trend.
+Apply fixes with pth_apply_fix, reload with pth_reload_plugin, repeat.
+End with pth_end_session.
 ```
 
-To resume an interrupted session:
+### Resuming an interrupted session
+
+If the Claude Code process restarts mid-session, use:
+
 ```
-pth_resume_session({ pluginPath: "...", branch: "pth/my-plugin-2026-02-18-abc123" })
+pth_resume_session  branch: "pth/my-plugin-2026-02-18-abc123"  pluginPath: "/path/to/plugin"
 ```
+
+Session branches follow the pattern `pth/<plugin>-<date>-<6-char-hex>`. The branch remains in the git repository after the session ends, preserving the full fix history.
+
+### Session isolation
+
+Each session runs in a git worktree at `/tmp/pth-worktree-<branch-slug>`. The main working tree is never modified during a session. Fix commits land on the session branch; `pth_diff_session` shows the cumulative diff against the branch point.
 
 ## Tools
 
@@ -64,195 +102,227 @@ pth_resume_session({ pluginPath: "...", branch: "pth/my-plugin-2026-02-18-abc123
 
 | Tool | Description |
 |------|-------------|
-| `pth_preflight` | Check plugin path, git repo, build system, and active session lock |
-| `pth_start_session` | Create session branch + worktree, detect plugin mode; optional `sessionNote` |
-| `pth_resume_session` | Re-attach to an existing session branch by name |
-| `pth_end_session` | Persist tests, write `SESSION-REPORT.md`, remove worktree |
-| `pth_get_session_status` | Session metadata, iteration count, pass/fail totals, convergence trend |
+| `pth_preflight` | Validate prerequisites: plugin path exists, git repo detected, plugin mode recognized, no active session lock, persistent store status. |
+| `pth_start_session` | Create session branch and worktree, detect plugin mode, load saved tests from persistent store, run gap analysis vs last snapshot. |
+| `pth_resume_session` | Re-attach to an existing session branch after a process restart. Loads tests from persistent store. |
+| `pth_end_session` | Persist tests and artifacts to `~/.pth/`, generate SESSION-REPORT.md, remove worktree, release session lock. |
+| `pth_get_session_status` | Current iteration count, pass/fail totals, convergence trend, mode, and start time. |
 
 ### Test Management
 
 | Tool | Description |
 |------|-------------|
-| `pth_generate_tests` | Auto-generate tests — MCP plugins: spawns the target server and calls `tools/list`; plugin mode: scans hook scripts. Optional `toolSchemas` override and `includeEdgeCases` flag. |
-| `pth_list_tests` | List tests with optional filters: `mode`, `status`, `tag` |
-| `pth_create_test` | Add a single test by passing a YAML string |
-| `pth_edit_test` | Replace a test definition by ID |
+| `pth_generate_tests` | Auto-discover tool schemas by spawning the target MCP server, then generate test cases (valid input + missing-required-field variants). Upserts existing tests rather than duplicating. Accepts optional `tools[]` for gap-targeted generation. |
+| `pth_list_tests` | List tests with optional filters: `mode` (mcp/plugin), `status` (passing/failing/pending), `tag`. |
+| `pth_create_test` | Add a new test from a YAML definition. |
+| `pth_edit_test` | Update an existing test by ID with a new YAML definition. |
 
-### Execution & Results
+### Execution and Results
 
 | Tool | Description |
 |------|-------------|
-| `pth_record_result` | Record `passing`, `failing`, or `skipped` for a test; accepts optional `durationMs`, `failureReason`, and `claudeNotes` |
-| `pth_get_results` | Pass/fail breakdown for all tests in the current suite |
-| `pth_get_test_impact` | Identify tests likely affected by changes to specific source files |
-| `pth_get_iteration_status` | Iteration table (passing/failing/fixes per iteration) and convergence trend |
+| `pth_record_result` | Record a test outcome (passing/failing/skipped) after Claude executes the test. Accepts optional `durationMs`, `failureReason`, and `claudeNotes`. |
+| `pth_get_results` | Full pass/fail listing for all tests with failure reasons. |
+| `pth_get_test_impact` | Identify which tests exercise a given set of source files — used to target re-runs after a fix. |
+| `pth_get_iteration_status` | Checkpoint the current iteration: snapshot pass/fail counts, advance the iteration counter, emit the convergence table and trend recommendation. |
 
 ### Fix Management
 
 | Tool | Description |
 |------|-------------|
-| `pth_apply_fix` | Write file changes (`files: [{path, content}]`) and commit to session branch with PTH trailers; stages only the specified files |
-| `pth_sync_to_cache` | Copy worktree files to the plugin cache so hook script changes take effect immediately |
-| `pth_reload_plugin` | Build the MCP plugin (auto-detects build system), sync to cache, then terminate the server process so Claude Code restarts it; optional `processPattern` |
-| `pth_get_fix_history` | List all PTH fix commits on the session branch |
-| `pth_revert_fix` | Undo a specific fix commit by SHA (7–40 hex chars) via `git revert` |
-| `pth_diff_session` | Cumulative diff of all session changes vs. branch point (truncated at 200 lines) |
+| `pth_apply_fix` | Write file changes and commit to the session branch with PTH git trailers (`PTH-Test`, `PTH-Category`, `PTH-Iteration`, `PTH-Files`). |
+| `pth_sync_to_cache` | Sync worktree changes to the plugin's installed cache directory so hook script changes take effect immediately without a rebuild. |
+| `pth_reload_plugin` | Build the plugin, sync the new binary to cache, then send SIGTERM to the MCP server process. Claude Code auto-restarts the server from the updated cache. |
+| `pth_get_fix_history` | List all fix commits on the session branch with their PTH trailers. |
+| `pth_revert_fix` | Undo a specific fix commit via `git revert`. Handles `session-state.json` conflicts automatically. |
+| `pth_diff_session` | Show the cumulative diff of all changes on the session branch vs the branch point (truncated at 200 lines; use `pth_get_fix_history` for a structured summary on large diffs). |
 
 ## Modes
 
-PTH auto-detects the target plugin type during `pth_start_session` — no `mode` parameter needed.
+| Mode | Detected when | How PTH tests |
+|------|---------------|---------------|
+| `mcp` | `.mcp.json` present at plugin root | Spawns the MCP server via `.mcp.json`, calls `tools/list` to discover all tool schemas, generates test calls via Claude using the discovered tools |
+| `plugin` | `.claude-plugin/` directory present (no `.mcp.json`) | Inspects `commands/`, `skills/`, `agents/` directories; generates file-existence validation tests for hook scripts |
 
-| Mode | When used | How PTH tests |
-|------|-----------|---------------|
-| `mcp` | Plugin has `.mcp.json` | Spawns the MCP server, calls `tools/list` to get schemas, generates `single` and `scenario` tests |
-| `plugin` | Plugin has `.claude-plugin/` directory | Scans hook scripts and manifest to generate `validate` tests |
+If both signals are present, `mcp` takes precedence.
 
 ## Test YAML Format
 
-Tests are YAML documents stored in the session's `.pth/tests/` directory. Fields are parsed by `src/testing/parser.ts`; the schema is defined in `src/testing/types.ts`.
+Tests are defined in YAML and parsed into `PthTest` objects. The `id` field is auto-generated from the name via slugification if not explicitly provided.
 
-**MCP single-tool test (most common):**
+### Single MCP tool call
 
 ```yaml
-id: "list-tools-returns-array"         # optional — derived from name if absent
-name: "tools/list returns an array"
-mode: "mcp"
-type: "single"                          # inferred from presence/absence of steps
-tool: "tools/list"
-input: {}
+id: pkg-info-valid-input          # optional; slugified from name if omitted
+name: pkg_info — valid input
+mode: mcp
+type: single
+tool: pkg_info
+input:
+  package: bash
 expect:
   success: true
-  output_contains: "tools"
-tags:
-  - "smoke"
+  output_contains: "Description"
 timeout_seconds: 10
+tags: [smoke]
 ```
 
-**MCP scenario test (multi-step, with variable capture):**
+### Multi-step scenario (captures output between steps)
 
 ```yaml
-name: "pth_revert_fix — valid commit hash"
-mode: "mcp"
-type: "scenario"
+name: pth_get_commit — valid input
+mode: mcp
+type: scenario
 steps:
-  - tool: "pth_apply_fix"
+  - tool: pth_apply_fix
     input:
       files:
-        - path: "src/stub.ts"
+        - path: src/stub.ts
           content: "// stub\n"
-      commitTitle: "test: stub for scenario"
+      commitTitle: "test: stub commit for scenario"
     expect:
       success: true
     capture:
-      commitHash: "text:Fix committed: (\\w+)"   # regex on response text
-  - tool: "pth_revert_fix"
+      commitHash: "text:Fix committed: (\\w+)"
+  - tool: pth_get_commit
     input:
-      commitHash: "${commitHash}"                # captured from step 1
+      commitHash: ${commitHash}
     expect:
       success: true
 expect:
   success: true
 timeout_seconds: 30
-generated_from: "schema"
+generated_from: schema
 ```
 
-**Plugin hook-script test:**
+### Plugin hook script validation
 
 ```yaml
-name: "write-guard.sh — exists and is readable"
-mode: "plugin"
-type: "validate"
+name: write-guard.sh — script exists and is readable
+mode: plugin
+type: validate
 checks:
-  - type: "file-exists"
-    files: ["scripts/write-guard.sh"]
+  - type: file-exists
+    files: [scripts/write-guard.sh]
 expect: {}
+generated_from: source_analysis
 ```
 
-**`expect` block fields:** `success`, `output_contains`, `output_equals`, `output_matches`, `output_json`, `output_json_contains`, `error_contains`, `exit_code`, `stdout_contains`, `stdout_matches`
+### Custom exec test
 
-**`type` values:** `single` (MCP one-shot call), `scenario` (MCP multi-step), `hook-script` (run script directly), `validate` (file/schema checks), `exec` (arbitrary command)
+```yaml
+name: build succeeds
+mode: plugin
+type: exec
+command: npm run build
+expect:
+  exit_code: 0
+  stdout_contains: "Build succeeded"
+timeout_seconds: 60
+```
 
-**`setup`/`teardown`:** Array of steps that run before/after the test. Each step is `{exec: "shell command"}` or `{file: {path, content}}`.
+### Available `expect` fields
 
-**Multi-document files:** Test files support `---` separators — multiple tests can live in one `.yaml` file.
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Tool call returns without error |
+| `output_contains` | string | Response text contains substring |
+| `output_equals` | string | Response text exact match |
+| `output_matches` | string | Response text matches regex |
+| `output_json` | any | Response parses as JSON equal to value |
+| `output_json_contains` | any | Response JSON contains subset |
+| `error_contains` | string | Error message contains substring |
+| `exit_code` | number | Process exit code (exec type) |
+| `stdout_contains` | string | stdout contains substring (exec type) |
+| `stdout_matches` | string | stdout matches regex (exec type) |
 
 ## Session Branches
 
-Every session creates a dedicated git branch **and a git worktree** in the target plugin's repository. The worktree is checked out to `/tmp/pth-worktree-<branch-suffix>` and removed at `pth_end_session`. The branch remains.
+Branch naming: `pth/<plugin-name>-<YYYY-MM-DD>-<6-hex-chars>`
 
-```
-Branch:   pth/<plugin>-<timestamp>-<hash>     e.g. pth/my-plugin-2026-02-18-abc123
-Worktree: /tmp/pth-worktree-<branch-suffix>   (removed on end_session)
-Lock:     <pluginPath>/.pth/active-session.lock  (PID + branch; removed on end_session)
-Tests:    <worktree>/.pth/tests/*.yaml        (committed to branch on end_session)
-Report:   <worktree>/.pth/SESSION-REPORT.md   (generated on end_session)
-```
+Example: `pth/linux-sysadmin-mcp-2026-02-18-a3f9c2`
 
-After a session ends, the branch is a complete record:
+Worktrees are created at: `/tmp/pth-worktree-<branch-slug>`
+
+The branch remains in the git repository after `pth_end_session` — you can browse fix history with:
 
 ```bash
-# See all commits from the session
-git log pth/my-plugin-2026-02-18-abc123 --oneline
-
-# Diff the entire session against the base branch
-git diff $(git merge-base HEAD pth/my-plugin-2026-02-18-abc123)...pth/my-plugin-2026-02-18-abc123
-
-# Merge a successful session to main
-git checkout main && git merge --no-ff pth/my-plugin-2026-02-18-abc123
+git log pth/my-plugin-2026-02-18-a3f9c2 --oneline
+git show pth/my-plugin-2026-02-18-a3f9c2:src/some-file.ts
 ```
 
-Abandoned sessions can be deleted without affecting your working branches:
-```bash
-git branch -d pth/my-plugin-2026-02-18-abc123
+Each fix commit carries PTH git trailers:
+
+```
+fix: handle null group
+
+PTH-Test: pkg_info_missing_required
+PTH-Category: runtime-exception
+PTH-Iteration: 3
+PTH-Files: src/tools/pkg-info.ts
 ```
 
-## Monorepo Support
+## Persistent Store
 
-PTH resolves the git repository root automatically — the target plugin can be a subdirectory within a larger mono-repo. File paths in `pth_apply_fix` are always relative to the **plugin directory**, not the repo root; PTH maps them to the correct worktree path internally.
+All session artifacts are written to `~/.pth/<plugin-name>/` at `pth_end_session`:
+
+```
+~/.pth/<plugin-name>/
+├── index.json                   # metadata + session count
+├── tests/                       # authoritative test suite (loaded by pth_start_session)
+├── results-history.json         # per-test pass/fail history across all sessions
+├── plugin-snapshot.json         # tool schemas + component list for gap analysis
+└── sessions/<branch>/
+    ├── SESSION-REPORT.md        # iteration table, fix list, final results
+    ├── iteration-history.json
+    └── fix-history.json
+```
+
+Tests in `~/.pth/` are the authoritative source. When resuming or starting a new session, PTH loads the saved test suite — no tests are lost across process restarts.
 
 ## Convergence
 
-`pth_get_iteration_status` reports the current trend and prints a per-iteration table:
+`pth_get_iteration_status` evaluates the last four iteration snapshots and returns one of five trend values:
+
+| Trend | Meaning | Recommended action |
+|-------|---------|-------------------|
+| `unknown` | Fewer than two iterations recorded | Keep running tests |
+| `improving` | Pass count rising over the window | Continue iterating |
+| `plateaued` | Last 2–3 snapshots have identical pass counts | Try a different fix strategy |
+| `oscillating` | Direction reverses 2+ times in the window | Use `pth_get_test_impact` to find the regressing fix |
+| `declining` | Pass count fell from first to last snapshot | Use `pth_revert_fix` before continuing |
+
+The convergence table rendered by `pth_get_iteration_status`:
 
 ```
 | Iteration | Passing | Failing | Fixes |
 |-----------|---------|---------|-------|
-| 1         | 3       | 5       | 0     |
-| 2         | 6       | 2       | 2     |
+| 1         | 12      | 8       | 0     |
+| 2         | 16      | 4       | 2     |
+| 3         | 18      | 2       | 1     |
 ```
 
-| Trend | Meaning | Recommended action |
-|-------|---------|-------------------|
-| `improving` | Pass rate rising each iteration | Keep iterating |
-| `plateaued` | Pass rate has stalled | Try a different fix strategy |
-| `oscillating` | Tests flip between pass and fail | Use `pth_get_test_impact` to find the regressing fix |
-| `declining` | Pass rate is falling | Use `pth_revert_fix` before continuing |
+## Gap Analysis
 
-Trend detection looks at the last 4 iteration snapshots; `unknown` is returned until 2+ snapshots exist.
+When a persistent store exists for a plugin, `pth_start_session` compares the saved plugin snapshot against the current source to surface structural changes without requiring a live server:
 
-## Requirements
+- **New components** — tools or commands present in source but absent from the last snapshot
+- **Modified components** — tools whose source files changed since the snapshot was captured
+- **Removed components** — tools that were in the snapshot but are no longer present
+- **Stale test IDs** — tests whose target tool was removed
 
-- Node.js 20+
-- Target plugin must be accessible on the local filesystem and inside a git repository
-- For `mcp` mode: the target MCP server must be startable via its `.mcp.json` command
+Use `pth_generate_tests` with the `tools[]` parameter to generate tests only for new or modified components from the gap report.
 
-## Planned Features
+## Known Limitations
 
-- **Parallel test execution** — run independent tests concurrently to reduce session iteration time
-- **HTML report export** — generate a self-contained HTML report from a completed session for sharing outside Claude
-- **Test suite import** — seed a new session from an existing YAML test file rather than starting from zero
-- **Watch mode** — automatically trigger a new iteration whenever source files in the target plugin change
+- `pth_reload_plugin` terminates the MCP server process by pattern-matching against `ps` output. On systems where the process pattern cannot be found (non-standard Claude Code installation paths), pass `processPattern` explicitly.
+- Convergence trend requires at least two distinct iteration snapshots. A session with a single `pth_get_iteration_status` call always returns `unknown`.
+- Plugin mode (`hook-script` and `validate` tests) currently generates only file-existence checks. Behavioral testing of hook scripts requires `exec` type tests written manually via `pth_create_test`.
+- The `capture` field in scenario steps uses text regex extraction from the tool response string, not JSON path extraction. Complex output formats may require manual test authoring.
 
-## Known Issues
-
-- **`npm install` must be run manually after plugin install** — the plugin installer does not execute `npm install`; run it in the plugin cache directory (see Installation Notes above)
-- **`pth_reload_plugin` only works for MCP servers** — reloading hook-based or command-only plugins requires restarting the Claude Code session
-- **Session state lives in the git worktree** — the worktree is created in `/tmp` and removed on `pth_end_session`. Tests and state are committed to the session branch at end; if the worktree is lost mid-session (e.g. system reboot), use `pth_resume_session` — it reconstructs from git history
-- **`pth_apply_fix` commits immediately** — there is no staging area; use `pth_revert_fix` to undo a commit if a fix causes regressions
-
-## Project Links
+## Links
 
 - Repository: [L3DigitalNet/Claude-Code-Plugins](https://github.com/L3DigitalNet/Claude-Code-Plugins)
-- Design document: `docs/PTH-DESIGN.md`
-- Issues and feedback: [GitHub Issues](https://github.com/L3DigitalNet/Claude-Code-Plugins/issues)
+- Changelog: [CHANGELOG.md](CHANGELOG.md)
+- Issues: [GitHub Issues](https://github.com/L3DigitalNet/Claude-Code-Plugins/issues)
+- Design document: [docs/PTH-DESIGN.md](docs/PTH-DESIGN.md)

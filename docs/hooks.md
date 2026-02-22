@@ -10,727 +10,307 @@ keywords: [hooks, lifecycle, events, automation, triggers]
 
 ## Overview
 
-**Purpose:** Intercept and modify Claude behavior at lifecycle events **Location:**
-`hooks/hooks.json` **Format:** JSON configuration
+**Purpose:** Run shell commands at lifecycle events — before or after tool calls, at session start, or before context compaction.
+**Location:** `hooks/hooks.json` at plugin root
+**Format:** JSON record keyed by event name
 
-**Use cases:**
+Hooks provide *mechanical* enforcement — they run regardless of AI behavior and cannot be bypassed by prompts. This makes them stronger than behavioral instructions.
 
-- Inject context
-- Transform inputs/outputs
-- Trigger external commands
-- Collect metrics
-- Automate workflows
+## hooks.json Format
 
-## Lifecycle Events
-
-| Event          | Timing                            | Input            | Common Uses                         |
-| -------------- | --------------------------------- | ---------------- | ----------------------------------- |
-| `SessionStart` | Session begins                    | None             | Setup, welcome, dependency check    |
-| `SessionEnd`   | Session ends                      | None             | Cleanup, metrics, summary           |
-| `PrePrompt`    | Before user message processing    | User message     | Input validation, context injection |
-| `PostPrompt`   | After processing, before response | Processed prompt | Prompt modification                 |
-| `PreToolUse`   | Before tool execution             | Tool name, args  | Authorization, logging              |
-| `PostToolUse`  | After tool execution              | Tool result      | Result transformation, side effects |
-| `PreResponse`  | Before sending response           | Response text    | Output filtering                    |
-| `PostResponse` | After response sent               | Response text    | Metrics, notifications              |
-| `Error`        | On error                          | Error details    | Error handling, alerts              |
-
-## Creating hooks
-
-### Basic structure
-
-Hooks are markdown files with YAML frontmatter:
-
-```markdown
----
-name: my-hook
-description: What this hook does
-event: SessionStart
----
-
-# Hook Implementation
-
-Your hook logic in natural language that tells Claude what to do.
+```json
+{
+  "hooks": {
+    "EventName": [
+      {
+        "matcher": "ToolName|OtherTool",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/my-hook.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
 
-### Location
+**Structure:**
+- `hooks`: Record (object) keyed by event name — **not** an array
+- Each event value: array of hook groups, each with a `matcher` and a `hooks` array
+- `type`: always `"command"` — runs an external shell process
+- `command`: shell command string; only `${CLAUDE_PLUGIN_ROOT}` is available as a variable
+- `timeout`: optional — max execution time in seconds
 
-Place hooks in your plugin:
+## Event Types
 
-```
-.claude-plugin/
-└── hooks/
-    ├── session-start.md
-    └── pre-tool-use.md
-```
+| Event | Timing | Stdin |
+|-------|--------|-------|
+| `SessionStart` | Session begins | None |
+| `SessionEnd` | Session ends | None |
+| `PreToolUse` | Before tool call | Tool name + arguments (JSON) |
+| `PostToolUse` | After tool call | Tool name + arguments + result (JSON) |
+| `PreCompact` | Before context compaction | None |
 
-## Hook events
+## Matcher Pattern
 
-### SessionStart
+The `matcher` field is a regex matched against the tool name for `PreToolUse` and `PostToolUse`. For `SessionStart`, `SessionEnd`, and `PreCompact`, use `"*"` or `"auto"`.
 
-Runs when a new session begins.
-
-**Use for**:
-
-- Display welcome message
-- Check project status
-- Verify dependencies
-- Load session configuration
-
-**Example**:
-
-```markdown
----
-name: welcome-hook
-description: Display project status at session start
-event: SessionStart
----
-
-When a session starts:
-
-1. Check git status for uncommitted changes
-2. Verify all tests pass
-3. Display summary of recent commits
-4. Show any pending TODOs
-
-Format output as a brief status report.
+```json
+"matcher": "Write|Edit|MultiEdit|NotebookEdit"     // exact tool names, pipe-separated
+"matcher": "Bash"                                   // single tool
+"matcher": "Read|View"                              // any of these tools
+"matcher": "mcp__.*__(write|edit|create|update).*"  // regex for MCP write tools
+"matcher": "*"                                      // all (for SessionStart/SessionEnd)
+"matcher": "auto"                                   // system-managed (for PreCompact)
 ```
 
-### SessionEnd
+Multiple hook groups for the same event run in the order listed.
 
-Runs when session ends.
+## Hook Input (stdin)
 
-**Use for**:
+For `PreToolUse` and `PostToolUse`, the hook script receives a JSON object on stdin:
 
-- Save session state
-- Clean up resources
-- Summary of changes made
-- Reminder prompts
-
-**Example**:
-
-```markdown
----
-name: session-summary
-description: Summarize session changes
-event: SessionEnd
----
-
-When session ends:
-
-1. List files modified
-2. Count lines added/removed
-3. Note new functions/classes created
-4. Suggest next steps
-
-Keep summary concise (3-5 lines).
+```json
+{
+  "tool_name": "Write",
+  "tool_input": {
+    "file_path": "/path/to/file.py",
+    "content": "..."
+  }
+}
 ```
 
-### PrePrompt
+`tool_response` is additionally available in `PostToolUse`. `SessionStart` and `PreCompact` hooks receive no stdin data.
 
-Runs before Claude processes user input.
+Extract fields in bash:
 
-**Use for**:
-
-- Inject additional context
-- Add recent changes info
-- Include environment details
-- Append relevant documentation
-
-**Input**: User's message **Output**: Modified message or additional context
-
-**Example**:
-
-```markdown
----
-name: context-injector
-description: Add project context to prompts
-event: PrePrompt
----
-
-Before processing user input:
-
-1. Check current branch name
-2. Identify active files in editor
-3. Note any test failures
-4. Add this context to the prompt
-
-Format:
+```bash
+FILE_PATH=$(cat | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+tool_input = d.get('tool_input', {})
+# Try multiple field names — different tools use different keys
+path = tool_input.get('file_path') or tool_input.get('path') or tool_input.get('notebook_path') or ''
+print(path)
+" 2>/dev/null)
 ```
 
-[Context] Branch: ${branch} Active files: ${files} Test status: ${testStatus} [End
-Context]
+## Hook Output
 
-${userMessage}
+### PostToolUse — inject a warning into agent context
 
+Write plain text to stdout — it is injected as a system message the agent will see on its next turn:
+
+```bash
+echo "WARNING: This file is in the protected zone. Review carefully before proceeding."
 ```
 
+### PreToolUse — block the tool call
+
+Exit with code `2` and write the block decision JSON to stdout:
+
+```bash
+echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","decision":"block","reason":"Writes to this path are not permitted."}}'
+exit 2
 ```
 
-### PostPrompt
+Exit code `0` (or any code other than `2`) allows the tool call to proceed normally.
 
-Runs after Claude processes input but before generating response.
+### SessionStart — write to terminal
 
-**Use for**:
+Stdout from `SessionStart` hooks is displayed in the terminal when the session begins. Useful for status messages, sync confirmations, or warnings.
 
-- Modify interpretation
-- Add constraints
-- Inject last-minute context
+## Variable Reference
 
-**Example**:
+Only one variable substitution is available in hook `command` strings:
 
-```markdown
----
-name: constraint-enforcer
-description: Enforce code style constraints
-event: PostPrompt
----
+| Variable | Value |
+|----------|-------|
+| `${CLAUDE_PLUGIN_ROOT}` | Absolute path to the installed plugin directory |
 
-After understanding user request:
+There is no `${file}` or other automatic variable substitution. Pass data to scripts via stdin JSON (for PreToolUse/PostToolUse) or by using `${CLAUDE_PLUGIN_ROOT}` to reference scripts and state bundled with the plugin.
 
-Add constraint: "All code must follow the project's established patterns in
-CONVENTIONS.md"
+## Multiple Hooks per Event
+
+One event can have multiple hook groups, and each group can have multiple hooks. Groups run in order; within a group, hooks run sequentially.
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/force-push-guard.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/auto-build.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
 
-### PreToolUse
+## Dispatcher Pattern (Recommended)
 
-Runs before Claude calls a tool.
+When multiple files or patterns need different handling, use a single hook that routes internally — one hook registration per event type. This keeps `hooks.json` simple and puts routing logic in a shell script where it can be tested independently.
 
-**Use for**:
+**hooks.json:**
 
-- Log tool usage
-- Validate parameters
-- Add confirmations for dangerous operations
-- Inject tool-specific context
-
-**Input**: Tool name and arguments **Output**: Modified arguments or cancellation
-
-**Example**:
-
-```markdown
----
-name: safe-delete
-description: Confirm before deleting files
-event: PreToolUse
-tool: run_in_terminal
----
-
-Before running terminal commands:
-
-If command contains `rm` or `delete`:
-
-1. List affected files
-2. Ask user to confirm: "Delete these files? (y/n)"
-3. Only proceed if confirmed
-
-Otherwise allow command without prompt.
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/post-write-hook.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
 
-### PostToolUse
-
-Runs after tool execution completes.
-
-**Use for**:
-
-- Log results
-- Transform tool output
-- Trigger follow-up actions
-- Error recovery
-
-**Input**: Tool name, arguments, result **Output**: Modified result
-
-**Example**:
-
-```markdown
----
-name: test-watcher
-description: Notify on test failures
-event: PostToolUse
-tool: run_in_terminal
----
-
-After running terminal commands:
-
-If command contains `test` or `pytest`:
-
-1. Check if output contains failures
-2. If failures found, extract failure details
-3. Add note: "⚠️ Tests failed. Review output above."
-
-Pass through original output with any additions.
-```
-
-### PreResponse
-
-Runs before sending response to user.
-
-**Use for**:
-
-- Format response
-- Add disclaimers
-- Inject tips
-- Modify tone
-
-**Input**: Claude's response **Output**: Modified response
-
-**Example**:
-
-```markdown
----
-name: format-response
-description: Add formatting to responses
-event: PreResponse
----
-
-Before sending response:
-
-1. If response includes code changes, add: "💡 Tip: Review changes carefully before
-   accepting."
-
-2. If response mentions security, add: "🔒 Security note: Test security changes
-   thoroughly."
-
-3. Format consistently with project standards.
-```
-
-### PostResponse
-
-Runs after response sent to user.
-
-**Use for**:
-
-- Log interactions
-- Collect metrics
-- Trigger background tasks
-- Update state
-
-**Example**:
-
-```markdown
----
-name: interaction-logger
-description: Log interactions for analysis
-event: PostResponse
----
-
-After response sent:
-
-1. Extract key metrics:
-   - Tools used
-   - Files modified
-   - Response length
-2. Append to `.claude/session.log`
-3. No output to user
-
-Format: `timestamp | tools | files | length`
-```
-
-### Error
-
-Runs when an error occurs.
-
-**Use for**:
-
-- Error recovery
-- User-friendly messages
-- Debug information collection
-- Fallback actions
-
-**Input**: Error details **Output**: Recovery actions or modified error message
-
-**Example**:
-
-```markdown
----
-name: error-handler
-description: Provide helpful error messages
-event: Error
----
-
-When error occurs:
-
-1. Identify error type
-2. Check known issues in TROUBLESHOOTING.md
-3. Provide specific guidance:
-   - If auth error: "Try running: claude login"
-   - If network error: "Check connection and retry"
-   - If file error: "Verify file permissions"
-
-Include link to relevant docs.
-```
-
-## Hook configuration
-
-### Frontmatter fields
-
-```yaml
-name: hook-name
-description: What the hook does
-event: SessionStart
-tool: read_file
-priority: high
-async: true
-timeout: 5000
-```
-
-#### Required fields
-
-- **name**: Hook identifier
-- **description**: Brief summary
-- **event**: Which event triggers the hook
-
-#### Optional fields
-
-- **tool**: Tool-specific hooks (for PreToolUse/PostToolUse)
-- **priority**: `high`, `medium`, `low` (default: `medium`)
-- **async**: Run asynchronously (default: `false`)
-- **timeout**: Max execution time in milliseconds
-- **condition**: When to run the hook
-
-### Conditional execution
-
-Run hooks only when conditions match:
-
-```yaml
-condition:
-  filePattern: '**/*.py'
-  userMessageContains: 'test'
-  toolMatches: 'run_in_terminal'
-```
-
-**Example**:
-
-```markdown
----
-name: python-test-hook
-description: Special handling for Python tests
-event: PreToolUse
-tool: run_in_terminal
-condition:
-  filePattern: '**/*test*.py'
-  userMessageContains: 'test'
----
-
-When running tests on Python files:
-
-Add environment variables:
-
-- PYTHONPATH=./src
-- TESTING=1
-
-Modify command to include coverage: `pytest --cov=src --cov-report=term-missing`
-```
-
-## Hook types
-
-### Prompt-based hooks
-
-Most hooks use natural language instructions:
-
-```markdown
----
-name: my-hook
-event: PrePrompt
----
-
-Natural language instructions for what to do.
-```
-
-Claude interprets and executes these instructions.
-
-### Agent-based hooks
-
-Complex hooks can use sub-agents:
-
-```markdown
----
-name: complex-hook
-event: SessionStart
-executeSubagent:
-  name: setup-agent
-  tools:
-    - read_file
-    - grep_search
----
-
-# Setup Agent
-
-You run at session start to verify project setup.
-
-1. Check for .env file
-2. Verify dependencies installed
-3. Check git status
-4. Report any issues
-```
-
-## Advanced patterns
-
-### Chained hooks
-
-Multiple hooks on same event execute in priority order:
-
-```markdown
----
-name: first-hook
-event: PrePrompt
-priority: high
----
-
-Run first.
-```
-
-```markdown
----
-name: second-hook
-event: PrePrompt
-priority: medium
----
-
-Run second.
-```
-
-### State management
-
-Hooks can maintain state across invocations:
-
-```markdown
----
-name: counter-hook
-event: PostToolUse
----
-
-Maintain interaction count:
-
-1. Read count from `.claude/stats.json`
-2. Increment by 1
-3. Write back to file
-4. If count > 100, suggest: "Consider reviewing session stats"
-```
-
-### Transformation pipelines
-
-Multiple hooks transform data sequentially:
-
-```markdown
----
-name: markdown-formatter
-event: PreResponse
-priority: high
----
-
-Format code blocks with syntax highlighting.
-```
-
-```markdown
----
-name: link-injector
-event: PreResponse
-priority: medium
----
-
-Add links to referenced files.
+**scripts/post-write-hook.sh:**
+
+```bash
+#!/bin/bash
+# Dispatcher: routes by file path to the appropriate validator
+FILE_PATH=$(cat | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+print(d.get('tool_input', {}).get('file_path', ''))
+")
+
+case "$FILE_PATH" in
+  */.claude-plugin/plugin.json) bash "${CLAUDE_PLUGIN_ROOT}/scripts/validate-manifest.sh" "$FILE_PATH" ;;
+  */agents/*.md)                bash "${CLAUDE_PLUGIN_ROOT}/scripts/validate-agent-frontmatter.sh" "$FILE_PATH" ;;
+esac
 ```
 
 ## Examples
 
-### Commit reminder
+### SessionStart: sync plugins on session open
 
-```markdown
----
-name: commit-reminder
-description: Remind to commit changes
-event: SessionEnd
----
-
-At session end:
-
-1. Check for uncommitted changes
-2. If found, remind user: "📝 You have uncommitted changes. Consider committing them:
-   `/commit <message>`"
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/sync-local-plugins.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
 
-### Test enforcer
-
-```markdown
----
-name: test-enforcer
-description: Require tests for new code
-event: PostToolUse
-tool: create_file
----
-
-After creating new source files:
-
-1. Check if file contains functions/classes
-2. If yes, prompt: "✅ Created ${filename} ⚠️ Remember to add tests for new code."
-```
-
-### Performance monitor
-
-```markdown
----
-name: performance-monitor
-description: Track tool execution time
-event: PostToolUse
-async: true
----
-
-After each tool execution:
-
-1. Calculate execution time
-2. If > 5 seconds, log to `.claude/slow-tools.log`
-3. Format: `${timestamp} | ${tool} | ${duration}ms`
-4. No user output (async logging)
-```
-
-### Context preloader
-
-```markdown
----
-name: context-preloader
-description: Load relevant docs automatically
-event: PrePrompt
----
-
-Before processing prompts:
-
-1. Detect keywords: "authentication", "database", "api"
-2. If found, inject content from relevant docs:
-   - "authentication" → docs/AUTH.md
-   - "database" → docs/DATABASE.md
-   - "api" → docs/API.md
-
-Prepend to user message:
-```
-
-[Relevant Documentation] ${docContent} [End Documentation]
-
-```
-
-```
-
-## Debugging hooks
-
-### Hook not triggering
-
-Check:
-
-1. Hook file in `.claude-plugin/hooks/`
-2. Valid YAML frontmatter
-3. Event name is correct
-4. Condition matches context
-
-### Hook errors
-
-View hook execution errors:
+### PreToolUse: block force-push
 
 ```bash
-/plugin
-# Go to Errors tab
+#!/bin/bash
+# force-push-guard.sh
+ARGS=$(cat | python3 -c "import sys, json; d=json.load(sys.stdin); print(d.get('tool_input', {}).get('command', ''))")
+
+if echo "$ARGS" | grep -qE -- '--force|-f '; then
+  echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","decision":"block","reason":"Force push is prohibited. Use a non-destructive push strategy."}}'
+  exit 2
+fi
 ```
 
-Common issues:
-
-- Invalid YAML syntax
-- Wrong event name
-- Infinite loops (hook triggers itself)
-- Timeout exceeded
-
-### Test hooks
-
-Test by triggering specific events:
+### PostToolUse: read-count warning
 
 ```bash
-# Test SessionStart hook
-claude  # Start new session
+#!/bin/bash
+# read-counter.sh — warns when session is consuming excessive context via file reads
+COUNTER_FILE=".claude/state/.read-count-$PPID"
+mkdir -p "$(dirname "$COUNTER_FILE")"
+COUNT=$(cat "$COUNTER_FILE" 2>/dev/null || echo 0)
+COUNT=$((COUNT + 1))
+echo "$COUNT" > "$COUNTER_FILE"
 
-# Test PreToolUse hook
-/read_file test.py
-
-# Test PostResponse hook
-# Any interaction triggers this
+if [ "$COUNT" -eq 10 ]; then
+  echo "WARNING: 10 file reads in this session. Consider compacting context."
+elif [ "$COUNT" -eq 15 ]; then
+  echo "CRITICAL: 15 reads. Compact immediately to preserve working context."
+fi
 ```
 
-### Debug output
+### PreCompact: save state before compaction
 
-Add logging to understand hook behavior:
-
-```markdown
----
-name: debug-hook
-event: PrePrompt
----
-
-Log to console: "[DEBUG] PrePrompt hook triggered with: ${userMessage}"
-
-Then proceed normally.
+```json
+{
+  "hooks": {
+    "PreCompact": [
+      {
+        "matcher": "auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/on-pre-compact.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
 
-## Best practices
+## Debugging Hooks
 
-### Keep hooks focused
+Hooks are silent on success. To debug:
 
-One hook, one responsibility:
+**1. Run the script manually** with a sample payload:
 
-✅ Good: Separate hooks for logging and transformation ❌ Too complex: One hook doing
-many unrelated things
-
-### Avoid loops
-
-Don't trigger the same event you're handling:
-
-❌ Dangerous:
-
-```markdown
----
-event: PreToolUse
-tool: read_file
----
-
-Read another file here. # Could cause infinite loop
+```bash
+echo '{"tool_name":"Write","tool_input":{"file_path":"test.py","content":""}}' \
+  | bash ./scripts/my-hook.sh
+echo "Exit code: $?"
 ```
 
-### Use async for side effects
+**2. Validate hooks.json syntax:**
 
-Non-blocking operations should be async:
-
-```yaml
-async: true
+```bash
+python3 -m json.tool hooks/hooks.json
 ```
 
-Use for: logging, metrics, notifications
+**3. Add stderr logging temporarily** (stderr is discarded in production but visible when run directly):
 
-### Handle errors gracefully
-
-Don't let hook failures break Claude:
-
-```markdown
-Try to do the thing. If it fails, log error and continue.
+```bash
+echo "[DEBUG] FILE_PATH=$FILE_PATH" >&2
 ```
 
-### Document hook behavior
+## Common Mistakes
 
-Explain what hooks do in README:
+| Mistake | Effect | Fix |
+|---------|--------|-----|
+| `"hooks"` field is an array, not a record | Schema error on load | Use `{"hooks": {"EventName": [...]}}`, not `{"hooks": [...]}` |
+| Using `${file}` in command string | Literal string — no substitution happens | Read file path from stdin JSON in the script |
+| Exit 1 in PreToolUse | Tool proceeds (exit 1 is not a block) | Only exit code `2` blocks tool execution |
+| Script path without `${CLAUDE_PLUGIN_ROOT}` | Wrong path at install time | Always prefix: `bash ${CLAUDE_PLUGIN_ROOT}/scripts/...` |
+| Forgetting `cat \|` before python3 | stdin is not consumed; JSON parse fails | Always pipe stdin: `FILE_PATH=$(cat \| python3 -c "...")` |
 
-```markdown
-## Hooks
+## Next Steps
 
-- **session-start**: Checks project setup
-- **pre-response**: Adds helpful tips to responses
-- **post-tool-use**: Logs tool usage stats
-```
-
-## Security considerations
-
-- Hooks run with Claude's permissions
-- Be careful with destructive operations
-- Validate inputs before using in commands
-- Don't log sensitive data
-- Review hook code from untrusted sources
-
-## Next steps
-
-- [Skills](./skills.md) for domain knowledge
-- [Sub-agents](./sub-agents.md) for specialized behaviors
-- [Plugins reference](./plugins-reference.md) for technical details
-- [Create plugins](./plugins.md) to package and distribute hooks
+- [Plugins development guide](./plugins.md) — plugin structure and workflow
+- [Sub-agents](./sub-agents.md) — isolated agent execution
+- [Skills](./skills.md) — context-triggered knowledge injection
+- [Plugins reference](./plugins-reference.md) — full manifest schema

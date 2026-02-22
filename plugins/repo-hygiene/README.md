@@ -2,35 +2,113 @@
 
 Autonomous maintenance sweep for the Claude-Code-Plugins monorepo.
 
+## Summary
+
+`/hygiene` runs five parallel mechanical checks against the repository and Claude Code's local plugin state, then performs a semantic pass over plugin READMEs using inline AI reasoning. Findings are classified automatically: safe corrections (missing `.gitignore` patterns, trailing slashes in `marketplace.json`) are applied without confirmation; destructive or ambiguous changes (orphan deletion, stale commits, README edits) require explicit approval via a multi-select prompt. A `--dry-run` flag shows the full plan without touching anything.
+
+## Principles
+
+**Act on Intent** — Invoking `/hygiene` is consent to a full sweep. The command runs all checks unconditionally and presents findings rather than asking which checks to run. It gates only on operations that are destructive or whose scope exceeds what a maintenance sweep implies.
+
+**Succeed Quietly, Fail Transparently** — Scripts emit structured JSON. If any script exits non-zero the sweep stops immediately and surfaces the raw error with the script name. Individual fix-command failures are logged and skipped rather than aborting the whole sweep.
+
+**Scope Fidelity** — Auto-fix is reserved for findings where the correct action is unambiguous (appending a missing `.gitignore` line, normalising a trailing slash). Everything with judgement involved surfaces for approval.
+
+**Safety by Construction** — Orphan `temp_*` directory deletion is gated on three independent path checks (prefix, no `..`, basename) enforced in the command itself, not just the script. No rm command runs unless all three pass.
+
+## Requirements
+
+- Claude Code (any recent version)
+- Python 3 (used by all four mechanical scan scripts — no external packages required)
+- Must be run from within the Claude-Code-Plugins repository (scripts call `git rev-parse --show-toplevel` to locate repo root)
+
+## Installation
+
+```
+/plugin marketplace add L3DigitalNet/Claude-Code-Plugins
+/plugin install repo-hygiene@l3digitalnet-plugins
+```
+
+For local development:
+
+```
+claude --plugin-dir ./plugins/repo-hygiene
+```
+
+## How It Works
+
+```mermaid
+flowchart TD
+    U([User]) -->|"/hygiene [--dry-run]"| S0[Step 0: Parse args\nLocate PLUGIN_ROOT and REPO_ROOT]
+    S0 --> P[Run 4 mechanical scripts in parallel]
+    P --> G[check-gitignore.sh]
+    P --> M[check-manifests.sh]
+    P --> O[check-orphans.sh]
+    P --> C[check-stale-commits.sh]
+    G & M & O & C --> R[Step 2: Semantic README scan\ninline AI reasoning]
+    R --> CL{Classify findings}
+    CL -->|auto_fix == true| AF[Step 4: Apply auto-fixes\nor show dry-run plan]
+    CL -->|needs approval| NA[Step 5: Present grouped findings\nAskUserQuestion multi-select]
+    CL -->|severity == info| IN[Collect info notes]
+    NA --> AP[Step 6: Apply approved fixes\norphan delete / git add / README display / gitignore edit]
+    AF & AP & IN --> SUM((Step 7: Final summary\nAuto-fixed / Approved / Deferred / Info))
+```
+
 ## Usage
 
 ```
 /hygiene [--dry-run]
 ```
 
-Runs five checks and auto-fixes safe items. Risky changes are presented for approval.
+The sweep always runs all five checks. With `--dry-run`, no files are modified and no approval prompt is shown — the command prints what it would do and exits.
+
+**Auto-fixed without approval:**
+- Missing `node_modules/` in a plugin `.gitignore` when `package.json` is present
+- Missing `__pycache__/` and `*.pyc` in a `.gitignore` when `.py` files are nearby
+- Trailing slash on a `source` path in `.claude-plugin/marketplace.json`
+
+**Presented for approval:**
+- Orphaned `temp_*` directories under `~/.claude/plugins/cache/`
+- Stale `enabledPlugins` entries in `~/.claude/settings.json` with no matching install
+- Uncommitted files last modified more than 24 hours ago (staged on approval, not committed)
+- README structural gaps or stale `Known Issues` / `Principles` sections (displayed for review, not auto-edited)
+
+**Info only (no action required):**
+- Plugins present in `installed_plugins.json` but absent from `settings.json` `enabledPlugins`
+
+## Commands
+
+| Command | Description |
+|---|---|
+| `/hygiene` | Run the full maintenance sweep and apply safe fixes |
+| `/hygiene --dry-run` | Show all findings and planned actions without modifying anything |
 
 ## Checks
 
-| # | Check | Auto-fixable |
-|---|-------|-------------|
-| 1 | `.gitignore` patterns (stale / missing) | Append missing patterns |
-| 2 | Marketplace manifest `source` paths | Normalize trailing slashes |
-| 3 | README `Known Issues` / `Principles` freshness | No (semantic judgment) |
-| 4 | Plugin state orphans (installed_plugins.json, settings.json, cache) | No (destructive) |
-| 5 | Uncommitted changes older than 24h | No (requires user intent) |
+| # | Check | Script | What it inspects | Auto-fixable |
+|---|---|---|---|---|
+| 1 | `.gitignore` missing patterns | `check-gitignore.sh` | All non-auto-generated `.gitignore` files in the repo tree. Flags missing `node_modules/` when `package.json` is co-located; flags missing `__pycache__/` and `*.pyc` when `.py` files exist within 3 directory levels. Skips the root `.gitignore` (already provides global coverage) and pytest-generated files (contain only `*`). | Yes — appends missing lines |
+| 2 | Marketplace manifest consistency | `check-manifests.sh` | Cross-references `.claude-plugin/marketplace.json` against each plugin's `.claude-plugin/plugin.json`: source directory existence, `plugin.json` presence, and version match between the marketplace entry and the manifest. Also checks `~/.claude/plugins/installed_plugins.json` for entries whose `installPath` no longer exists on disk. Flags trailing slashes in `source` paths as auto-fixable normalisation. | Trailing slash only; all other mismatches need approval |
+| 3 | README structural and semantic freshness | inline AI (Step 2) | For each plugin `README.md`: checks that all required sections are present (`Summary`, `Principles`, `Requirements`, `Installation`, `How It Works`, `Usage`, `Planned Features`, `Known Issues`, `Links`); scans `Known Issues` bullets for implementation evidence that the issue is resolved; checks `Principles` for clear contradictions with the current codebase. | No |
+| 4 | Plugin state orphans | `check-orphans.sh` | Compares three state sources: `installed_plugins.json`, `settings.json` `enabledPlugins`, and `~/.claude/plugins/cache/`. Flags `enabledPlugins` keys absent from `installed_plugins.json` (stale toggle) as warnings; flags the inverse (installed but not enabled) as info notes. Flags `temp_*` directories at the top level of the cache dir as orphaned. | No |
+| 5 | Stale uncommitted changes | `check-stale-commits.sh` | Runs `git status --porcelain` and identifies modified or untracked files (excluding git-ignored) whose `mtime` is older than 24 hours. Reports the file path and age in days and hours. On approval, stages the file with `git add` — does not commit. | No |
 
-## `--dry-run`
+## Planned Features
 
-Shows the full report with proposed `[would apply]` labels. No files are modified.
+No unreleased items are currently tracked in the changelog. Two checks were considered and intentionally excluded from v1.0.0:
 
-## Auto-fix vs Needs-Approval
+- **Stale pattern detection for `.gitignore`** — removed because defensive patterns (`.env`, `.DS_Store`, `.vscode/`) are valid even when no matching file currently exists, making any `git ls-files`-based staleness check produce systematic false positives.
+- **Per-plugin `.claude/state/` coverage check** — omitted because the root `.gitignore` already has `**/.claude/state/`, which covers all subdirectories via gitignore inheritance.
 
-**Auto-fixed immediately:**
-- Missing `.gitignore` patterns for well-known transient files (appended, never removed)
+## Known Issues
 
-**Always needs your approval:**
-- Removing stale `.gitignore` patterns
-- Plugin state inconsistencies (installed_plugins.json / settings.json / cache)
-- Staging uncommitted files
-- Any README documentation updates
+- The README semantic scan (Check 3) is inline AI reasoning, not a deterministic script. Results may vary across runs for borderline cases.
+- `check-stale-commits.sh` uses file `mtime`, which is reset by checkouts and merges. A file touched by a rebase may not surface even if its content has been uncommitted for a long time.
+- `check-manifests.sh` silently skips `installed_plugins.json` checks when the file does not exist, which is the expected behaviour in CI environments with no Claude Code installation.
+- The `.gitignore` check scans only 3 directory levels for `.py` files when deciding whether to suggest Python cache patterns. Deeply nested Python files in a plugin would not trigger the suggestion.
+
+## Links
+
+- Repository: [L3DigitalNet/Claude-Code-Plugins](https://github.com/L3DigitalNet/Claude-Code-Plugins)
+- Changelog: [CHANGELOG.md](CHANGELOG.md)
+- Issues: [GitHub Issues](https://github.com/L3DigitalNet/Claude-Code-Plugins/issues)

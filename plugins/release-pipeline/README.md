@@ -1,22 +1,30 @@
 # Release Pipeline
 
-**Version:** 2.0.0 — Interactive release pipeline for any repo. One command, six options.
+Autonomous release pipeline for Claude Code — interactive menu-driven releases with parallel pre-flight checks, semver suggestion, changelog generation, and GitHub release creation.
 
 ## Summary
 
-Release Pipeline streamlines the full release lifecycle into a single `/release` command. It auto-detects your repository state, suggests a semantic version from conventional commits, runs pre-flight checks in parallel (tests, docs, git state), generates a changelog entry, and creates a tagged GitHub release — all with fail-fast behavior and no destructive auto-recovery.
+Release Pipeline presents a context-aware menu at invocation, detects whether you are in a monorepo or single-package repo, suggests the next semver version from commit history, and runs three pre-flight agents in parallel before executing the full release sequence (version bump, changelog, commit, tag, merge, push, GitHub release) behind an explicit approval gate. It supports seven modes including quick merge, full semver release, scoped plugin release, and batch release of all unreleased plugins in one operation. Auto-heal resolves the two most common pre-flight blockers (dirty working tree, non-noreply git email) before pre-flight runs, and tag reconciliation prevents duplicate-tag failures on retry.
 
 ## Principles
 
-**[P1] Fail Fast, No Auto-Recovery** — If any pre-flight check fails, the pipeline stops immediately and reports. It never attempts to repair problems autonomously or continue past a known failure.
+**[P1] Act on Intent** — Invocation is consent to the implied scope. The single approval gate before irreversible operations (tag, push, GitHub release) is the decision point; routine sub-tasks like staging or committing do not prompt separately.
 
-**[P2] Gate at Genuine Irreversibility** — Explicit approval is required before creating tags and publishing GitHub releases — these are public, hard to retract, and exceed what the invocation implies. Version bumps and changelog generation proceed on clear intent; they remain editable before the pipeline reaches an irreversible gate.
+**[P2] Scope Fidelity** — Execute the full release completely without intermediate confirmation gates. Pre-flight failures stop the pipeline immediately with the full error and a rollback suggestion.
 
-**[P3] Conventional Commits as Ground Truth** — Version bump suggestions and changelog entries are derived from commit message prefixes (`feat:`, `fix:`, `BREAKING CHANGE:`). The history is the specification; the pipeline reads it, not the developer's memory.
+**[P3] Succeed Quietly, Fail Transparently** — Pre-flight agents, auto-build, stash, and the session-start sync hook suppress output when nothing changed. On critical failure, the pipeline stops and surfaces raw output with recovery instructions.
 
-**[P4] Parallel Where Possible** — Pre-flight checks (tests, docs, git state) run in parallel agents. Concurrency is exploited where safe; sequential logic is preserved at critical approval gates.
+**[P4] Use the Full Toolkit** — Every decision point uses `AskUserQuestion` with bounded options. Version selection always presents a commit-derived suggestion alongside a custom entry option.
 
-**[P5] Dry Run for Tag-Creating Paths** — All release paths that create tags or GitHub releases (Full Release, Plugin Release) support a full simulation via Dry Run that exercises complete pipeline logic without any mutations. Release Status provides a read-only preview for Quick Merge.
+**[P5] Convergence is the Contract** — Batch release runs all plugins to completion with quarantine-and-continue semantics; individual plugin failures do not abort the batch.
+
+## Requirements
+
+- Claude Code (any recent version)
+- `gh` CLI authenticated (for GitHub releases)
+- `git` repository with at least one prior commit
+- Conventional commits recommended (`feat:`, `fix:`, `BREAKING CHANGE:`) for accurate semver suggestion
+- `rsync` recommended for the session-start sync hook (falls back to `cp`)
 
 ## Installation
 
@@ -25,87 +33,140 @@ Release Pipeline streamlines the full release lifecycle into a single `/release`
 /plugin install release-pipeline@l3digitalnet-plugins
 ```
 
+For local development:
+
+```
+claude --plugin-dir ./plugins/release-pipeline
+```
+
+## How It Works
+
+```mermaid
+flowchart TD
+    User([User invokes /release]) --> P0[Phase 0: Detect context\nmonorepo · git state · version · tag]
+    P0 --> Menu{Interactive menu\nAskUserQuestion}
+    Menu -->|Quick Merge| M1[Stage · commit if dirty\nMerge testing → main · push]
+    Menu -->|Full Release| Vers[Version selection]
+    Menu -->|Plugin Release| Pick[Plugin picker · version selection]
+    Menu -->|Batch Release| Plan[Plan all unreleased plugins]
+    Menu -->|Status / Dry Run / Preview| Info((Read-only output))
+    Vers --> AH[Phase 0.5: Auto-Heal\nauto-stash · fix git email]
+    Pick --> AH
+    Plan --> AH
+    AH --> PF[Phase 1: Parallel pre-flight\nTest Runner · Docs Auditor · Git Pre-flight]
+    PF -->|Any FAIL| Stop((Stop · surface error\nrollback suggestion))
+    PF -->|All PASS/WARN| Prep[Phase 2: Preparation\nVersion bump · changelog preview]
+    Prep --> Gate{Approval gate}
+    Gate -->|Abort| Revert((Revert version bumps))
+    Gate -->|Proceed| Rel[Phase 3: Release\ncommit · tag reconcile · merge · push]
+    Rel --> GH[Phase 3.5: Stash restore\nGitHub release create]
+    GH --> Ver[Phase 4: Verify release]
+    Ver --> Report((Final summary report))
+```
+
 ## Usage
 
 ```
 /release
 ```
 
-Or trigger naturally: "ship it", "merge to main", "cut a release", "release v1.2.0"
+The command auto-detects context before showing the menu. The menu header shows a one-line summary:
 
-The command auto-detects your repository state and presents a context-aware menu. The menu adapts: monorepos show an unreleased plugin count, dirty trees warn about uncommitted changes, and version suggestions are calculated from conventional commits (`feat` → minor, `fix` → patch, `BREAKING CHANGE` → major).
+```
+Branch: testing  |  Last tag: v1.2.0  |  14 commits since last tag  |  uncommitted changes
+```
+
+Natural language triggers also route to the menu: "merge to main", "cut a release", "release the plugin".
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/release` | Open the interactive release menu |
-
-## Hooks
-
-Three scripts are registered across two background hooks, installed automatically and running without invocation:
-
-| Hook | Event | Behavior |
-|------|-------|----------|
-| `sync-local-plugins.sh` | SessionStart | Syncs local plugin source from the development repo to the installed Claude Code cache. Discovery order: `$CLAUDE_PROJECT_DIR` first, then `$HOME/projects/Claude-Code-Plugins` as a fallback. Only syncs plugins that are already installed (cache dir exists). Produces no output when no files changed — output only appears when files are actually transferred. |
-| `force-push-guard.sh` | PreToolUse (Bash) | Blocks any `git push --force` or `git push -f` command. Returns a block decision — the command does not execute. |
-| `auto-build-plugins.sh` | PreToolUse (Bash) | On `git commit`, checks for staged TypeScript source files in `plugins/<name>/src/`. If found and the plugin has a `build` npm script, runs `npm run build`, stages the resulting `dist/` directory, and then lets the commit proceed. Blocks the commit if the build fails. Outputs a notice before building so the side-effect is visible. |
-
-**Note:** `force-push-guard.sh` and `auto-build-plugins.sh` are registered sequentially under the same PreToolUse/Bash matcher. If the force-push guard blocks a command (exits 2), `auto-build-plugins.sh` does not run for that command.
-
-## Pre-flight Agents
-
-Full Release and Plugin Release spawn three agents in parallel during Phase 1:
-
-| Agent | Role | Output format |
-|-------|------|---------------|
-| `test-runner` | Detects and runs the project's test suite | `TEST RESULTS` block — PASS / FAIL with count and details |
-| `docs-auditor` | Checks docs for stale versions, broken links, and tone | `DOCS AUDIT` block — PASS / WARN / FAIL |
-| `git-preflight` | Validates branch, noreply email, and tag availability | `GIT PRE-FLIGHT` block — PASS / FAIL per check |
+| `/release` | Open the interactive release menu with context-aware options |
 
 ## Release Options
 
-| Option | Description |
-|--------|-------------|
-| Quick Merge | Commit and merge testing → main (no version bump) |
-| Full Release | Semver release with pre-flight, changelog, tag, GitHub release |
-| Plugin Release | Release a single plugin from a monorepo (scoped tag + changelog) |
-| Release Status | Show unreleased commits, last tag, changelog drift |
-| Dry Run | Simulate a full release without any changes (`bump-version.sh --dry-run` + `generate-changelog.sh --preview`) |
-| Changelog Preview | Generate and display a changelog entry |
+| Option | When available | Description |
+|--------|---------------|-------------|
+| Quick Merge | Always | Stage uncommitted changes (if any), merge `testing` into `main`, and push. No version bump or tag. |
+| Full Release | Always | Semver release with parallel pre-flight, version bump, changelog, annotated tag, and GitHub release. |
+| Plugin Release | Monorepos only | Scoped release for a single plugin. Uses `<plugin-name>/vX.Y.Z` tags, scoped changelog, and stages only that plugin's files. |
+| Batch Release | Monorepos only | Release all plugins with unreleased changes sequentially. Failures quarantined; batch continues. |
+| Release Status | Always | Read-only view of unreleased commits, last tag, and changelog drift. No changes made. |
+| Dry Run | Always | Simulate a full release (version bump preview, changelog preview) without committing, tagging, or pushing. |
+| Changelog Preview | Always | Generate and display the changelog entry without writing it. |
 
-## Full Release Workflow
+## Pre-flight Agents
 
-| Phase | Action | Parallel? |
-|-------|--------|-----------|
-| 0. Detection | Auto-detect repo state, suggest version | Yes |
-| 1. Pre-flight | Run tests, audit docs, check git state | Yes (3 agents) |
-| 2. Preparation | Bump versions, preview changelog and diff, approval gate, write changelog | Sequential |
-| 3. Release | Commit, merge, tag, push, GitHub release | Sequential |
-| 4. Verification | Confirm tag, release page, notes | Sequential |
+Three agents run in parallel before any release operation (Phase 1). All three must report PASS or WARN to proceed.
 
-If anything fails, the pipeline stops immediately and suggests rollback steps. No destructive auto-recovery.
+| Agent | Model | Role |
+|-------|-------|------|
+| `git-preflight` | haiku | Verifies clean working tree, dev branch, noreply git email, remote URL, and local/remote tag availability via `reconcile-tags.sh`. |
+| `test-runner` | sonnet | Auto-detects and runs the full test suite; reports pass/fail/skip counts and coverage percentage when available. |
+| `docs-auditor` | sonnet | Checks version consistency across `.md` files, broken relative links, and corporate tone flags. Warns on missing README or CHANGELOG. |
+
+Each agent supports per-check waivers via `.release-waivers.json` in the repo root. Waivable checks: `dirty_working_tree`, `protected_branch`, `noreply_email`, `tag_exists`, `missing_tests`, `stale_docs`. Broken links are never waivable.
+
+## Hooks
+
+| Hook | Event | What it does |
+|------|-------|-------------|
+| `sync-local-plugins.sh` | SessionStart | Rsyncs the local plugin development repo to the Claude Code plugin cache so in-session edits take effect without reinstalling. Discovery order: `$CLAUDE_PROJECT_DIR` first, then `$HOME/projects/Claude-Code-Plugins`. Silent when no files changed. |
+| `force-push-guard.sh` | PreToolUse / Bash | Blocks any `git push --force` or `git push -f` command before it executes. Returns a JSON block decision so the reason surfaces in Claude's context. |
+| `auto-build-plugins.sh` | PreToolUse / Bash | On `git commit`, checks whether any staged TypeScript files (`plugins/*/src/**/*.ts`) belong to a plugin with a `build` npm script. If so, runs `npm run build`, stages `dist/`, then allows the commit. Blocks with exit 2 if the build fails. |
+
+`force-push-guard.sh` and `auto-build-plugins.sh` are registered sequentially under the same `PreToolUse/Bash` matcher. A block from the force-push guard (exit 2) prevents `auto-build-plugins.sh` from running for that command.
 
 ## Supported Test Runners
 
-Auto-detected from project files:
+`detect-test-runner.sh` probes for test frameworks in this order:
 
-- **Python**: pytest (pyproject.toml, pytest.ini, setup.cfg)
-- **Node.js**: npm test (package.json)
-- **Rust**: cargo test (Cargo.toml)
-- **Go**: go test (go.mod)
-- **Make**: make test (Makefile)
-- **Fallback**: reads CLAUDE.md for test commands
+1. **Python / pytest** — `pyproject.toml` with `[tool.pytest]`, `pytest.ini`, or `setup.cfg` with `[tool:pytest]`
+2. **Node.js** — `package.json` with a `scripts.test` entry (`npm test`)
+3. **Rust** — `Cargo.toml` present (`cargo test`)
+4. **Make** — `Makefile` with a `test:` target (`make test`)
+5. **Go** — `go.mod` present (`go test ./...`)
+6. **CLAUDE.md fallback** — extracts the first documented test command from the project's CLAUDE.md
 
-## Planned Features
+If no runner is detected, the `missing_tests` waiver is checked before reporting FAIL.
 
-- **GitLab support** — detect GitLab remotes and use the `glab` CLI for releases and MR management
-- **PyPI / npm publish step** — optional post-release package publish with `twine` or `npm publish`
-- **Rollback automation** — `/release rollback` option that reverses a tag, reverts the merge, and re-opens the PR
-- **Multi-package monorepo** — release multiple packages in one pass with per-package changelogs and tags
+## Auto-Heal
+
+Before pre-flight runs in Full Release, Plugin Release, and Batch Release modes, two common blockers are resolved automatically:
+
+- **Dirty working tree** — auto-stashed before pre-flight via `auto-stash.sh stash` and restored after all git operations complete (before the GitHub API call) via `auto-stash.sh pop`.
+- **Non-noreply git email** — checked via `fix-git-email.sh`, which parses the remote URL (HTTPS or SSH) to derive the correct `@users.noreply.github.com` address and applies it with `git config --local --auto-fix`. If auto-fix fails, the pipeline stops with a manual fix instruction.
+
+Both recoveries are noted inline. If either cannot be resolved, the pipeline stops immediately.
+
+## Tag Reconciliation
+
+Before creating a local tag in Phase 3, `reconcile-tags.sh` compares local and remote tag state:
+
+| State | Meaning | Action |
+|-------|---------|--------|
+| `MISSING` | Tag does not exist anywhere | Proceed to `git tag -a` |
+| `LOCAL_ONLY` | Tag exists locally only | Skip `git tag -a`, proceed to push |
+| `REMOTE_ONLY` | Tag exists on remote only | Auto-fetch, then treat as `BOTH` |
+| `BOTH` | Tag exists on local and remote | Check `tag_exists` waiver or stop |
+
+This prevents duplicate-tag push failures on retry after a partial release.
+
+## API Retry
+
+GitHub CLI calls in Phase 3.5 (release create) and Phase 4 (verify) are wrapped with `api-retry.sh`: up to 3 attempts with exponential backoff and jitter. HTTP 4xx permanent errors (400, 401, 403, 404, 409, 410) abort immediately without retry. HTTP 429 (rate limit) is retried normally.
 
 ## Known Issues
 
-- **GitHub release requires `gh` CLI** — the Full Release and Plugin Release options create GitHub releases via `gh`; if `gh` is not authenticated, these steps will fail with a permission error
-- **Changelog generation assumes conventional commits** — version bump suggestions and changelog entries rely on `feat:`, `fix:`, and `BREAKING CHANGE:` prefixes; non-conventional commit histories will produce a flat "Other changes" section
-- **Dry Run does not simulate GitHub API calls** — the Dry Run option skips all git and file mutations but cannot simulate the GitHub release API; actual release creation may still fail after a clean dry run
+- `sync-local-plugins.sh` is hardcoded to the `l3digitalnet-plugins` marketplace. It will not sync plugins from a differently named marketplace without modifying the script.
+- Batch Release runs plugins sequentially, not in parallel. Large monorepos with many unreleased plugins will take proportionally longer.
+- Quick Merge always merges `testing` into `main`. Repos using different branch naming must adjust manually.
+- Changelog generation uses conventional commit prefixes. Repos without conventional commits produce a generic "other" section with no semver signal.
+- Dry Run simulates version bumps and changelog generation but cannot simulate the GitHub release API — actual release creation may still fail after a clean dry run.
+
+## Links
+
+- Repository: [L3DigitalNet/Claude-Code-Plugins](https://github.com/L3DigitalNet/Claude-Code-Plugins)
+- Changelog: [CHANGELOG.md](CHANGELOG.md)
+- Issues: [GitHub Issues](https://github.com/L3DigitalNet/Claude-Code-Plugins/issues)
