@@ -37486,12 +37486,15 @@ async function writeToolSchemasCache(pluginPath, schemas) {
   await fs6.writeFile(cachePath, JSON.stringify(schemas, null, 2), "utf-8");
 }
 async function fetchToolSchemasFromMcpServer(mcpConfig, pluginPath) {
+  const expandVar = (s) => s.replace(/\$\{CLAUDE_PLUGIN_ROOT\}/g, pluginPath);
   const transport2 = new StdioClientTransport({
-    command: mcpConfig.command,
-    args: mcpConfig.args,
+    command: expandVar(mcpConfig.command),
+    args: mcpConfig.args.map(expandVar),
     env: { ...process.env, ...mcpConfig.env ?? {} },
-    cwd: pluginPath
+    cwd: pluginPath,
+    stderr: "pipe"
   });
+  if (transport2.stderr) transport2.stderr.resume();
   const client = new Client({ name: "pth-discovery", version: "1.0.0" });
   try {
     await client.connect(transport2);
@@ -37536,6 +37539,14 @@ function createServer() {
   return server2;
   async function dispatch(toolName, args) {
     const respond = (text) => ({ content: [{ type: "text", text }] });
+    const toolDef = registry2.getAllTools().find((t) => t.name === toolName);
+    if (toolDef) {
+      const validation = toolDef.inputSchema.safeParse(args);
+      if (!validation.success) {
+        const msg = validation.error.errors.map((e) => `${e.path.join(".") || "input"}: ${e.message}`).join("; ");
+        return { content: [{ type: "text", text: `Validation error: ${msg}` }], isError: true };
+      }
+    }
     try {
       if (!sessionManager) {
         sessionManager = await Promise.resolve().then(() => (init_manager(), manager_exports));

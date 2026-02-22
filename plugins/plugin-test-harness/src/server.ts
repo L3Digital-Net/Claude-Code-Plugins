@@ -64,8 +64,21 @@ export function createServer(): Server {
   async function dispatch(
     toolName: string,
     args: Record<string, unknown>
-  ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  ): Promise<{ content: Array<{ type: 'text'; text: string }>; isError?: boolean }> {
     const respond = (text: string) => ({ content: [{ type: 'text' as const, text }] });
+    // Zod schema validation before any tool handler runs.
+    // Returns isError:true so MCP clients can distinguish validation failures from success
+    // without parsing the text content — catches missing required fields cleanly.
+    const toolDef = registry.getAllTools().find(t => t.name === toolName);
+    if (toolDef) {
+      const validation = toolDef.inputSchema.safeParse(args);
+      if (!validation.success) {
+        const msg = validation.error.errors
+          .map(e => `${e.path.join('.') || 'input'}: ${e.message}`)
+          .join('; ');
+        return { content: [{ type: 'text' as const, text: `Validation error: ${msg}` }], isError: true };
+      }
+    }
 
     try {
       // Lazy import session manager
