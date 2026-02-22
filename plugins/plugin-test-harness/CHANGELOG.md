@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.1] - 2026-02-21
+
+### Changed
+- Release plugin-test-harness v0.5.1
+
+### Fixed
+- preflight verdict reflects active session state
+
+
 ## [0.5.1] - 2026-02-22
 
 ### Fixed
