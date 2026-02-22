@@ -15,13 +15,15 @@ keywords: [reference, schema, manifest, cli, debugging]
 | Skills    | `skills/`       | Domain knowledge       | [skills.md](./skills.md)         |
 | Agents    | `agents/`       | Specialized assistants | [sub-agents.md](./sub-agents.md) |
 | Hooks     | `hooks/`        | Lifecycle events       | [hooks.md](./hooks.md)           |
-| MCP       | `manifest.json` | External tools         | [mcp.md](./mcp.md)               |
-| LSP       | `manifest.json` | Code intelligence      | See below                        |
-| Commands  | `commands/`     | User commands          | Legacy (use skills)              |
+| MCP       | `.mcp.json`     | External tools         | [mcp.md](./mcp.md)               |
+| LSP       | `.lsp.json`     | Code intelligence      | See below                        |
+| Commands  | `commands/`     | User commands          | Slash commands (see plugins.md)  |
 
 ## manifest.json Schema
 
-**Location:** `.claude-plugin/manifest.json`
+**Location:** `.claude-plugin/plugin.json`
+
+The manifest uses Zod strict mode — unknown fields are rejected. Only the fields listed here are valid.
 
 ### Complete Schema
 
@@ -32,83 +34,72 @@ keywords: [reference, schema, manifest, cli, debugging]
   "version": string,           // Semver (e.g., "1.0.0")
   "description": string,       // One-line summary
 
-  // Optional metadata
-  "author": string | {         // Author info
+  // Optional
+  "author": {                  // Author info
     "name": string,
-    "email": string,
-    "url": string
+    "url": string              // or "email": string
   },
-  "homepage": string,          // Plugin homepage URL
-  "repository": string,        // Repository URL
-  "license": string,           // License identifier (e.g., "MIT")
-  "keywords": string[],        // Search tags
-
-  // Component configuration
-  "mcpServers": {              // MCP server configs
-    "[server-id]": { /*...*/ }
-  },
-  "lspServers": {              // LSP server configs
-    "[language]": { /*...*/ }
-  },
-  "settings": {                // Plugin settings schema
-    /*...*/
-  }
+  "homepage": string           // Plugin homepage URL
 }
 ```
 
-- **author**: String or object. Plugin creator information.
-- **homepage**: String. URL to plugin documentation or website.
-- **repository**: String. Git repository URL.
-- **license**: String. SPDX license identifier.
-- **keywords**: Array of strings. Tags for discovery.
-- **mcpServers**: Object. MCP server configurations (see
-  [MCP configuration](#mcp-configuration)).
-- **lspServers**: Object. LSP server configurations (see
-  [LSP configuration](#lsp-servers)).
-- **settings**: Object. Plugin-specific settings schema.
+MCP servers are configured in `.mcp.json` at plugin root (not in `plugin.json`).
+LSP servers are configured in `.lsp.json` at plugin root (not in `plugin.json`).
+
+- **author**: Object with `name` and `url` (or `email`). Plugin creator information.
+- **homepage**: String. URL to plugin documentation or repository.
 
 ### Complete example
 
 ```json
 {
-  "name": "commit-commands",
+  "name": "my-plugin",
   "version": "1.2.0",
-  "description": "Git commit workflow commands",
+  "description": "One-line description of what this plugin does.",
   "author": {
-    "name": "Anthropic",
-    "email": "support@anthropic.com"
+    "name": "Your Name",
+    "url": "https://github.com/your-org"
   },
-  "homepage": "https://code.claude.com/docs/en/plugins",
-  "repository": "https://github.com/anthropics/claude-code-plugins",
-  "license": "MIT",
-  "keywords": ["git", "commit", "workflow"],
-  "settings": {
-    "autoStage": {
-      "type": "boolean",
-      "default": true,
-      "description": "Automatically stage changes before committing"
-    }
-  }
+  "homepage": "https://github.com/your-org/your-repo/tree/main/plugins/my-plugin"
 }
 ```
 
 ## MCP configuration
 
-Configure MCP servers in your plugin's `manifest.json`:
+Configure MCP servers in `.mcp.json` at plugin root (not inside `.claude-plugin/`):
 
 ```json
 {
-  "mcpServers": {
-    "github": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
-      }
-    }
+  "server-name": {
+    "command": "node",
+    "args": ["dist/server.js"]
   }
 }
 ```
+
+For npx-based servers:
+
+```json
+{
+  "server-name": {
+    "command": "npx",
+    "args": ["-y", "@scope/package"]
+  }
+}
+```
+
+For HTTP servers:
+
+```json
+{
+  "server-name": {
+    "type": "http",
+    "url": "https://api.example.com/mcp"
+  }
+}
+```
+
+Note: Plugin install does **not** run `npm install`. Dependencies must be pre-built or use `npx`.
 
 See [MCP](./mcp.md) for complete documentation on server types, authentication, and
 advanced configuration.
@@ -238,18 +229,25 @@ A complete plugin with all component types:
 ```
 my-plugin/
 ├── .claude-plugin/
-│   ├── manifest.json          # Required: plugin metadata
-│   ├── skills/                # Optional: skill definitions
-│   │   ├── skill-one.md
-│   │   └── skill-two.md
-│   ├── agents/                # Optional: custom agents
-│   │   ├── reviewer.md
-│   │   └── analyzer.md
-│   └── hooks/                 # Optional: lifecycle hooks
-│       ├── session-start.md
-│       └── pre-tool-use.md
-└── README.md                  # Recommended: usage docs
+│   └── plugin.json            # Required: plugin metadata (only this file goes here)
+├── commands/                  # Optional: slash commands
+│   └── my-command.md
+├── skills/                    # Optional: AI skills (one folder per skill)
+│   └── my-skill/
+│       └── SKILL.md
+├── agents/                    # Optional: custom subagents
+│   └── my-agent.md
+├── hooks/                     # Optional: lifecycle hooks
+│   ├── hooks.json             # Hook configuration (JSON record keyed by event)
+│   └── (scripts are in scripts/)
+├── scripts/                   # Optional: hook scripts and utilities
+│   └── my-hook.sh
+├── .mcp.json                  # Optional: MCP server config (at plugin root)
+├── .lsp.json                  # Optional: LSP server config (at plugin root)
+└── README.md                  # Documentation
 ```
+
+**Important:** Only `plugin.json` goes inside `.claude-plugin/`. All other directories are at plugin root.
 
 ## Configuration scopes
 
