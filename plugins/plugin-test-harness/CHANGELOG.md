@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.1] - 2026-02-22
+
+### Fixed
+- `pth_preflight`: verdict now correctly reflects an active session — returns `⚠ Session already active` instead of `✓ OK — ready to start a session` when a live session lock is detected. Discovered via PTH self-test run.
+
 ## [0.5.0] - 2026-02-22
 
 ### Added

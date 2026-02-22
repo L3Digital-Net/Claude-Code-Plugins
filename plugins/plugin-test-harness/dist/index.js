@@ -22928,11 +22928,13 @@ async function preflight(args) {
   } catch {
     checkLines.push(`\u2717 Not a valid plugin: no .mcp.json or .claude-plugin/ found`);
   }
+  let liveSessionActive = false;
   const lockPath = path13.join(args.pluginPath, ".pth", "active-session.lock");
   try {
     const lock = JSON.parse(await fs8.readFile(lockPath, "utf-8"));
     try {
       process.kill(lock.pid, 0);
+      liveSessionActive = true;
       checkLines.push(`\u26A0 Active session detected (PID ${lock.pid}, branch ${lock.branch})`);
     } catch {
       checkLines.push(`\u26A0 Stale session lock found (PID ${lock.pid} is not running) \u2014 will be cleaned up at start`);
@@ -22940,7 +22942,7 @@ async function preflight(args) {
   } catch {
     checkLines.push(`\u2713 No active session lock`);
   }
-  const verdict = pluginValid ? "\u2713 OK \u2014 ready to start a session." : "\u2717 Cannot start session \u2014 fix the issues above first.";
+  const verdict = !pluginValid ? "\u2717 Cannot start session \u2014 fix the issues above first." : liveSessionActive ? "\u26A0 Session already active \u2014 call pth_end_session first, or use pth_resume_session." : "\u2713 OK \u2014 ready to start a session.";
   return [verdict, "", "PTH Preflight Check", "", ...checkLines].join("\n");
 }
 async function startSession(args) {
