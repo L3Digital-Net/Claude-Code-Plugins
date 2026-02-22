@@ -23,6 +23,8 @@ Do documented behaviors, tool names, parameter descriptions, and examples match 
 
 Are all user-facing tools, commands, hooks, and configuration options documented? Compare the directory listing against the documentation's table of contents, architecture description, and usage sections. Any implementation component with no documentation mention is a finding. Undocumented internal utilities are findings only if they represent architectural decisions a future developer would need to understand.
 
+Also verify structural completeness of the plugin's `README.md` against the canonical template (`docs/plugin-readme-template.md`). Required headings (any level): `Summary`, `Principles`, `Requirements`, `Installation`, `How It Works`, `Usage`, `Planned Features`, `Known Issues`, `Links`. A missing required section is a completeness finding regardless of whether the content is covered elsewhere in the file.
+
 ## Drift Category 3: Orphaned References
 
 Does the documentation describe features, flags, or behaviors that no longer exist? For each named component in the documentation, verify it exists in the directory listing. This includes partially removed features where some references were cleaned up but others weren't.

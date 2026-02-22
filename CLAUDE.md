@@ -80,8 +80,9 @@ CI runs the full matrix automatically on push to `testing` or `main`.
 1. Create `plugins/my-plugin/.claude-plugin/plugin.json` (name, version, description, author)
 2. Add entry to `.claude-plugin/marketplace.json`
 3. Add `CHANGELOG.md` (Keep a Changelog format: Added, Changed, Fixed, Removed, Security)
-4. Run `./scripts/validate-marketplace.sh`
-5. Commit to `testing`, push, merge to `main` when ready
+4. Create `README.md` from `docs/plugin-readme-template.md` — fill in all required sections; delete optional sections that don't apply
+5. Run `./scripts/validate-marketplace.sh`
+6. Commit to `testing`, push, merge to `main` when ready
 
 **Updating a plugin — both files must change together:**
 1. Bump version in `plugins/<name>/.claude-plugin/plugin.json`
@@ -179,3 +180,4 @@ Ground truth schema: `~/.claude/plugins/marketplaces/claude-plugins-official/.cl
 - `docs/sub-agents.md` — Custom agent definitions, tool restrictions
 - `docs/mcp.md` — MCP server integration
 - `docs/plugin-marketplaces.md` — Creating and hosting marketplaces
+- `docs/plugin-readme-template.md` — Canonical README template for all plugin directories

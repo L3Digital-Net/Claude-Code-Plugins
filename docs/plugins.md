@@ -189,11 +189,16 @@ plugin-name/
 ├── hooks/                     # Optional hooks
 │   └── hooks.json
 ├── .lsp.json                  # Optional LSP config
-└── README.md                  # Documentation
+└── README.md                  # Documentation — use docs/plugin-readme-template.md
 ```
 
 **Important:** Only `manifest.json` goes inside `.claude-plugin/`. All other directories
 are at plugin root.
+
+Every plugin `README.md` should follow `docs/plugin-readme-template.md`. Required sections:
+Summary, Principles, Requirements, Installation, How It Works (Mermaid), Usage, Planned
+Features, Known Issues, Links. Delete optional sections (Features, Configuration, Design
+Decisions, etc.) that don't apply to the specific plugin.
 
 ## Development Workflow
 

@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.0] - 2026-02-22
+
+### Added
+- **Persistent storage at `~/.pth/PLUGIN_NAME/`**: tests, results history, session reports, iteration history, fix history, and plugin snapshots now survive across sessions
+- **Gap analysis** at `pth_start_session`: compares saved plugin snapshot vs current source files to surface new/modified/removed components without requiring a live server
+- `pth_generate_tests` now accepts optional `tools[]` parameter for gap-targeted test generation (only generate tests for specific new/modified tools from gap analysis)
+- `pth_preflight` reports whether a persistent store exists for the plugin
+
+### Changed
+- `resumeSession` now loads tests from the persistent store (`~/.pth/PLUGIN_NAME/tests/`) instead of the worktree — persistent store is the authoritative test source
+- `endSession` persists all session artifacts to `~/.pth/PLUGIN_NAME/` before worktree removal, and cleans the worktree's `.pth/` directory to prevent stale data loading
+- `pth_end_session` response now includes the persistent store path and session report location
+
 ## [0.5.1] - 2026-02-21
 
 ### Changed

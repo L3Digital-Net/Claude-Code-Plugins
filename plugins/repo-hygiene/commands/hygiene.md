@@ -48,9 +48,11 @@ Collect all `findings` arrays. Tag each finding with its `check` field value.
 For each plugin directory under `plugins/` that has a `README.md`:
 
 1. Read the README
-2. Extract the `Known Issues` section (heading may be `## Known Issues`, `### Known Issues`, or similar). For each bullet item in that section, scan the plugin's actual implementation files (scripts, hooks, commands) for evidence the issue has been fixed. If the codebase evidence suggests the issue is no longer present, add a finding:
+2. **Structural conformance** — check that all required sections from `docs/plugin-readme-template.md` are present. Required headings (any level): `Summary`, `Principles`, `Requirements`, `Installation`, `How It Works`, `Usage`, `Planned Features`, `Known Issues`, `Links`. For each missing required section, add a finding:
+   - `check: "readme-freshness"`, `severity: "warn"`, `path: "plugins/<name>/README.md"`, `detail: "Missing required section '<section name>' (see docs/plugin-readme-template.md)"`, `auto_fix: false`, `fix_cmd: null`
+3. Extract the `Known Issues` section (heading may be `## Known Issues`, `### Known Issues`, or similar). For each bullet item in that section, scan the plugin's actual implementation files (scripts, hooks, commands) for evidence the issue has been fixed. If the codebase evidence suggests the issue is no longer present, add a finding:
    - `check: "readme-freshness"`, `severity: "warn"`, `path: "plugins/<name>/README.md"`, `detail: "Known Issue '<first 80 chars>' may be stale — implementation evidence suggests it is resolved"`, `auto_fix: false`, `fix_cmd: null`
-3. Extract the `Principles` or `Design Principles` section. For each principle listed, check if it is obviously contradicted by the current codebase (e.g., "no external network calls" but the plugin makes HTTP requests; "single-file command" but there are agents/ and scripts/). Only flag clear contradictions, not minor drift. Add findings with the same format as above.
+4. Extract the `Principles` or `Design Principles` section. For each principle listed, check if it is obviously contradicted by the current codebase (e.g., "no external network calls" but the plugin makes HTTP requests; "single-file command" but there are agents/ and scripts/). Only flag clear contradictions, not minor drift. Add findings with the same format as above.
 
 Add all readme-freshness findings to the unified findings list.
 
