@@ -19,85 +19,62 @@ if [ ! -d "$PLUGIN_DIR" ]; then
   exit 1
 fi
 
-# Resolve to absolute path so cwd fields are unambiguous
 PLUGIN_DIR_ABS="$(cd "$PLUGIN_DIR" && pwd)"
 
-# Collect commands as bash arrays, then serialize with Python to avoid JSON quoting issues
-TYPES=()
-COMMANDS=()
-CWDS=()
+# Delegate all discovery to Python — avoids JSON quoting issues with bash arrays.
+# Each discovery block appends to the 'commands' list in Python.
+python3 - "$PLUGIN_DIR_ABS" << 'PYEOF'
+import json, os, sys
 
-# --- package.json (npm/node plugin) ---
-if [ -f "$PLUGIN_DIR_ABS/package.json" ]; then
-  has_build=$(python3 -c "
-import json, sys
-try:
-    d = json.load(open('$PLUGIN_DIR_ABS/package.json'))
-    s = d.get('scripts', {})
-    print('yes' if 'build' in s else 'no')
-except Exception:
-    print('no')
-")
-  has_test=$(python3 -c "
-import json, sys
-try:
-    d = json.load(open('$PLUGIN_DIR_ABS/package.json'))
-    s = d.get('scripts', {})
-    print('yes' if 'test' in s else 'no')
-except Exception:
-    print('no')
-")
-  if [ "$has_build" = "yes" ]; then
-    TYPES+=("build"); COMMANDS+=("npm run build"); CWDS+=("$PLUGIN_DIR_ABS")
-  fi
-  if [ "$has_test" = "yes" ]; then
-    TYPES+=("test"); COMMANDS+=("npm test"); CWDS+=("$PLUGIN_DIR_ABS")
-  fi
-fi
+plugin_dir = sys.argv[1]
+commands = []
+
+# --- package.json (npm/node plugins) ---
+pkg = os.path.join(plugin_dir, 'package.json')
+if os.path.exists(pkg):
+    try:
+        scripts = json.load(open(pkg)).get('scripts', {})
+        if 'build' in scripts:
+            commands.append({'type': 'build', 'command': 'npm run build', 'cwd': plugin_dir})
+        if 'test' in scripts:
+            commands.append({'type': 'test', 'command': 'npm test', 'cwd': plugin_dir})
+    except (json.JSONDecodeError, OSError):
+        pass
 
 # --- Makefile ---
-if [ -f "$PLUGIN_DIR_ABS/Makefile" ]; then
-  if grep -q "^build:" "$PLUGIN_DIR_ABS/Makefile" 2>/dev/null; then
-    TYPES+=("build"); COMMANDS+=("make build"); CWDS+=("$PLUGIN_DIR_ABS")
-  fi
-  if grep -q "^test:" "$PLUGIN_DIR_ABS/Makefile" 2>/dev/null; then
-    TYPES+=("test"); COMMANDS+=("make test"); CWDS+=("$PLUGIN_DIR_ABS")
-  fi
-fi
+makefile = os.path.join(plugin_dir, 'Makefile')
+if os.path.exists(makefile):
+    try:
+        content = open(makefile).read()
+        if '\nbuild:' in content or content.startswith('build:'):
+            commands.append({'type': 'build', 'command': 'make build', 'cwd': plugin_dir})
+        if '\ntest:' in content or content.startswith('test:'):
+            commands.append({'type': 'test', 'command': 'make test', 'cwd': plugin_dir})
+    except OSError:
+        pass
 
-# --- pytest (pyproject.toml or pytest.ini or setup.cfg) ---
-has_pytest=0
-if [ -f "$PLUGIN_DIR_ABS/pytest.ini" ]; then
-  has_pytest=1
-fi
-if [ -f "$PLUGIN_DIR_ABS/pyproject.toml" ] && grep -q '\[tool\.pytest' "$PLUGIN_DIR_ABS/pyproject.toml" 2>/dev/null; then
-  has_pytest=1
-fi
-if [ -f "$PLUGIN_DIR_ABS/setup.cfg" ] && grep -q '\[tool:pytest\]' "$PLUGIN_DIR_ABS/setup.cfg" 2>/dev/null; then
-  has_pytest=1
-fi
-if [ "$has_pytest" = "1" ]; then
-  TYPES+=("test"); COMMANDS+=("pytest"); CWDS+=("$PLUGIN_DIR_ABS")
-fi
+# --- pytest (pytest.ini / pyproject.toml / setup.cfg) ---
+has_pytest = (
+    os.path.exists(os.path.join(plugin_dir, 'pytest.ini'))
+    or (
+        os.path.exists(os.path.join(plugin_dir, 'pyproject.toml'))
+        and '[tool.pytest' in open(os.path.join(plugin_dir, 'pyproject.toml')).read()
+    )
+    or (
+        os.path.exists(os.path.join(plugin_dir, 'setup.cfg'))
+        and '[tool:pytest]' in open(os.path.join(plugin_dir, 'setup.cfg')).read()
+    )
+)
+if has_pytest:
+    commands.append({'type': 'test', 'command': 'pytest', 'cwd': plugin_dir})
 
-# --- shell test scripts (scripts/test*.sh) ---
-if [ -d "$PLUGIN_DIR_ABS/scripts" ]; then
-  for f in "$PLUGIN_DIR_ABS/scripts"/test*.sh; do
-    [ -f "$f" ] || continue
-    TYPES+=("test"); COMMANDS+=("bash $f"); CWDS+=("$PLUGIN_DIR_ABS")
-  done
-fi
+# --- shell test scripts in scripts/ ---
+scripts_dir = os.path.join(plugin_dir, 'scripts')
+if os.path.isdir(scripts_dir):
+    for fname in sorted(os.listdir(scripts_dir)):
+        if fname.startswith('test') and fname.endswith('.sh'):
+            fpath = os.path.join(scripts_dir, fname)
+            commands.append({'type': 'test', 'command': f'bash {fpath}', 'cwd': plugin_dir})
 
-# Serialize to JSON with Python — avoids manual quoting of paths/commands
-python3 - <<PYEOF
-import json
-types = ${TYPES[@]+"$(IFS=$'\n'; printf '%s\n' "${TYPES[@]}" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read().splitlines()))")"}
-commands = ${COMMANDS[@]+"$(IFS=$'\n'; printf '%s\n' "${COMMANDS[@]}" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read().splitlines()))")"}
-cwds = ${CWDS[@]+"$(IFS=$'\n'; printf '%s\n' "${CWDS[@]}" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read().splitlines()))")"}
-
-result = [
-    {"type": t, "command": c, "cwd": d}
-    for t, c, d in zip(types, commands, cwds)
-]
-print(json.dumps(result, indent=2))
+print(json.dumps(commands, indent=2))
 PYEOF
