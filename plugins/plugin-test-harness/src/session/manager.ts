@@ -158,8 +158,7 @@ export async function startSession(args: { pluginPath: string; sessionNote?: str
       ? [
           `MCP server: ${mcpConfig.command} ${mcpConfig.args.join(' ')}`,
           ``,
-          `Next: verify the plugin is loaded in your session, then call pth_generate_tests`,
-          `      with toolSchemas from its tools/list response.`,
+          `Next: call pth_generate_tests — tool schemas will be auto-discovered from the MCP server.`,
         ].join('\n')
       : `Next: call pth_generate_tests to analyze hook scripts and manifest.`;
 

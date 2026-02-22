@@ -17,8 +17,9 @@ import { revertCommit, getDiff } from './session/git.js';
 import { run } from './shared/exec.js';
 import { reloadPlugin } from './plugin/reloader.js';
 import { writeSessionState } from './session/state-persister.js';
-import { writeToolSchemasCache } from './shared/source-analyzer.js';
+import { writeToolSchemasCache, fetchToolSchemasFromMcpServer } from './shared/source-analyzer.js';
 import type { ToolSchema } from './shared/source-analyzer.js';
+import { readMcpConfig } from './plugin/detector.js';
 import { PTHError } from './shared/errors.js';
 import * as mgr from './session/manager.js';
 
@@ -163,9 +164,20 @@ export function createServer(): Server {
 
       // ── Tests ──────────────────────────────────────────────────────
       case 'pth_generate_tests': {
-        const { toolSchemas, includeEdgeCases } = args as { toolSchemas?: ToolSchema[]; includeEdgeCases?: boolean };
+        const { toolSchemas: passedSchemas, includeEdgeCases } = args as { toolSchemas?: ToolSchema[]; includeEdgeCases?: boolean };
         let tests;
-        if (session.pluginMode === 'mcp' && toolSchemas) {
+        if (session.pluginMode === 'mcp') {
+          // Auto-discover tool schemas when not explicitly passed: spawn the target MCP server,
+          // call tools/list, and use the full schema list. This ensures all tools are covered,
+          // not just the subset Claude happens to have loaded in its deferred tool registry.
+          let toolSchemas = passedSchemas;
+          if (!toolSchemas) {
+            const mcpConfig = await readMcpConfig(session.pluginPath);
+            if (!mcpConfig) {
+              return respond('No .mcp.json found — cannot auto-discover tool schemas. Pass toolSchemas explicitly.');
+            }
+            toolSchemas = await fetchToolSchemasFromMcpServer(mcpConfig, session.pluginPath);
+          }
           await writeToolSchemasCache(session.worktreePath, toolSchemas);
           // Pass session.pluginPath (not worktreePath) so field-name heuristics in
           // buildValidInput can populate *path* fields with a real, reachable directory.
@@ -186,7 +198,7 @@ export function createServer(): Server {
         });
         if (tests.length === 0) {
           const guidance = session.pluginMode === 'mcp'
-            ? 'No tool schemas found. Pass toolSchemas from the plugin\'s tools/list response.'
+            ? 'No tools discovered from the plugin\'s MCP server. Verify the server starts correctly.'
             : 'No hook scripts found in the plugin. Create tests manually with pth_create_test.';
           return respond(`Generated 0 tests.\n\n${guidance}`);
         }
