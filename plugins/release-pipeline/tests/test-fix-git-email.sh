@@ -57,7 +57,8 @@ assert_exit 0 "noreply email → exit 0" bash "$SCRIPT" "$REPO"
 
 # ---- Test 2: non-noreply email, no --auto-fix → FAIL, exit 1 ----
 git -C "$REPO" config user.email "user@gmail.com"
-out=$(bash "$SCRIPT" "$REPO" 2>/dev/null)
+# || true suppresses set -e: script prints "FAIL:" to stdout then exits 1
+out=$(bash "$SCRIPT" "$REPO" 2>/dev/null) || true
 assert_contains "$out" "FAIL:" "non-noreply, no --auto-fix → FAIL"
 assert_exit 1 "non-noreply, no --auto-fix → exit 1" bash "$SCRIPT" "$REPO"
 
@@ -81,7 +82,8 @@ assert_contains "$out" "sshowner@users.noreply.github.com" "--auto-fix derives u
 # ---- Test 5: --auto-fix with no remote, gh fails → FAIL, exit 1 ----
 git -C "$REPO" config user.email "user@gmail.com"
 git -C "$REPO" remote remove origin 2>/dev/null || true
-out=$(PATH="$FAKE_BIN:$PATH" bash "$SCRIPT" "$REPO" --auto-fix 2>/dev/null)
+# || true suppresses set -e: script prints "FAIL:" to stdout then exits 1
+out=$(PATH="$FAKE_BIN:$PATH" bash "$SCRIPT" "$REPO" --auto-fix 2>/dev/null) || true
 assert_contains "$out" "FAIL:" "--auto-fix with no remote and no gh → FAIL"
 assert_exit 1 "--auto-fix with no remote → exit 1" \
   bash -c "PATH=\"$FAKE_BIN:\$PATH\" bash \"$SCRIPT\" \"$REPO\" --auto-fix"
