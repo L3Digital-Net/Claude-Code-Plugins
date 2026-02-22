@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.3] - 2026-02-22
+
+### Fixed
+- **Plugin scanner false positive**: strip single-line comments before regex scan — the `TOOL_NAME_PATTERN` comment in `plugin-scanner.ts` itself was matched, injecting `tool_name` as a fake new component in the gap analysis
+- **`pth_start_session_valid_input` wrong expectation**: renamed to "rejects when session already active", flipped to `success: false` — this is the correct behavior and a valid error-path test
+- **`pth_resume_session_valid_input` wrong expectation**: renamed to "rejects invalid branch format", flipped to `success: false` — `branch: main` correctly fails the PTH session branch format guard
+
+## [0.6.2] - 2026-02-22
+
+### Fixed
+- **`pth_edit_test` accepts blank testId**: added `.min(1)` to Zod schema and a whitespace guard in dispatch — empty or whitespace-only testId now returns `isError: true`
+- **`pth_reload_plugin` orphans MCP context when testing itself**: process kill is now deferred 500ms via `setTimeout` so the success response can be sent over stdio before SIGTERM arrives
+- **Schema-generated stubs cause ID collisions across sessions**: `pth_create_test` input YAML now uses `pth_list_tests` (a real tool) and a timestamp suffix; scenario stubs get unique IDs on each `pth_generate_tests` call
+
+### Removed
+- Three artifact stub tests (`test-value`, `generated_test`, `scenario_stub_for_pth_record_result`) removed from persistent store — generator left-overs using `tool: example` (non-existent)
+
 ## [0.6.1] - 2026-02-22
 
 ### Fixed
