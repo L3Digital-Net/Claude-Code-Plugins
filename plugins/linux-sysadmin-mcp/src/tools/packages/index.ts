@@ -101,7 +101,9 @@ export function registerPackageTools(ctx: PluginContext): void {
     });
     if (gate) return gate;
     const r = await executeCommand(ctx, "pkg_install", cmd, "slow");
-    if (r.exitCode !== 0) return buildCategorizedResponse("pkg_install", ctx.targetHost, r.durationMs, r.stderr, ctx);
+    // --assumeno exits 1 on RHEL/DNF to signal "operation aborted" even on a successful dry-run preview;
+    // treat non-zero exit as success when dry_run is set and stdout has content.
+    if (r.exitCode !== 0 && !(args.dry_run && r.stdout)) return buildCategorizedResponse("pkg_install", ctx.targetHost, r.durationMs, r.stderr, ctx);
     const docHint = ctx.config.documentation.repo_path
       ? { documentation_action: { type: "packages_changed", suggested_actions: ["doc_generate_host"] } }
       : undefined;
@@ -177,7 +179,8 @@ export function registerPackageTools(ctx: PluginContext): void {
     });
     if (gate) return gate;
     const r = await executeCommand(ctx, "pkg_update", cmd, "slow");
-    if (r.exitCode !== 0) return buildCategorizedResponse("pkg_update", ctx.targetHost, r.durationMs, r.stderr, ctx);
+    // --assumeno exits 1 on RHEL/DNF even on a successful dry-run preview; same pattern as pkg_install.
+    if (r.exitCode !== 0 && !(args.dry_run && r.stdout)) return buildCategorizedResponse("pkg_update", ctx.targetHost, r.durationMs, r.stderr, ctx);
     // Parse updated package count from apt/dnf output — heuristic, not exhaustive
     const stdout = r.stdout.trim();
     const upgradedMatch = stdout.match(/(\d+)\s+upgraded/i) ?? stdout.match(/Upgraded:\s+(\d+)/i) ?? stdout.match(/Nothing to upgrade/i);
@@ -244,6 +247,11 @@ export function registerPackageTools(ctx: PluginContext): void {
       confirmed: args.confirmed as boolean, dryRun: args.dry_run as boolean,
     });
     if (gate) return gate;
+    // dry_run: the safety gate allows the call through but we must short-circuit before executing —
+    // pkg_rollback constructs cmdStr manually and bypasses ctx.commands, so dry_run must be intercepted here.
+    if (args.dry_run) {
+      return success("pkg_rollback", ctx.targetHost, 0, null, { preview_command: cmdStr }, { dry_run: true });
+    }
     const r = await ctx.executor.execute({ argv: ["bash", "-c", cmdStr] }, 60_000);
     if (r.exitCode !== 0) return buildCategorizedResponse("pkg_rollback", ctx.targetHost, r.durationMs, r.stderr, ctx);
     return success("pkg_rollback", ctx.targetHost, r.durationMs, cmdStr, { output: r.stdout.trim() });

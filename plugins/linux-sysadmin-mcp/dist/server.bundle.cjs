@@ -32445,11 +32445,10 @@ var import_node_path3 = require("node:path");
 
 // src/logger.ts
 var import_pino = __toESM(require_pino(), 1);
-var logger = (0, import_pino.default)({
-  name: "linux-sysadmin",
-  level: process.env.LOG_LEVEL ?? "info",
-  transport: process.env.NODE_ENV === "development" ? { target: "pino/file", options: { destination: 2 } } : void 0
-});
+var logger = (0, import_pino.default)(
+  { name: "linux-sysadmin", level: process.env.LOG_LEVEL ?? "info" },
+  process.stderr
+);
 
 // src/config/loader.ts
 var import_node_fs = require("node:fs");
@@ -33404,7 +33403,9 @@ function registerPackageTools(ctx) {
       name: parsed.package ?? parsed.name ?? args.package,
       version: parsed.version,
       description: parsed.description,
-      installed: "installed-size" in parsed || (parsed.status?.includes("installed") ?? false),
+      // apt: Installed-Size field present; apt: Status: install ok installed
+      // dnf/rhel: "Installed packages" section header appears when package is installed
+      installed: "installed-size" in parsed || (parsed.status?.includes("installed") ?? false) || r.stdout.includes("Installed packages"),
       depends: parsed.depends
     });
   });
@@ -33434,7 +33435,7 @@ function registerPackageTools(ctx) {
     });
     if (gate) return gate;
     const r = await executeCommand(ctx, "pkg_install", cmd, "slow");
-    if (r.exitCode !== 0) return buildCategorizedResponse("pkg_install", ctx.targetHost, r.durationMs, r.stderr, ctx);
+    if (r.exitCode !== 0 && !(args.dry_run && r.stdout)) return buildCategorizedResponse("pkg_install", ctx.targetHost, r.durationMs, r.stderr, ctx);
     const docHint = ctx.config.documentation.repo_path ? { documentation_action: { type: "packages_changed", suggested_actions: ["doc_generate_host"] } } : void 0;
     return success(
       "pkg_install",
@@ -33531,7 +33532,7 @@ function registerPackageTools(ctx) {
     });
     if (gate) return gate;
     const r = await executeCommand(ctx, "pkg_update", cmd, "slow");
-    if (r.exitCode !== 0) return buildCategorizedResponse("pkg_update", ctx.targetHost, r.durationMs, r.stderr, ctx);
+    if (r.exitCode !== 0 && !(args.dry_run && r.stdout)) return buildCategorizedResponse("pkg_update", ctx.targetHost, r.durationMs, r.stderr, ctx);
     const stdout = r.stdout.trim();
     const upgradedMatch = stdout.match(/(\d+)\s+upgraded/i) ?? stdout.match(/Upgraded:\s+(\d+)/i) ?? stdout.match(/Nothing to upgrade/i);
     const packages_updated_count = upgradedMatch ? upgradedMatch[0].match(/\d+/) ? parseInt(upgradedMatch[0].match(/\d+/)[0]) : 0 : void 0;
@@ -33602,6 +33603,9 @@ function registerPackageTools(ctx) {
       dryRun: args.dry_run
     });
     if (gate) return gate;
+    if (args.dry_run) {
+      return success("pkg_rollback", ctx.targetHost, 0, null, { preview_command: cmdStr }, { dry_run: true });
+    }
     const r = await ctx.executor.execute({ argv: ["bash", "-c", cmdStr] }, 6e4);
     if (r.exitCode !== 0) return buildCategorizedResponse("pkg_rollback", ctx.targetHost, r.durationMs, r.stderr, ctx);
     return success("pkg_rollback", ctx.targetHost, r.durationMs, cmdStr, { output: r.stdout.trim() });
@@ -33672,6 +33676,13 @@ function registerServiceTools(ctx) {
         const hr = await executeBash(ctx, hc.command, "quick");
         let passed = true;
         if (hc.expect_exit !== void 0) passed = hr.exitCode === hc.expect_exit;
+        if (hc.expect_output !== void 0) {
+          if (typeof hc.expect_output === "string") {
+            passed = passed && hr.stdout.trim().split("\n").some((line) => line.trim() === hc.expect_output);
+          } else {
+            passed = passed && hr.stdout.trim().length > 0;
+          }
+        }
         if (hc.expect_contains) passed = passed && hr.stdout.includes(hc.expect_contains);
         checks.push({ description: hc.description, passed, output: hr.stdout.trim().slice(0, 200) });
       }

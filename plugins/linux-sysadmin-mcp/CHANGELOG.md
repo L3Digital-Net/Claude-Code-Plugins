@@ -2,6 +2,14 @@
 
 All notable changes to the linux-sysadmin-mcp plugin are documented here.
 
+## [1.1.2] - 2026-02-22
+
+### Fixed
+- `pkg_install` dry_run: `dnf --assumeno` exits 1 even on a successful preview; handler now treats non-zero exit as success when `dry_run` is set and stdout has content. Discovered via PTH session.
+- `pkg_update` dry_run: same `--assumeno` exit-1 bug as `pkg_install`. Fixed with identical guard.
+- `pkg_rollback` dry_run: CRITICAL — `dry_run:true` was not respected; the tool executed `dnf history undo -y last` unconditionally. Fixed by adding a short-circuit guard after the safety gate check. (Bug discovered via PTH session: sshpass was actually removed from the system during testing.)
+- Logger always writes to `process.stderr` — previously conditionally wrote to stdout in non-TTY mode, corrupting the MCP stdio JSON-RPC stream.
+
 ## [1.1.1] - 2026-02-20
 
 ### Fixed
