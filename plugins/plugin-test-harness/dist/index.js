@@ -36317,6 +36317,10 @@ async function generateMcpTests(options) {
       tests.push(buildCommitScenarioTest(tool, options.pluginPath));
       continue;
     }
+    if (requiresRuntimeTestId(tool)) {
+      tests.push(buildTestIdScenarioTest(tool, options.pluginPath));
+      continue;
+    }
     const validInput = buildValidInput(tool, options.pluginPath);
     tests.push({
       id: slugify(`${tool.name}_valid_input`),
@@ -36405,6 +36409,59 @@ function buildValidInput(tool, pluginPath) {
     }
   }
   return input;
+}
+function requiresRuntimeTestId(tool) {
+  const required2 = tool.inputSchema?.required ?? [];
+  const props = tool.inputSchema?.properties ?? {};
+  return required2.some((field) => {
+    const prop = props[field];
+    if (!prop || prop.type !== "string") return false;
+    return field.toLowerCase() === "testid";
+  });
+}
+function buildTestIdScenarioTest(tool, pluginPath) {
+  const required2 = tool.inputSchema?.required ?? [];
+  const props = tool.inputSchema?.properties ?? {};
+  const testIdField = required2.find((f) => f.toLowerCase() === "testid");
+  const otherInput = {};
+  for (const field of required2) {
+    if (field === testIdField) continue;
+    otherInput[field] = buildValidInput(
+      { name: tool.name, inputSchema: { type: "object", properties: { [field]: props[field] }, required: [field] } },
+      pluginPath
+    )[field];
+  }
+  return {
+    id: slugify(`${tool.name}_valid_input`),
+    name: `${tool.name} \u2014 valid input`,
+    mode: "mcp",
+    type: "scenario",
+    steps: [
+      {
+        // Step 1: create a stub test to get a real, in-suite test ID
+        tool: "pth_create_test",
+        input: {
+          yaml: `name: scenario-stub-for-${tool.name}
+mode: mcp
+tool: example
+expect:
+  success: true`
+        },
+        expect: { success: true },
+        // pth_create_test responds: "Test added: <name>\nID: <id>"
+        capture: { [testIdField]: "text:ID: (\\S+)" }
+      },
+      {
+        // Step 2: call the target tool with the real captured test ID
+        tool: tool.name,
+        input: { ...otherInput, [testIdField]: `\${${testIdField}}` },
+        expect: { success: true }
+      }
+    ],
+    expect: { success: true },
+    generated_from: "schema",
+    timeout_seconds: 30
+  };
 }
 function requiresRealCommit(tool) {
   const required2 = tool.inputSchema?.required ?? [];
@@ -37486,12 +37543,15 @@ async function writeToolSchemasCache(pluginPath, schemas) {
   await fs6.writeFile(cachePath, JSON.stringify(schemas, null, 2), "utf-8");
 }
 async function fetchToolSchemasFromMcpServer(mcpConfig, pluginPath) {
+  const expandVar = (s) => s.replace(/\$\{CLAUDE_PLUGIN_ROOT\}/g, pluginPath);
   const transport2 = new StdioClientTransport({
-    command: mcpConfig.command,
-    args: mcpConfig.args,
+    command: expandVar(mcpConfig.command),
+    args: mcpConfig.args.map(expandVar),
     env: { ...process.env, ...mcpConfig.env ?? {} },
-    cwd: pluginPath
+    cwd: pluginPath,
+    stderr: "pipe"
   });
+  if (transport2.stderr) transport2.stderr.resume();
   const client = new Client({ name: "pth-discovery", version: "1.0.0" });
   try {
     await client.connect(transport2);
@@ -37536,6 +37596,14 @@ function createServer() {
   return server2;
   async function dispatch(toolName, args) {
     const respond = (text) => ({ content: [{ type: "text", text }] });
+    const toolDef = registry2.getAllTools().find((t) => t.name === toolName);
+    if (toolDef) {
+      const validation = toolDef.inputSchema.safeParse(args);
+      if (!validation.success) {
+        const msg = validation.error.errors.map((e) => `${e.path.join(".") || "input"}: ${e.message}`).join("; ");
+        return { content: [{ type: "text", text: `Validation error: ${msg}` }], isError: true };
+      }
+    }
     try {
       if (!sessionManager) {
         sessionManager = await Promise.resolve().then(() => (init_manager(), manager_exports));
@@ -37698,7 +37766,7 @@ ID: ${test.id}`);
       case "pth_record_result": {
         const { testId, status, durationMs, failureReason, claudeNotes } = args;
         const test = store.get(testId);
-        if (!test) return respond(`Unknown test id: ${testId}`);
+        if (!test) return { content: [{ type: "text", text: `Unknown test id: ${testId}` }], isError: true };
         resultsTracker.record({
           testId,
           testName: test.name,
