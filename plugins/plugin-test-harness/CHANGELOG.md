@@ -7,6 +7,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [0.6.0] - 2026-02-22
 
 ### Added
+- rich end-session summary with fixes and test outcomes
+- add persistent storage at ~/.pth/PLUGIN_NAME
+
+### Changed
+- Enhance Release Pipeline and Repo Hygiene Plugins
+- update plugin docs, PTH README for v0.6.0, and repo template
+- bump to v0.6.0
+- add persistent storage design doc
+
+
+## [0.6.0] - 2026-02-22
+
+### Added
 - **Persistent storage at `~/.pth/PLUGIN_NAME/`**: tests, results history, session reports, iteration history, fix history, and plugin snapshots now survive across sessions
 - **Gap analysis** at `pth_start_session`: compares saved plugin snapshot vs current source files to surface new/modified/removed components without requiring a live server
 - `pth_generate_tests` now accepts optional `tools[]` parameter for gap-targeted test generation (only generate tests for specific new/modified tools from gap analysis)
