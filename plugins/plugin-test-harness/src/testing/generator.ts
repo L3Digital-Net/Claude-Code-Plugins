@@ -21,6 +21,14 @@ export async function generateMcpTests(options: GenerateMcpOptions): Promise<Pth
       continue;
     }
 
+    // Tools requiring a real test ID (e.g. pth_record_result, pth_edit_test) need a test
+    // to exist in the suite before they can be called. Generate a two-step scenario that
+    // creates a stub test first and captures its ID for step 2.
+    if (requiresRuntimeTestId(tool)) {
+      tests.push(buildTestIdScenarioTest(tool, options.pluginPath));
+      continue;
+    }
+
     // Test 1: valid input (using required fields with minimal values)
     const validInput = buildValidInput(tool, options.pluginPath);
     tests.push({
@@ -119,6 +127,64 @@ function buildValidInput(tool: ToolSchema, pluginPath: string): Record<string, u
     }
   }
   return input;
+}
+
+// True when any required field is a PTH test ID — the test must exist in the live suite,
+// so a standalone call with a placeholder value will always fail at the store lookup.
+function requiresRuntimeTestId(tool: ToolSchema): boolean {
+  const required = tool.inputSchema?.required ?? [];
+  const props = tool.inputSchema?.properties ?? {};
+  return required.some(field => {
+    const prop = props[field];
+    if (!prop || prop.type !== 'string') return false;
+    return field.toLowerCase() === 'testid';
+  });
+}
+
+// Generates a two-step scenario: create a stub test with pth_create_test, capture the ID,
+// then call the target tool with the real ID. Avoids "Unknown test id" failures from placeholders.
+function buildTestIdScenarioTest(tool: ToolSchema, pluginPath: string): PthTest {
+  const required = tool.inputSchema?.required ?? [];
+  const props = tool.inputSchema?.properties ?? {};
+  const testIdField = required.find(f => f.toLowerCase() === 'testid')!;
+
+  // Build non-testId required fields using the same heuristics as single-tool tests
+  const otherInput: Record<string, unknown> = {};
+  for (const field of required) {
+    if (field === testIdField) continue;
+    otherInput[field] = buildValidInput(
+      { name: tool.name, inputSchema: { type: 'object', properties: { [field]: props[field] }, required: [field] } },
+      pluginPath
+    )[field];
+  }
+
+  return {
+    id: slugify(`${tool.name}_valid_input`),
+    name: `${tool.name} — valid input`,
+    mode: 'mcp',
+    type: 'scenario',
+    steps: [
+      {
+        // Step 1: create a stub test to get a real, in-suite test ID
+        tool: 'pth_create_test',
+        input: {
+          yaml: `name: scenario-stub-for-${tool.name}\nmode: mcp\ntool: example\nexpect:\n  success: true`,
+        },
+        expect: { success: true },
+        // pth_create_test responds: "Test added: <name>\nID: <id>"
+        capture: { [testIdField]: 'text:ID: (\\S+)' },
+      },
+      {
+        // Step 2: call the target tool with the real captured test ID
+        tool: tool.name,
+        input: { ...otherInput, [testIdField]: `\${${testIdField}}` },
+        expect: { success: true },
+      },
+    ],
+    expect: { success: true },
+    generated_from: 'schema',
+    timeout_seconds: 30,
+  };
 }
 
 // True when any required string field is a git commit SHA — these fields can only be satisfied

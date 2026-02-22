@@ -146,7 +146,7 @@ export function createServer(): Server {
     toolName: string,
     args: Record<string, unknown>,
     session: SessionState
-  ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  ): Promise<{ content: Array<{ type: 'text'; text: string }>; isError?: boolean }> {
     const respond = (text: string) => ({ content: [{ type: 'text' as const, text }] });
     const store = mgr.testStore;
 
@@ -281,7 +281,9 @@ export function createServer(): Server {
           durationMs?: number; failureReason?: string; claudeNotes?: string;
         };
         const test = store.get(testId);
-        if (!test) return respond(`Unknown test id: ${testId}`);
+        // isError: true so callers can distinguish bad IDs from successful records
+        // without parsing the response text.
+        if (!test) return { content: [{ type: 'text' as const, text: `Unknown test id: ${testId}` }], isError: true };
 
         resultsTracker.record({
           testId,
