@@ -56,44 +56,44 @@ The plugin degrades gracefully if this step is skipped — per-file diff summari
 
 ```mermaid
 flowchart TD
-    User([User]) -->|"/refactor src/foo.ts"| Init[Initialise session state\n.claude/state/refactor-session.json]
+    User([User]) -->|"/refactor src/foo.ts"| Init[Initialise session state<br/>.claude/state/refactor-session.json]
     Init --> P1[Phase 1 — Snapshot]
 
-    P1 --> TG[Spawn test-generator agent\nReads exports, writes tests to\n.claude/state/refactor-tests/]
-    TG --> BaselineOk{Green\nbaseline?}
-    BaselineOk -->|BASELINE FAILURE| Stop1((Stop — fix\nbaseline first))
-    BaselineOk -->|Pass| Metrics1[snapshot-metrics.sh\nCapture LOC + complexity]
+    P1 --> TG[Spawn test-generator agent<br/>Reads exports, writes tests to<br/>.claude/state/refactor-tests/]
+    TG --> BaselineOk{Green<br/>baseline?}
+    BaselineOk -->|BASELINE FAILURE| Stop1((Stop — fix<br/>baseline first))
+    BaselineOk -->|Pass| Metrics1[snapshot-metrics.sh<br/>Capture LOC + complexity]
     Metrics1 --> P2[Phase 2 — Analyze]
 
-    P2 --> PA[Spawn principles-auditor agent\nReads README.md + target files\nReturns ranked opportunities JSON]
-    PA --> P3[Phase 3 — Refactor Loop\nfully autonomous]
+    P2 --> PA[Spawn principles-auditor agent<br/>Reads README.md + target files<br/>Returns ranked opportunities JSON]
+    PA --> P3[Phase 3 — Refactor Loop<br/>fully autonomous]
 
-    P3 --> Osc{Reverted\ntwice?}
+    P3 --> Osc{Reverted<br/>twice?}
     Osc -->|Yes| Skip1[Skip — oscillation]
-    Osc -->|No| WT[git worktree add\n.claude/worktrees/refactor-N]
-    WT --> WTFail{Worktree\ncreated?}
-    WTFail -->|Fail| Stop2((Stop — surface\ngit error))
-    WTFail -->|OK| RA[Spawn refactor-agent\nImplements change in worktree]
-    RA --> Scope{More than\n3 files?}
-    Scope -->|Yes| Skip2[OUT_OF_SCOPE\nRemove worktree]
-    Scope -->|No| Tests[run-tests.sh\nRun suite in worktree]
-    Tests --> Runner{Runner\nfound?}
-    Runner -->|Exit 2| Stop3((Stop — surface\ninstall instructions))
-    Runner -->|Exit 0 green| Commit[git commit in worktree\ngit worktree remove]
-    Runner -->|Exit 1 red| Revert[git worktree remove --force\nRecord revert]
+    Osc -->|No| WT[git worktree add<br/>.claude/worktrees/refactor-N]
+    WT --> WTFail{Worktree<br/>created?}
+    WTFail -->|Fail| Stop2((Stop — surface<br/>git error))
+    WTFail -->|OK| RA[Spawn refactor-agent<br/>Implements change in worktree]
+    RA --> Scope{More than<br/>3 files?}
+    Scope -->|Yes| Skip2[OUT_OF_SCOPE<br/>Remove worktree]
+    Scope -->|No| Tests[run-tests.sh<br/>Run suite in worktree]
+    Tests --> Runner{Runner<br/>found?}
+    Runner -->|Exit 2| Stop3((Stop — surface<br/>install instructions))
+    Runner -->|Exit 0 green| Commit[git commit in worktree<br/>git worktree remove]
+    Runner -->|Exit 1 red| Revert[git worktree remove --force<br/>Record revert]
 
-    Commit --> ReAudit[Re-audit: spawn\nprinciples-auditor again]
-    ReAudit --> More{More opportunities\nor under max-changes?}
+    Commit --> ReAudit[Re-audit: spawn<br/>principles-auditor again]
+    ReAudit --> More{More opportunities<br/>or under max-changes?}
     Revert --> More
     Skip1 --> More
     Skip2 --> More
     More -->|Yes| Osc
     More -->|No| P4
 
-    P4[Phase 4 — Report] --> Metrics2[snapshot-metrics.sh\nCapture final LOC + complexity]
-    Metrics2 --> RG[Spawn report-generator agent\nPopulates final-report.md template]
+    P4[Phase 4 — Report] --> Metrics2[snapshot-metrics.sh<br/>Capture final LOC + complexity]
+    Metrics2 --> RG[Spawn report-generator agent<br/>Populates final-report.md template]
     RG --> Cleanup[rm -rf .claude/state .claude/worktrees]
-    Cleanup --> Report((Before/after report\nemitted to user))
+    Cleanup --> Report((Before/after report<br/>emitted to user))
 ```
 
 ## Usage

@@ -39,19 +39,19 @@ claude --plugin-dir ./plugins/repo-hygiene
 
 ```mermaid
 flowchart TD
-    U([User]) -->|"/hygiene [--dry-run]"| S0[Step 0: Parse args\nLocate PLUGIN_ROOT and REPO_ROOT]
+    U([User]) -->|"/hygiene [--dry-run]"| S0[Step 0: Parse args<br/>Locate PLUGIN_ROOT and REPO_ROOT]
     S0 --> P[Run 4 mechanical scripts in parallel]
     P --> G[check-gitignore.sh]
     P --> M[check-manifests.sh]
     P --> O[check-orphans.sh]
     P --> C[check-stale-commits.sh]
-    G & M & O & C --> R[Step 2: Semantic README scan\ninline AI reasoning]
+    G & M & O & C --> R[Step 2: Semantic README scan<br/>inline AI reasoning]
     R --> CL{Classify findings}
-    CL -->|auto_fix == true| AF[Step 4: Apply auto-fixes\nor show dry-run plan]
-    CL -->|needs approval| NA[Step 5: Present grouped findings\nAskUserQuestion multi-select]
+    CL -->|auto_fix == true| AF[Step 4: Apply auto-fixes<br/>or show dry-run plan]
+    CL -->|needs approval| NA[Step 5: Present grouped findings<br/>AskUserQuestion multi-select]
     CL -->|severity == info| IN[Collect info notes]
-    NA --> AP[Step 6: Apply approved fixes\norphan delete / git add / README display / gitignore edit]
-    AF & AP & IN --> SUM((Step 7: Final summary\nAuto-fixed / Approved / Deferred / Info))
+    NA --> AP[Step 6: Apply approved fixes<br/>orphan delete / git add / README display / gitignore edit]
+    AF & AP & IN --> SUM((Step 7: Final summary<br/>Auto-fixed / Approved / Deferred / Info))
 ```
 
 ## Usage

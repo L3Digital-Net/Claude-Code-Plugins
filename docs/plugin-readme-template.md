@@ -107,7 +107,8 @@ TypeScript source.
        [Component]                → internal processing step (rectangle)
        {Decision}                 → branching condition (diamond)
        ((Output))                 → terminal result (circle)
-     Keep the diagram to ~10 nodes maximum for readability. -->
+     Keep the diagram to ~10 nodes maximum for readability.
+     Line breaks in node labels: use <br/> — NOT \n (GitHub renders \n literally). -->
 
 ```mermaid
 flowchart TD

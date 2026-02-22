@@ -47,20 +47,20 @@ claude --plugin-dir ./plugins/plugin-review
 
 ```mermaid
 flowchart TD
-    User([User]) -->|/review plugin-name| Setup["Phase 1: Setup\n(triage read, principles list,\ntouchpoint map)"]
-    Setup --> Spawn["Phase 2: Spawn analyst subagents\n(parallel)"]
-    Spawn --> TrackA["Track A\nPrinciples Analyst"]
-    Spawn --> TrackB["Track B\nUX Analyst"]
-    Spawn --> TrackC["Track C\nDocs Analyst"]
-    TrackA --> Collect["Phase 2.5: Assertion Collection\n(merge assertions into state)"]
+    User([User]) -->|/review plugin-name| Setup["Phase 1: Setup<br/>(triage read, principles list,<br/>touchpoint map)"]
+    Setup --> Spawn["Phase 2: Spawn analyst subagents<br/>(parallel)"]
+    Spawn --> TrackA["Track A<br/>Principles Analyst"]
+    Spawn --> TrackB["Track B<br/>UX Analyst"]
+    Spawn --> TrackC["Track C<br/>Docs Analyst"]
+    TrackA --> Collect["Phase 2.5: Assertion Collection<br/>(merge assertions into state)"]
     TrackB --> Collect
     TrackC --> Collect
-    Collect --> Report["Phase 3: Pass Report\n(severity-sorted open findings)"]
-    Report --> Fix["Phase 4: Auto-implement all fixes\n(orchestrator writes code + docs)"]
-    Fix --> Assert["Phase 5.5: Run Assertions\n(confidence score)"]
-    Assert --> Decision{"confidence\n= 100%?"}
+    Collect --> Report["Phase 3: Pass Report<br/>(severity-sorted open findings)"]
+    Report --> Fix["Phase 4: Auto-implement all fixes<br/>(orchestrator writes code + docs)"]
+    Fix --> Assert["Phase 5.5: Run Assertions<br/>(confidence score)"]
+    Assert --> Decision{"confidence<br/>= 100%?"}
     Decision -->|"No — budget remains"| Spawn
-    Decision -->|"Yes or budget reached"| Final(("Phase 6:\nFinal Report"))
+    Decision -->|"Yes or budget reached"| Final(("Phase 6:<br/>Final Report"))
 ```
 
 In `--autonomous` mode, a fourth subagent (Regression Guard) runs on every Pass 2+ in parallel with the analysts, and Phase 4.5 runs build/test validation after each implementation pass.

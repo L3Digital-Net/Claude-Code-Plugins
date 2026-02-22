@@ -55,17 +55,17 @@ npm run build
 ```mermaid
 flowchart TD
     User([User]) -->|"pth_preflight"| Preflight[Check path, git, build system, lock]
-    Preflight -->|"pth_start_session"| Start[Create branch + worktree\nDetect mode, load saved tests\nRun gap analysis]
-    Start --> Generate[pth_generate_tests\nAuto-discover schemas\nUpsert test suite]
-    Generate --> Run[Claude executes each test\nagainst live plugin tools]
-    Run -->|"pth_record_result × N"| Record[Record pass / fail / skipped\nUpdate session state]
-    Record -->|"pth_get_iteration_status"| Iter{Convergence\ntrend?}
+    Preflight -->|"pth_start_session"| Start[Create branch + worktree<br/>Detect mode, load saved tests<br/>Run gap analysis]
+    Start --> Generate[pth_generate_tests<br/>Auto-discover schemas<br/>Upsert test suite]
+    Generate --> Run[Claude executes each test<br/>against live plugin tools]
+    Run -->|"pth_record_result × N"| Record[Record pass / fail / skipped<br/>Update session state]
+    Record -->|"pth_get_iteration_status"| Iter{Convergence<br/>trend?}
     Iter -->|improving| Run
-    Iter -->|plateaued / oscillating / declining| Fix[pth_apply_fix\nWrite + commit files]
-    Fix -->|"pth_reload_plugin"| Reload[Build → sync cache → kill process\nClaude Code restarts server]
+    Iter -->|plateaued / oscillating / declining| Fix[pth_apply_fix<br/>Write + commit files]
+    Fix -->|"pth_reload_plugin"| Reload[Build → sync cache → kill process<br/>Claude Code restarts server]
     Reload --> Run
-    Iter -->|all passing| End[pth_end_session\nPersist artifacts, remove worktree]
-    End --> Report((~/.pth/PLUGIN/\nSESSION-REPORT.md))
+    Iter -->|all passing| End[pth_end_session<br/>Persist artifacts, remove worktree]
+    End --> Report((~/.pth/PLUGIN/<br/>SESSION-REPORT.md))
 ```
 
 ## Usage
