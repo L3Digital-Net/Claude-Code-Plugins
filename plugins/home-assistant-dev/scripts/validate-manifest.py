@@ -29,6 +29,9 @@ CORE_REQUIRED = {
 # Additional required fields for custom integrations (HACS)
 HACS_REQUIRED = CORE_REQUIRED | {"version", "issue_tracker"}
 
+# Cross-file contract: VALID_INTEGRATION_TYPES and VALID_IOT_CLASSES are duplicated in
+# mcp-server/src/tools/validate-manifest.ts (TypeScript). Both sets must stay in sync
+# when HA adds new values — update both files together.
 VALID_INTEGRATION_TYPES = {
     "device",
     "entity",
@@ -237,14 +240,9 @@ def main() -> int:
 
     is_custom = "--core" not in sys.argv
 
-    print(f"Validating: {manifest_path}")
-    print(f"Mode: {'Custom Integration (HACS)' if is_custom else 'Core Integration'}")
-    print()
-
     errors = validate_manifest(manifest_path, is_custom)
 
     if not errors:
-        print("✅ manifest.json is valid!")
         return 0
 
     error_count = sum(1 for e in errors if e.severity == "error")

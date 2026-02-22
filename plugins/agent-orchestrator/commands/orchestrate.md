@@ -1,5 +1,6 @@
 ---
 description: Orchestrate a complex task using agent teams or subagent pipelines. Decomposes work, delegates to teammates with file isolation, manages context, and synthesizes results.
+allowed-tools: Task, Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion, TodoWrite, TodoRead
 ---
 
 # Agent Team Orchestrator

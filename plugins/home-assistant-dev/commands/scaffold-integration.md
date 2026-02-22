@@ -2,6 +2,7 @@
 name: scaffold-integration
 description: Scaffold a new Home Assistant integration with all required files
 disable-model-invocation: true
+allowed-tools: Write, Read, Glob, Grep, AskUserQuestion
 ---
 
 Create a new Home Assistant integration with all required files following 2025 best practices.
