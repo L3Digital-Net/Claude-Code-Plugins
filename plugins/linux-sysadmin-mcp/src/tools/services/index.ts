@@ -59,6 +59,14 @@ export function registerServiceTools(ctx: PluginContext): void {
         const hr = await executeBash(ctx, hc.command, "quick");
         let passed = true;
         if (hc.expect_exit !== undefined) passed = hr.exitCode === hc.expect_exit;
+        if (hc.expect_output !== undefined) {
+          // Exact line match — avoids "active" matching "inactive" via substring
+          if (typeof hc.expect_output === "string") {
+            passed = passed && hr.stdout.trim().split("\n").some(line => line.trim() === (hc.expect_output as string));
+          } else {
+            passed = passed && hr.stdout.trim().length > 0;
+          }
+        }
         if (hc.expect_contains) passed = passed && hr.stdout.includes(hc.expect_contains);
         checks.push({ description: hc.description, passed, output: hr.stdout.trim().slice(0, 200) });
       }
