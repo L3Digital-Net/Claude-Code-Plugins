@@ -1,10 +1,10 @@
 # Home Assistant Dev
 
-A comprehensive Claude Code plugin for building, reviewing, and debugging Home Assistant custom integrations: covering all 52 Integration Quality Scale rules, HACS compliance, and HA 2025+ patterns.
+A Claude Code plugin for Home Assistant custom integration development. Covers all 52 Integration Quality Scale rules, HACS compliance, and HA 2025+ patterns.
 
 ## Summary
 
-This plugin provides every layer of tooling needed for HA integration development: two interactive commands for generating complete integrations at configurable quality tiers, 27 skills that auto-activate on contextually relevant conversations, three specialized subagents for development, code review, and debugging, automated validation hooks that fire on every write, and an MCP server that connects live to a Home Assistant instance for state queries, service calls, documentation search, and code pattern detection.
+Two commands generate integrations at selectable quality tiers. Twenty-seven skills auto-activate when conversation touches relevant HA concepts, no manual invocation needed. Three subagents handle development, review, and debugging. Validation hooks fire on every write, and an optional MCP server connects to a live HA instance for state queries, service calls, and documentation search.
 
 ## Principles
 
@@ -77,15 +77,13 @@ flowchart TD
 
 ## Usage
 
-**Starting a new integration:** Use `/home-assistant-dev:generate-integration` for a fully guided experience with quality-tier selection, or `/home-assistant-dev:scaffold-integration` for a faster Silver-tier scaffold. Both commands collect requirements interactively and confirm before writing any files.
+Use `/home-assistant-dev:generate-integration` for a guided experience with quality-tier selection, or `/home-assistant-dev:scaffold-integration` for a faster Silver-tier scaffold. Both collect requirements interactively and confirm before writing.
 
-**Skills auto-activate** when your conversation mentions relevant HA concepts; e.g., discussing `DataUpdateCoordinator` loads the coordinator skill, mentioning HACS loads the HACS metadata skill. You do not need to invoke skills manually.
+Skills auto-activate when conversation mentions relevant HA concepts. Discussing `DataUpdateCoordinator` loads the coordinator skill; mentioning HACS loads the HACS metadata skill.
 
-**Agents** are spawned automatically by commands but can also be addressed directly: "act as ha-integration-reviewer and review my config_flow.py" or "use ha-integration-debugger to diagnose this error."
+Agents spawn via commands but can also be addressed directly: "act as ha-integration-reviewer and review my config_flow.py" or "use ha-integration-debugger to diagnose this error."
 
-**Validation** runs automatically on every write to integration files via the PostToolUse hook. Warnings appear inline in the agent response when issues are detected.
-
-**MCP tools** are available to Claude as `ha-dev-mcp` once connected. Call `ha_connect` with your HA URL and token to enable live integration features.
+Validation runs on every write via the PostToolUse hook; warnings appear inline when issues are detected. MCP tools are available as `ha-dev-mcp` once you call `ha_connect` with your HA URL and token.
 
 ## Commands
 
@@ -161,7 +159,7 @@ Skills load automatically when conversation content matches their trigger patter
 
 | Agent | Description |
 |-------|-------------|
-| `ha-integration-dev` | Full integration development specialist. Enforces DataUpdateCoordinator, config flow, `runtime_data`, unique IDs, and device info patterns. Guides through architecture decisions and produces complete working examples. Loaded skills: `ha-architecture`, `ha-integration-scaffold`, `ha-config-flow`, `ha-coordinator`, `ha-entity-platforms`, `ha-service-actions`, `ha-async-patterns`. |
+| `ha-integration-dev` | Full integration development specialist. Enforces DataUpdateCoordinator, config flow, `runtime_data`, unique IDs, and device info patterns. Guides architecture decisions and produces working examples. Loaded skills: `ha-architecture`, `ha-integration-scaffold`, `ha-config-flow`, `ha-coordinator`, `ha-entity-platforms`, `ha-service-actions`, `ha-async-patterns`. |
 | `ha-integration-reviewer` | Code reviewer against Integration Quality Scale standards. Runs `ruff` and `mypy` if available, then produces a structured report with Critical Issues, Warnings, and Suggestions, each with specific before/after code examples. Loaded skills: `ha-quality-review`, `ha-testing`, `ha-debugging`. |
 | `ha-integration-debugger` | Systematic debugging specialist. Categorizes issues (config flow, coordinator, entity, async, import), isolates root cause, provides targeted before/after fixes, and suggests regression tests. Loaded skills: `ha-debugging`, `ha-coordinator`, `ha-async-patterns`. |
 

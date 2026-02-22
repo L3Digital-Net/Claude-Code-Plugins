@@ -1,6 +1,6 @@
 # Claude Code Plugins Marketplace
 
-A Claude Code plugin marketplace covering orchestration, release automation, design review, Home Assistant development, Linux system administration, GitHub repository management, and plugin testing.
+A Claude Code plugin marketplace. Plugins cover the full development lifecycle: agent orchestration, release automation, design review, Home Assistant integration dev, Linux system administration, GitHub repo health, and plugin testing.
 
 ## Installation
 
@@ -163,9 +163,8 @@ interactively, with owner approval at every step.
 
 ### Home Assistant Dev
 
-**Comprehensive Home Assistant integration development toolkit** with 19 AI skills, an
-MCP server for live HA connections, automated validation, example integrations, and
-project templates.
+**Home Assistant integration development toolkit**: 27 AI skills, an MCP server for live
+HA connections, automated validation, example integrations, and project templates.
 
 **Features:**
 
@@ -191,15 +190,12 @@ project templates.
 
 ### Linux SysAdmin MCP
 
-**Comprehensive Linux system administration MCP server** with ~100 tools across 15
-modules for managing packages, services, users, firewall, networking, security, storage,
-containers, and more.
+**Linux system administration MCP server**: ~100 tools across 15 modules. Covers
+packages, services, users, firewall, networking, security, storage, containers, and more.
 
 **Features:**
 
-- ~100 tools organized across 15 modules (packages, services, users, firewall,
-  networking, security, storage, performance, logs, containers, SSH, cron, backup, docs,
-  session)
+- ~100 tools across 15 modules (see the [full tool table](plugins/linux-sysadmin-mcp/README.md#tools))
 - Distro-agnostic command abstraction (Debian/RHEL auto-detection)
 - 5-tier risk classification with confirmation gates
 - YAML knowledge profiles for 8 services (sshd, nginx, docker, ufw, fail2ban, pihole,
@@ -455,8 +451,8 @@ These plugins are in development and not yet available in the marketplace.
 ## Plugin Development
 
 This repository also serves as a development workspace for creating new plugins. See
-[CLAUDE.md](CLAUDE.md) for architectural guidance and [docs/](docs/) for comprehensive
-documentation.
+[CLAUDE.md](CLAUDE.md) for architectural guidance and [docs/](docs/) for the full
+reference.
 
 ### Quick Start
 

@@ -304,12 +304,7 @@ The convergence table rendered by `pth_get_iteration_status`:
 
 ## Gap Analysis
 
-When a persistent store exists for a plugin, `pth_start_session` compares the saved plugin snapshot against the current source to surface structural changes without requiring a live server:
-
-- **New components**: tools or commands present in source but absent from the last snapshot
-- **Modified components**: tools whose source files changed since the snapshot was captured
-- **Removed components**: tools that were in the snapshot but are no longer present
-- **Stale test IDs**: tests whose target tool was removed
+When a persistent store exists for a plugin, `pth_start_session` compares the saved plugin snapshot against the current source to surface structural changes without requiring a live server. It flags new tools (present in source but absent from the snapshot), modified tools (source files changed since capture), and removed tools. Tests whose target tool was removed are surfaced as stale test IDs.
 
 Use `pth_generate_tests` with the `tools[]` parameter to generate tests only for new or modified components from the gap report.
 
