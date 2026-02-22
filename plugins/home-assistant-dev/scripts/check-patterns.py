@@ -311,16 +311,12 @@ def main() -> int:
     else:
         target = Path(sys.argv[-1])
 
-    print(f"Checking: {target}")
-    print()
-
     if target.is_file():
         matches = check_file(target, PATTERNS)
     else:
         matches = check_directory(target, PATTERNS)
 
     if not matches:
-        print("✅ No anti-patterns detected!")
         return 0
 
     # Group by severity

@@ -1,6 +1,7 @@
 ---
 name: generate-integration
 description: Generate a complete Home Assistant integration from scratch with all necessary files. Interactive command that scaffolds a full integration based on user requirements.
+allowed-tools: Write, Read, Glob, Grep, AskUserQuestion
 ---
 
 Generate a complete Home Assistant custom integration. Collects requirements, then produces all files for the selected quality tier.

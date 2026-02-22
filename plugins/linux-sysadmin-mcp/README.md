@@ -4,7 +4,7 @@ A Claude Code MCP plugin providing comprehensive Linux system administration —
 
 ## Summary
 
-linux-sysadmin-mcp exposes 116 tools across 15 modules as MCP tools, giving Claude the ability to read system state and execute state-changing commands with a built-in safety gate. Every state-changing operation is classified by risk level and passes through a three-step safety check before execution — tool default risk, knowledge profile escalation, and configurable threshold — so routine operations proceed without friction while high-impact commands require explicit confirmation.
+linux-sysadmin-mcp exposes 101 tools across 15 modules as MCP tools, giving Claude the ability to read system state and execute state-changing commands with a built-in safety gate. Every state-changing operation is classified by risk level and passes through a three-step safety check before execution — tool default risk, knowledge profile escalation, and configurable threshold — so routine operations proceed without friction while high-impact commands require explicit confirmation.
 
 The server auto-detects the host's distro family (Debian/RHEL/Arch) and maps commands accordingly. A knowledge base of service profiles (sshd, ufw, nginx, etc.) enriches health checks, log queries, and risk escalations with service-specific context.
 
@@ -122,22 +122,22 @@ Pass `dry_run: true` to any state-changing tool (except `fw_enable`/`fw_disable`
 
 | Module | Count | Example Tools |
 |--------|-------|---------------|
-| session | 2 | `sysadmin_session_info` |
-| packages | 11 | `pkg_list_installed`, `pkg_install`, `pkg_remove`, `pkg_purge`, `pkg_update`, `pkg_rollback`, `pkg_history` |
-| services | 7 | `svc_list`, `svc_status`, `svc_start`, `svc_stop`, `svc_restart`, `svc_logs`, `timer_list` |
-| performance | 8 | `perf_overview`, `perf_top_processes`, `perf_memory`, `perf_disk_io`, `perf_network_io`, `perf_bottleneck` |
-| logs | 5 | `log_query`, `log_search`, `log_summary`, `log_disk_usage` |
-| security | 8 | `sec_audit`, `sec_check_ssh`, `sec_harden_ssh`, `sec_update_check`, `sec_mac_status`, `sec_check_suid` |
-| storage | 9 | `disk_usage`, `disk_usage_top`, `mount_list`, `mount_add`, `lvm_status`, `lvm_create_lv`, `lvm_resize` |
-| users | 11 | `user_list`, `user_create`, `user_modify`, `user_delete`, `group_list`, `group_create`, `group_delete`, `perms_check`, `perms_set` |
-| firewall | 7 | `fw_status`, `fw_list_rules`, `fw_add_rule`, `fw_remove_rule`, `fw_enable`, `fw_disable` |
-| networking | 8 | `net_interfaces`, `net_connections`, `net_dns_show`, `net_routes_show`, `net_test`, `net_dns_modify`, `net_routes_modify` |
-| containers | 12 | `ctr_list`, `ctr_images`, `ctr_inspect`, `ctr_logs`, `ctr_start`, `ctr_stop`, `ctr_remove`, `ctr_compose_up`, `ctr_compose_down` |
-| cron | 6 | `cron_list`, `cron_add`, `cron_remove`, `cron_validate`, `cron_next_runs` |
-| backup | 6 | `bak_list`, `bak_create`, `bak_restore`, `bak_schedule`, `bak_verify` |
-| ssh | 7 | `ssh_session_info`, `ssh_config_list`, `ssh_key_list`, `ssh_test_connection`, `ssh_key_generate`, `ssh_authorized_keys` |
-| docs | 9 | `doc_status`, `doc_init`, `doc_generate_host`, `doc_generate_service`, `doc_backup_config`, `doc_diff`, `doc_restore_guide` |
-| **Total** | **116** | |
+| session | 1 | `sysadmin_session_info` |
+| packages | 10 | `pkg_list_installed`, `pkg_install`, `pkg_remove`, `pkg_purge`, `pkg_update`, `pkg_rollback`, `pkg_history` |
+| services | 6 | `svc_list`, `svc_status`, `svc_start`, `svc_stop`, `svc_restart`, `svc_logs` |
+| performance | 7 | `perf_overview`, `perf_top_processes`, `perf_memory`, `perf_disk_io`, `perf_network_io`, `perf_bottleneck` |
+| logs | 4 | `log_query`, `log_search`, `log_summary`, `log_disk_usage` |
+| security | 7 | `sec_audit`, `sec_check_ssh`, `sec_harden_ssh`, `sec_update_check`, `sec_mac_status`, `sec_check_suid` |
+| storage | 8 | `disk_usage`, `disk_usage_top`, `mount_list`, `mount_add`, `lvm_status`, `lvm_create_lv`, `lvm_resize` |
+| users | 10 | `user_list`, `user_create`, `user_modify`, `user_delete`, `group_list`, `group_create`, `group_delete`, `perms_check`, `perms_set` |
+| firewall | 6 | `fw_status`, `fw_list_rules`, `fw_add_rule`, `fw_remove_rule`, `fw_enable`, `fw_disable` |
+| networking | 7 | `net_interfaces`, `net_connections`, `net_dns_show`, `net_routes_show`, `net_test`, `net_dns_modify`, `net_routes_modify` |
+| containers | 11 | `ctr_list`, `ctr_images`, `ctr_inspect`, `ctr_logs`, `ctr_start`, `ctr_stop`, `ctr_remove`, `ctr_compose_up`, `ctr_compose_down` |
+| cron | 5 | `cron_list`, `cron_add`, `cron_remove`, `cron_validate`, `cron_next_runs` |
+| backup | 5 | `bak_list`, `bak_create`, `bak_restore`, `bak_schedule`, `bak_verify` |
+| ssh | 6 | `ssh_session_info`, `ssh_config_list`, `ssh_key_list`, `ssh_test_connection`, `ssh_key_generate`, `ssh_authorized_keys` |
+| docs | 8 | `doc_status`, `doc_init`, `doc_generate_host`, `doc_generate_service`, `doc_backup_config`, `doc_diff`, `doc_restore_guide` |
+| **Total** | **101** | |
 
 ## Knowledge Profiles
 

@@ -255,15 +255,9 @@ def main() -> int:
     # Look for config_flow.py in same directory
     config_flow_path = strings_path.parent / "config_flow.py"
 
-    print(f"Validating: {strings_path}")
-    if config_flow_path.exists():
-        print(f"Syncing with: {config_flow_path}")
-    print()
-
     errors = validate_strings(strings_path, config_flow_path)
 
     if not errors:
-        print("✅ strings.json is valid!")
         return 0
 
     error_count = sum(1 for e in errors if e.severity == "error")

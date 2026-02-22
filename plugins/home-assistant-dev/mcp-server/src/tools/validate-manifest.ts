@@ -21,6 +21,9 @@ const HACS_REQUIRED = new Set([
   "issue_tracker",
 ]);
 
+// Cross-file contract: VALID_INTEGRATION_TYPES and VALID_IOT_CLASSES are duplicated in
+// scripts/validate-manifest.py (Python). Both sets must stay in sync when HA adds new
+// values — update both files together.
 const VALID_INTEGRATION_TYPES = new Set([
   "device",
   "entity",

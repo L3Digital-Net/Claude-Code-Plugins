@@ -1,5 +1,6 @@
 ---
 description: Autonomous maintenance sweep — validates .gitignore patterns, manifest paths, plugin state consistency, stale uncommitted changes, README freshness (leaf-to-root with implementation cross-reference), and docs/ accuracy.
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion
 ---
 
 # /hygiene [--dry-run]

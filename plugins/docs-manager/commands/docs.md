@@ -1,6 +1,7 @@
 ---
 name: docs
 description: Documentation lifecycle management
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion
 ---
 
 Parse the first argument as `<subcommand>`. Route to the matching section below. If no argument, run **status (brief)**.
