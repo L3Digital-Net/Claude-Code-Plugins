@@ -4,7 +4,7 @@ Test-driven autonomous refactoring against project design principles, with git w
 
 ## Summary
 
-Manual refactoring requires a developer to simultaneously understand design principles, identify violations, implement changes safely, and validate correctness, a cognitively expensive cycle prone to scope creep and regressions. `autonomous-refactor` automates this loop end-to-end: it reads your project's stated design principles from `README.md`, generates a behavioural test baseline, applies each refactoring opportunity in an isolated git worktree, and commits only changes that keep tests green, reverting everything else without human input. The result is a before/after report showing LOC, cyclomatic complexity, and principles alignment score deltas.
+Manual refactoring is a cognitively expensive loop: understand design principles, find violations, change code safely, verify correctness. `autonomous-refactor` automates that cycle. It reads your project's stated design principles from `README.md`, generates a behavioural test baseline, and applies each refactoring opportunity in an isolated git worktree. Only changes that keep tests green are committed; everything else is reverted without human input. The result is a before/after report showing LOC, cyclomatic complexity, and alignment score deltas.
 
 ## Principles
 
@@ -112,8 +112,8 @@ If no target files are specified, the plugin lists `.ts`, `.tsx`, and `.py` file
 
 1. **Snapshot**: `test-generator` generates a behavioural test suite from all exported symbols, runs it to confirm a green baseline, and saves results to `.claude/state/refactor-tests/`. LOC and cyclomatic complexity are snapshotted. Baseline failure stops the session.
 2. **Analyze**: `principles-auditor` reads project `README.md`, extracts stated design principles (sections named Principles, Design Principles, Architecture, Guidelines, or labelled P1/P2 etc.), identifies violations and improvement opportunities, scores alignment 0–100, and returns up to 15 ranked opportunities.
-3. **Refactor Loop**: Opportunities are processed autonomously in priority order (high → medium → low). Each runs in a dedicated git worktree. Green tests: commit, remove worktree, re-audit for new opportunities. Red tests: force-remove worktree, record revert, continue. Oscillation (two reverts of the same opportunity) causes a skip. Loop exits when all opportunities are addressed, `--max-changes` is reached, or a hard stop condition triggers.
-4. **Report**: Final LOC, complexity, and alignment score are captured. `report-generator` populates a before/after report template with deltas and a per-change table. All session state and worktrees are cleaned up.
+3. **Refactor Loop**: Opportunities run autonomously in priority order (high → medium → low), each in a dedicated git worktree. Green tests commit and trigger a re-audit; red tests force-remove the worktree and continue. Two reverts of the same opportunity cause a skip. The loop exits when all opportunities are addressed, `--max-changes` is reached, or a hard stop triggers.
+4. **Report**: Final LOC, complexity, and alignment score are captured. `report-generator` populates a before/after template with deltas and a per-change table, then cleans up all session state and worktrees.
 
 ## Commands
 

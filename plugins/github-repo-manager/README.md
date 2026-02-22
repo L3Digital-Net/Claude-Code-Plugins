@@ -4,7 +4,7 @@ Conversational GitHub repository maintenance: health auditing, wiki sync, PR tri
 
 ## Summary
 
-github-repo-manager turns Claude Code into an interactive GitHub repository maintenance assistant. Invoke `/repo-manager`, tell it which repo (or repos) to look at, and it runs a structured health assessment across up to nine modules (security, releases, community files, PRs, issues, dependencies, notifications, discussions, and wiki) then surfaces findings in a single prioritized view and proposes specific actions for your approval. Every mutation goes through the `gh-manager` helper CLI (a Node.js wrapper around the GitHub API) and requires explicit owner confirmation before execution. Sessions are scoped: the plugin activates on `/repo-manager` and exits cleanly when you're done, leaving no residual behavior.
+github-repo-manager turns Claude Code into an interactive GitHub repository maintenance assistant. Invoke `/repo-manager`, tell it which repo (or repos) to look at, and it runs a structured health assessment across nine modules: security, releases, community files, PRs, issues, dependencies, notifications, discussions, and wiki. Findings surface in a single prioritized view; the plugin then proposes specific actions and waits for your approval before touching anything. Every mutation goes through the `gh-manager` helper CLI, a Node.js wrapper around the GitHub API. Sessions are scoped: the plugin activates on `/repo-manager` and exits cleanly when you're done, leaving no residual behavior.
 
 ## Principles
 
@@ -93,10 +93,10 @@ Invoke the plugin with a natural-language request:
 **Session flow:**
 
 1. The plugin determines scope (single-repo or cross-repo) from your request.
-2. On first run it checks dependencies, verifies your PAT, detects the repo tier, and bootstraps maintenance labels; these steps succeed silently and collapse to one confirmation line.
+2. On first run, dependency checks, PAT verification, tier detection, and label bootstrapping all run silently and collapse to one confirmation line.
 3. For a full assessment it runs all nine modules in order, emitting a progress line per module, then presents one consolidated findings view grouped by severity (critical / needs attention / healthy).
 4. For each actionable finding it proposes a specific action and waits for your approval before executing.
-5. At session end it summarizes actions taken, lists any deferred items, and offers to generate a markdown report.
+5. At session end it summarizes actions taken and lists any deferred items. It can also generate a markdown report if you want one.
 
 The plugin exits cleanly when you change topic or say you're done.
 

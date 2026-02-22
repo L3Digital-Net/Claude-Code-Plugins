@@ -1,6 +1,6 @@
 # plugin-review
 
-Comprehensive plugin quality review covering principles alignment, terminal UX quality, and documentation freshness via orchestrated subagents.
+Plugin quality review covering principles alignment, terminal UX, and documentation freshness via orchestrated subagents.
 
 ## Summary
 
@@ -130,7 +130,8 @@ Audits every user-facing touchpoint (tools that produce output, input collection
 - **Information Density**: Is output appropriately compact? No verbose preamble before findings.
 - **User Input**: Are decision points bounded choices (`AskUserQuestion`) rather than open-ended prompts?
 - **Progress and Feedback**: Are long operations accompanied by progress signals? Are errors surfaced with recovery paths?
-- **Terminal-Specific**: Does output respect terminal width, avoid excessive color, and format structured data legibly?
+
+Terminal-specific checks also apply: output must respect terminal width, avoid excessive color, and format structured data legibly.
 
 Findings are severity-grouped: High (🔴), Medium (🟡), Low (🟢).
 

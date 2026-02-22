@@ -4,7 +4,7 @@ Autonomous release pipeline for Claude Code: interactive menu-driven releases wi
 
 ## Summary
 
-Release Pipeline presents a context-aware menu at invocation, detects whether you are in a monorepo or single-package repo, suggests the next semver version from commit history, and runs three pre-flight agents in parallel before executing the full release sequence (version bump, changelog, commit, tag, merge, push, GitHub release) behind an explicit approval gate. It supports seven modes including quick merge, full semver release, scoped plugin release, and batch release of all unreleased plugins in one operation. Auto-heal resolves the two most common pre-flight blockers (dirty working tree, non-noreply git email) before pre-flight runs, and tag reconciliation prevents duplicate-tag failures on retry.
+Release Pipeline presents a context-aware menu at invocation, detects monorepo vs. single-package layout, and suggests the next semver version from commit history. Three pre-flight agents run in parallel before the full release sequence (version bump, changelog, commit, tag, merge, push, GitHub release) executes behind a single approval gate. Seven modes are available, from a quick merge to a batch release of all unreleased plugins at once. Auto-heal quietly resolves dirty working trees and non-noreply git email addresses before pre-flight; tag reconciliation prevents duplicate-tag failures on retry.
 
 ## Principles
 
@@ -133,10 +133,9 @@ If no runner is detected, the `missing_tests` waiver is checked before reporting
 
 ## Auto-Heal
 
-Before pre-flight runs in Full Release, Plugin Release, and Batch Release modes, two common blockers are resolved automatically:
+Before pre-flight runs in Full Release, Plugin Release, and Batch Release modes, two common blockers are resolved automatically.
 
-- **Dirty working tree**: auto-stashed before pre-flight via `auto-stash.sh stash` and restored after all git operations complete (before the GitHub API call) via `auto-stash.sh pop`.
-- **Non-noreply git email**: checked via `fix-git-email.sh`, which parses the remote URL (HTTPS or SSH) to derive the correct `@users.noreply.github.com` address and applies it with `git config --local --auto-fix`. If auto-fix fails, the pipeline stops with a manual fix instruction.
+A dirty working tree is auto-stashed via `auto-stash.sh stash` before pre-flight and restored after all git operations complete (before the GitHub API call) via `auto-stash.sh pop`. A non-noreply git email is corrected by `fix-git-email.sh`, which parses the remote URL (HTTPS or SSH) to derive the correct `@users.noreply.github.com` address and applies it with `git config --local --auto-fix`.
 
 Both recoveries are noted inline. If either cannot be resolved, the pipeline stops immediately.
 

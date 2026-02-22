@@ -1,6 +1,6 @@
 # linux-sysadmin-mcp
 
-A Claude Code MCP plugin providing comprehensive Linux system administration: packages, services, users, firewall, networking, security, storage, containers, and more, through a structured, risk-aware tool interface.
+A Claude Code MCP plugin for Linux system administration. It exposes ~100 tools across 15 modules (packages, services, users, firewall, networking, security, storage, containers, and more) through a structured, risk-aware interface.
 
 ## Summary
 

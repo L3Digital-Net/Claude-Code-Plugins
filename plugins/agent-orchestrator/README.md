@@ -76,10 +76,10 @@ Invoke the command from within any project directory:
 
 The orchestrator walks through three phases:
 
-1. **Triage (Phase 0)**: Evaluates task size. If small enough (3 or fewer files, sequential by nature, describable in 3 sentences), handles it directly without spinning up any team infrastructure.
-2. **Plan (Phase 1)**: Scans the codebase in read-only plan mode, decomposes the work into teammate workstreams with explicit file ownership, designs a git worktree strategy, and presents a full orchestration plan for user approval. The plan is written to `.claude/state/orchestration-plan.md` before asking for approval so it survives context loss.
-3. **Execute (Phase 2)**: Bootstraps `.claude/state/` (ledger, teammate protocol, gitignore entries), creates worktrees, activates delegate mode enforced by the lead-write-guard hook, and spawns teammates in dependency waves. The lead monitors health via status files, aggregates results into the ledger, and compacts between waves.
-4. **Synthesize (Phase 3)**: Merges worktree branches one at a time, runs the integration-checker agent, cycles through a quality gate until clean (max 3 cycles), presents a final summary, and optionally cleans up state artifacts.
+1. **Triage (Phase 0)**: Evaluates task size. Tasks touching 3 or fewer files, sequential by nature, and describable in 3 sentences are handled directly without spinning up any team infrastructure.
+2. **Plan (Phase 1)**: Scans the codebase in read-only plan mode, decomposes the work into teammate workstreams with explicit file ownership, designs a git worktree strategy, and presents a full orchestration plan for user approval. The plan is written to `.claude/state/orchestration-plan.md` before the approval prompt so it survives context loss.
+3. **Execute (Phase 2)**: Bootstraps `.claude/state/` (ledger, teammate protocol, gitignore entries), creates worktrees, and spawns teammates in dependency waves with the lead-write-guard hook active. The lead monitors health via status files, aggregates results into the ledger, and compacts between waves.
+4. Merges worktree branches one at a time, runs the integration-checker agent, and cycles through a quality gate until clean (max 3 cycles). A final summary is presented; state artifacts are optionally cleaned up.
 
 When `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` is not set, subagent fallback mode activates automatically. Workstreams run sequentially within each wave and cross-workstream communication routes through the lead rather than directly between teammates. The plugin outputs a warning when this mode is active.
 
