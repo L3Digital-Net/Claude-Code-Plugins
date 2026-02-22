@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.0] - 2026-02-22
+
+### Added
+- `pth_generate_tests` now auto-discovers tool schemas by spawning the target MCP server and calling `tools/list` — no longer requires Claude to manually pass `toolSchemas`. Fixes incomplete test generation when the plugin has more tools than Claude's active tool registry (e.g. 106 tools on linux-sysadmin-mcp vs. 27 previously generated).
+- New `fetchToolSchemasFromMcpServer` function in `shared/source-analyzer.ts` using `StdioClientTransport` + `Client` from the MCP SDK
+
 ## [0.4.1] - 2026-02-21
 
 ### Fixed

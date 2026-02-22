@@ -76,7 +76,9 @@ export function registerPackageTools(ctx: PluginContext): void {
       name: parsed.package ?? parsed.name ?? (args.package as string),
       version: parsed.version,
       description: parsed.description,
-      installed: "installed-size" in parsed || (parsed.status?.includes("installed") ?? false),
+      // apt: Installed-Size field present; apt: Status: install ok installed
+      // dnf/rhel: "Installed packages" section header appears when package is installed
+      installed: "installed-size" in parsed || (parsed.status?.includes("installed") ?? false) || r.stdout.includes("Installed packages"),
       depends: parsed.depends,
     });
   });
