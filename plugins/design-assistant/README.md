@@ -40,9 +40,9 @@ claude --plugin-dir ./plugins/design-assistant
 ```mermaid
 flowchart TD
     User([User]) -->|"/design-draft [project or file]"| A[Phase 0-1: Orientation & Context Interview]
-    A --> B[Phase 2: Principles Discovery\nCandidate gen → stress-test → tension resolution → registry lock]
+    A --> B[Phase 2: Principles Discovery<br/>Candidate gen → stress-test → tension resolution → registry lock]
     B --> C[Phase 3-4: Scope, Structure & Content Questions]
-    C --> D((Draft Document\ndocs/design-draft.md))
+    C --> D((Draft Document<br/>docs/design-draft.md))
     D -->|Option B: warm handoff| E{Handoff or cold start?}
     D -->|Option A: save then manual| E
     User -->|"/design-review [path]"| E
@@ -50,7 +50,7 @@ flowchart TD
     E -->|Cold start| G[Extract or provide principles]
     F --> H[Initialization: Health check, gap baseline, auto-fix mode]
     G --> H
-    H --> I[Multi-pass loop:\nTrack A Structural · Track B Principle · Track C Gap]
+    H --> I[Multi-pass loop:<br/>Track A Structural · Track B Principle · Track C Gap]
     I -->|Zero findings, all clean| J((DESIGN REVIEW COMPLETE))
     I -->|Findings remain| I
 ```

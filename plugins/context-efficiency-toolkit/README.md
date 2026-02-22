@@ -54,18 +54,18 @@ claude --plugin-dir ./plugins/context-efficiency-toolkit
 ```mermaid
 flowchart TD
     User([User]) --> RCE[/review-context-efficiency/]
-    RCE --> S1[Stage 1: Analyze all plugin files\nClassify P1-P12 per file]
-    S1 --> S2[Stage 2: Map concrete consequences\nper violation]
+    RCE --> S1[Stage 1: Analyze all plugin files<br/>Classify P1-P12 per file]
+    S1 --> S2[Stage 2: Map concrete consequences<br/>per violation]
     S2 --> S3{Approve findings?}
-    S3 -- Yes --> S4[Stage 3: Present remediation options\nper HIGH/MEDIUM finding]
+    S3 -- Yes --> S4[Stage 3: Present remediation options<br/>per HIGH/MEDIUM finding]
     S4 --> S5[Stage 4: Sequence implementation plan]
     S5 --> S6[Stage 5: Execute approved plan]
     S6 --> TM[/tighten-markdown/]
-    TM --> T1[Step 1: Inventory file\ncount sections and sentences]
+    TM --> T1[Step 1: Inventory file<br/>count sections and sentences]
     T1 --> T2[Step 2: Cut — apply 3-test standard]
     T2 --> T3[Step 3: Compress — rewrite survivors]
     T3 --> T4[Step 4: Structure — enforce format rules]
-    T4 --> T5((Write file\nreport savings))
+    T4 --> T5((Write file<br/>report savings))
 ```
 
 ## Usage

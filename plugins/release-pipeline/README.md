@@ -43,23 +43,23 @@ claude --plugin-dir ./plugins/release-pipeline
 
 ```mermaid
 flowchart TD
-    User([User invokes /release]) --> P0[Phase 0: Detect context\nmonorepo · git state · version · tag]
-    P0 --> Menu{Interactive menu\nAskUserQuestion}
-    Menu -->|Quick Merge| M1[Stage · commit if dirty\nMerge testing → main · push]
+    User([User invokes /release]) --> P0[Phase 0: Detect context<br/>monorepo · git state · version · tag]
+    P0 --> Menu{Interactive menu<br/>AskUserQuestion}
+    Menu -->|Quick Merge| M1[Stage · commit if dirty<br/>Merge testing → main · push]
     Menu -->|Full Release| Vers[Version selection]
     Menu -->|Plugin Release| Pick[Plugin picker · version selection]
     Menu -->|Batch Release| Plan[Plan all unreleased plugins]
     Menu -->|Status / Dry Run / Preview| Info((Read-only output))
-    Vers --> AH[Phase 0.5: Auto-Heal\nauto-stash · fix git email]
+    Vers --> AH[Phase 0.5: Auto-Heal<br/>auto-stash · fix git email]
     Pick --> AH
     Plan --> AH
-    AH --> PF[Phase 1: Parallel pre-flight\nTest Runner · Docs Auditor · Git Pre-flight]
-    PF -->|Any FAIL| Stop((Stop · surface error\nrollback suggestion))
-    PF -->|All PASS/WARN| Prep[Phase 2: Preparation\nVersion bump · changelog preview]
+    AH --> PF[Phase 1: Parallel pre-flight<br/>Test Runner · Docs Auditor · Git Pre-flight]
+    PF -->|Any FAIL| Stop((Stop · surface error<br/>rollback suggestion))
+    PF -->|All PASS/WARN| Prep[Phase 2: Preparation<br/>Version bump · changelog preview]
     Prep --> Gate{Approval gate}
     Gate -->|Abort| Revert((Revert version bumps))
-    Gate -->|Proceed| Rel[Phase 3: Release\ncommit · tag reconcile · merge · push]
-    Rel --> GH[Phase 3.5: Stash restore\nGitHub release create]
+    Gate -->|Proceed| Rel[Phase 3: Release<br/>commit · tag reconcile · merge · push]
+    Rel --> GH[Phase 3.5: Stash restore<br/>GitHub release create]
     GH --> Ver[Phase 4: Verify release]
     Ver --> Report((Final summary report))
 ```

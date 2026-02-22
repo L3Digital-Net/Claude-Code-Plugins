@@ -75,12 +75,12 @@ flowchart LR
     A[Claude] -->|MCP tool call| B[linux-sysadmin-mcp server]
     B --> C{Safety Gate}
     C -->|risk below threshold| D[Executor]
-    C -->|risk >= threshold\nand not confirmed| E[confirmation_required response]
+    C -->|risk >= threshold<br/>and not confirmed| E[confirmation_required response]
     C -->|dry_run: true| F[preview_command response]
     D --> G[sudo command on local host]
     G -->|stdout + exit code| H[Structured JSON response]
     H --> A
-    I[Knowledge Profiles] -.->|risk escalations\nhealth checks\nlog sources| C
+    I[Knowledge Profiles] -.->|risk escalations<br/>health checks<br/>log sources| C
 ```
 
 The server runs as a stdio MCP process spawned by Claude Code. On startup it detects the distro family, verifies sudo access, loads active systemd units, resolves knowledge profiles, and registers all tool modules. Tool registrations are filtered in degraded mode — only `read-only` tools are exposed when passwordless sudo is unavailable.
