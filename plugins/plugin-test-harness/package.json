@@ -14,7 +14,7 @@
     "typecheck": "tsc -p tsconfig.test.json --noEmit"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.15.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "execa": "^9.5.0",
     "yaml": "^2.7.0",
     "zod": "^3.24.0",
