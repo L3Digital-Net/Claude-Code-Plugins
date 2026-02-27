@@ -325,8 +325,8 @@ class TestCrossReferences:
 
     def test_readme_mentions_module_count(self, plugin_root: Path) -> None:
         readme = (plugin_root / "README.md").read_text()
-        assert "15" in readme, (
-            "README should mention 15 modules"
+        assert "5 modules" in readme, (
+            "README should mention 5 modules"
         )
 
     def test_readme_mentions_all_profiles(self, plugin_root: Path) -> None:
