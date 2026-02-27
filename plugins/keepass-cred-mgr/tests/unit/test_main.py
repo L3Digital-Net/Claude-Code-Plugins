@@ -185,3 +185,71 @@ class TestAppLifespan:
                 assert ctx.poll_task is not None
             # After exit, poll task should have been cancelled
             # (the poll_task is an asyncio.Task wrapping start_polling)
+
+
+class TestListEntriesHandler:
+    def test_happy_path(self):
+        from server.main import list_entries, AppContext
+        ctx = MagicMock()
+        app = AppContext(vault=MagicMock(), audit=MagicMock(), poll_task=MagicMock())
+        ctx.request_context.lifespan_context = app
+        entries = [{"title": "Test", "group": "Servers", "username": "u", "url": ""}]
+        with patch("server.tools.read.list_entries", return_value=entries) as mock_le:
+            result = list_entries(ctx, group="Servers", include_inactive=False)
+            assert result == entries
+            mock_le.assert_called_once_with(
+                app.vault, app.audit, group="Servers", include_inactive=False
+            )
+
+    def test_group_not_allowed_maps_to_value_error(self):
+        from server.main import list_entries, AppContext
+        ctx = MagicMock()
+        app = AppContext(vault=MagicMock(), audit=MagicMock(), poll_task=MagicMock())
+        ctx.request_context.lifespan_context = app
+        with patch("server.tools.read.list_entries", side_effect=GroupNotAllowed("nope")):
+            with pytest.raises(ValueError, match="GroupNotAllowed"):
+                list_entries(ctx, group="Banking")
+
+
+class TestSearchEntriesHandler:
+    def test_happy_path(self):
+        from server.main import search_entries, AppContext
+        ctx = MagicMock()
+        app = AppContext(vault=MagicMock(), audit=MagicMock(), poll_task=MagicMock())
+        ctx.request_context.lifespan_context = app
+        entries = [{"title": "Match", "group": "Servers", "username": "u", "url": ""}]
+        with patch("server.tools.read.search_entries", return_value=entries) as mock_se:
+            result = search_entries(ctx, query="Match", group=None, include_inactive=False)
+            assert result == entries
+            mock_se.assert_called_once()
+
+
+class TestGetAttachmentErrors:
+    def test_group_not_allowed_maps_to_value_error(self):
+        from server.main import get_attachment, AppContext
+        ctx = MagicMock()
+        app = AppContext(vault=MagicMock(), audit=MagicMock(), poll_task=MagicMock())
+        ctx.request_context.lifespan_context = app
+        with patch("server.tools.read.get_attachment", side_effect=GroupNotAllowed("nope")):
+            with pytest.raises(ValueError, match="GroupNotAllowed"):
+                get_attachment(ctx, title="Test", attachment_name="file.txt", group="Banking")
+
+
+class TestDeactivateEntryErrors:
+    def test_vault_locked_maps_to_value_error(self):
+        from server.main import deactivate_entry, AppContext
+        ctx = MagicMock()
+        app = AppContext(vault=MagicMock(), audit=MagicMock(), poll_task=MagicMock())
+        ctx.request_context.lifespan_context = app
+        with patch("server.tools.write.deactivate_entry", side_effect=VaultLocked("locked")):
+            with pytest.raises(ValueError, match="VaultLocked"):
+                deactivate_entry(ctx, title="Test", group="Servers")
+
+    def test_write_lock_timeout_maps_to_value_error(self):
+        from server.main import deactivate_entry, AppContext
+        ctx = MagicMock()
+        app = AppContext(vault=MagicMock(), audit=MagicMock(), poll_task=MagicMock())
+        ctx.request_context.lifespan_context = app
+        with patch("server.tools.write.deactivate_entry", side_effect=WriteLockTimeout("timeout")):
+            with pytest.raises(ValueError, match="WriteLockTimeout"):
+                deactivate_entry(ctx, title="Test", group="Servers")

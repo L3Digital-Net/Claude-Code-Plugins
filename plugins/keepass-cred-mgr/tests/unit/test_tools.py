@@ -591,3 +591,74 @@ class TestWriteTools:
         assert len(log_lines) == 3
         tools = [json.loads(line)["tool"] for line in log_lines]
         assert tools == ["create_entry", "deactivate_entry", "add_attachment"]
+
+
+class TestSearchEntries:
+    @patch("subprocess.run")
+    def test_search_with_group_filter(self, mock_run, unlocked_vault):
+        """Explicit group filters results to only that group."""
+        from server.tools.read import search_entries
+
+        vault, audit = unlocked_vault
+        mock_run.side_effect = [
+            # search returns entries from multiple groups
+            subprocess.CompletedProcess(
+                args=[], returncode=0,
+                stdout="Servers/Web Server\nSSH Keys/SSH Key\nAPI Keys/Anthropic\n",
+                stderr=""
+            ),
+            # show Web Server (only this should be fetched for group="Servers")
+            subprocess.CompletedProcess(
+                args=[], returncode=0,
+                stdout="Title: Web Server\nUserName: admin\nURL: https://web\n",
+                stderr=""
+            ),
+        ]
+        result = search_entries(vault, audit, query="Server", group="Servers")
+        assert len(result) == 1
+        assert result[0]["title"] == "Web Server"
+
+    @patch("subprocess.run")
+    def test_search_filters_inactive_by_default(self, mock_run, unlocked_vault):
+        """Inactive entries excluded when include_inactive=False."""
+        from server.tools.read import search_entries
+
+        vault, audit = unlocked_vault
+        mock_run.side_effect = [
+            subprocess.CompletedProcess(
+                args=[], returncode=0,
+                stdout="Servers/Active Entry\nServers/[INACTIVE] Old Entry\n",
+                stderr=""
+            ),
+            # show Active Entry
+            subprocess.CompletedProcess(
+                args=[], returncode=0,
+                stdout="Title: Active Entry\nUserName: u\nURL: \n",
+                stderr=""
+            ),
+        ]
+        result = search_entries(vault, audit, query="Entry")
+        assert len(result) == 1
+        assert result[0]["title"] == "Active Entry"
+
+    @patch("subprocess.run")
+    def test_search_entry_without_group_prefix(self, mock_run, unlocked_vault):
+        """Entries without group prefix (no '/') get group=None."""
+        from server.tools.read import search_entries
+
+        vault, audit = unlocked_vault
+        mock_run.side_effect = [
+            subprocess.CompletedProcess(
+                args=[], returncode=0,
+                stdout="Standalone Entry\n",
+                stderr=""
+            ),
+            subprocess.CompletedProcess(
+                args=[], returncode=0,
+                stdout="Title: Standalone Entry\nUserName: u\nURL: \n",
+                stderr=""
+            ),
+        ]
+        result = search_entries(vault, audit, query="Standalone")
+        assert len(result) == 1
+        assert result[0]["group"] is None
