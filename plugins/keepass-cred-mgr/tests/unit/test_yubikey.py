@@ -82,6 +82,27 @@ class TestRealYubiKey:
         yk = RealYubiKey(slot=2)
         assert yk.slot() == 2
 
+    @patch("subprocess.run")
+    def test_not_present_on_os_error(self, mock_run):
+        """OSError (e.g., ykman not installed) returns False."""
+        from server.yubikey import RealYubiKey
+
+        mock_run.side_effect = OSError("No such file or directory")
+        yk = RealYubiKey(slot=2)
+        assert yk.is_present() is False
+
+    @patch("subprocess.run")
+    def test_non_zero_returncode_with_stdout(self, mock_run):
+        """Non-zero returncode with stdout still returns True (stdout check only)."""
+        from server.yubikey import RealYubiKey
+
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=1, stdout="YubiKey 5C Nano\n", stderr="warning"
+        )
+        yk = RealYubiKey(slot=2)
+        # The code checks bool(stdout.strip()), not returncode
+        assert yk.is_present() is True
+
 
 class TestYubiKeyInterface:
     def test_mock_implements_interface(self):

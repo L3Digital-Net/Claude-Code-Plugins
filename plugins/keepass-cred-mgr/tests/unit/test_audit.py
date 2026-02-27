@@ -72,3 +72,44 @@ class TestAuditLogger:
         bad_path = str(tmp_path / "nonexistent" / "subdir" / "audit.jsonl")
         with pytest.raises(FileNotFoundError):
             AuditLogger(bad_path)
+
+    def test_group_none_serializes_to_null(self, tmp_path):
+        """group=None writes JSON null."""
+        import json
+        from server.audit import AuditLogger
+
+        audit_path = tmp_path / "audit.jsonl"
+        logger = AuditLogger(str(audit_path))
+        logger.log(tool="get_entry", title="Test", group=None, secret_returned=True)
+        record = json.loads(audit_path.read_text().strip())
+        assert record["group"] is None
+        assert record["attachment"] is None
+
+    def test_timestamp_is_valid_iso_format(self, tmp_path):
+        """Timestamp can be parsed by datetime.fromisoformat."""
+        from datetime import datetime
+        import json
+        from server.audit import AuditLogger
+
+        audit_path = tmp_path / "audit.jsonl"
+        logger = AuditLogger(str(audit_path))
+        logger.log(tool="test", title="Test")
+        record = json.loads(audit_path.read_text().strip())
+        parsed = datetime.fromisoformat(record["timestamp"])
+        assert parsed.year >= 2026
+
+    def test_permission_error_propagates(self, tmp_path):
+        """Write failure raises OSError."""
+        import os
+        from server.audit import AuditLogger
+
+        audit_path = tmp_path / "audit.jsonl"
+        logger = AuditLogger(str(audit_path))
+        # Create file as read-only
+        audit_path.write_text("")
+        os.chmod(audit_path, 0o444)
+        try:
+            with pytest.raises(PermissionError):
+                logger.log(tool="test", title="Test")
+        finally:
+            os.chmod(audit_path, 0o644)

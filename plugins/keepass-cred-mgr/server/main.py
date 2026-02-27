@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import binascii
 import logging
+import subprocess
 import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -87,7 +89,7 @@ def list_groups(ctx: Context) -> list[str]:
     app = _get_ctx(ctx)
     try:
         return read_tools.list_groups(app.vault)
-    except (VaultLocked, YubiKeyNotPresent, KeePassCLIError) as e:
+    except (VaultLocked, YubiKeyNotPresent, KeePassCLIError, subprocess.TimeoutExpired) as e:
         raise ValueError(_error_text(e))
 
 
@@ -103,7 +105,7 @@ def list_entries(
         return read_tools.list_entries(
             app.vault, app.audit, group=group, include_inactive=include_inactive
         )
-    except (VaultLocked, GroupNotAllowed, KeePassCLIError) as e:
+    except (VaultLocked, GroupNotAllowed, KeePassCLIError, subprocess.TimeoutExpired) as e:
         raise ValueError(_error_text(e))
 
 
@@ -121,7 +123,7 @@ def search_entries(
             app.vault, app.audit,
             query=query, group=group, include_inactive=include_inactive,
         )
-    except (VaultLocked, GroupNotAllowed, KeePassCLIError) as e:
+    except (VaultLocked, GroupNotAllowed, KeePassCLIError, subprocess.TimeoutExpired) as e:
         raise ValueError(_error_text(e))
 
 
@@ -131,7 +133,7 @@ def get_entry(ctx: Context, title: str, group: str | None = None) -> dict:
     app = _get_ctx(ctx)
     try:
         return read_tools.get_entry(app.vault, app.audit, title=title, group=group)
-    except (VaultLocked, EntryInactive, GroupNotAllowed, KeePassCLIError) as e:
+    except (VaultLocked, EntryInactive, GroupNotAllowed, KeePassCLIError, subprocess.TimeoutExpired) as e:
         raise ValueError(_error_text(e))
 
 
@@ -147,7 +149,7 @@ def get_attachment(
             title=title, attachment_name=attachment_name, group=group,
         )
         return base64.b64encode(data).decode("ascii")
-    except (VaultLocked, EntryInactive, GroupNotAllowed, KeePassCLIError) as e:
+    except (VaultLocked, EntryInactive, GroupNotAllowed, KeePassCLIError, subprocess.TimeoutExpired) as e:
         raise ValueError(_error_text(e))
 
 
@@ -176,6 +178,7 @@ def create_entry(
     except (
         VaultLocked, GroupNotAllowed, DuplicateEntry,
         WriteLockTimeout, KeePassCLIError, ValueError,
+        subprocess.TimeoutExpired,
     ) as e:
         raise ValueError(_error_text(e))
 
@@ -194,6 +197,7 @@ def deactivate_entry(
     except (
         VaultLocked, EntryInactive, GroupNotAllowed,
         WriteLockTimeout, KeePassCLIError,
+        subprocess.TimeoutExpired,
     ) as e:
         raise ValueError(_error_text(e))
 
@@ -219,6 +223,7 @@ def add_attachment(
     except (
         VaultLocked, EntryInactive, GroupNotAllowed,
         WriteLockTimeout, KeePassCLIError,
+        binascii.Error, subprocess.TimeoutExpired,
     ) as e:
         raise ValueError(_error_text(e))
 

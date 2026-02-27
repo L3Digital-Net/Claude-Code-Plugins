@@ -23,6 +23,31 @@ def unlocked_vault(test_config, mock_yubikey):
     return vault, audit
 
 
+class TestParseShowOutput:
+    """Direct tests for the _parse_show_output helper."""
+
+    def test_empty_input(self):
+        from server.tools.read import _parse_show_output
+        assert _parse_show_output("") == {}
+
+    def test_value_containing_colon(self):
+        """Values with ': ' are handled correctly by partition."""
+        from server.tools.read import _parse_show_output
+        result = _parse_show_output("Notes: URL: https://example.com\n")
+        assert result["notes"] == "URL: https://example.com"
+
+    def test_unknown_fields_ignored(self):
+        from server.tools.read import _parse_show_output
+        result = _parse_show_output("CustomField: something\nTitle: My Entry\n")
+        assert result == {"title": "My Entry"}
+
+    def test_case_insensitive_keys(self):
+        from server.tools.read import _parse_show_output
+        result = _parse_show_output("USERNAME: admin\nPASSWORD: s3cret\n")
+        assert result["username"] == "admin"
+        assert result["password"] == "s3cret"
+
+
 class TestReadTools:
     @patch("subprocess.run")
     def test_list_groups(self, mock_run, unlocked_vault):
@@ -222,6 +247,78 @@ class TestReadTools:
             list_entries(vault, audit, group="Banking")
 
 
+    @patch("subprocess.run")
+    def test_list_entries_group_none_iterates_all(self, mock_run, unlocked_vault):
+        """group=None iterates all allowed_groups."""
+        from server.tools.read import list_entries
+
+        vault, audit = unlocked_vault
+        # 3 allowed groups: Servers, SSH Keys, API Keys
+        # Each returns one entry + one show call = 6 total subprocess calls
+        mock_run.side_effect = [
+            # ls Servers
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="Web Server\n", stderr=""),
+            # show Web Server
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="Title: Web Server\nUserName: admin\nURL: https://web\n", stderr=""),
+            # ls SSH Keys
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="My SSH Key\n", stderr=""),
+            # show My SSH Key
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="Title: My SSH Key\nUserName: user\nURL: \n", stderr=""),
+            # ls API Keys
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="Anthropic\n", stderr=""),
+            # show Anthropic
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="Title: Anthropic\nUserName: key\nURL: https://api\n", stderr=""),
+        ]
+        result = list_entries(vault, audit, group=None)
+        assert len(result) == 3
+        groups = {e["group"] for e in result}
+        assert groups == {"Servers", "SSH Keys", "API Keys"}
+
+    @patch("subprocess.run")
+    def test_list_entries_page_size_truncation(self, mock_run, unlocked_vault, test_config):
+        """Results truncated at page_size limit."""
+        from server.tools.read import list_entries
+
+        vault, audit = unlocked_vault
+        import yaml
+        from pathlib import Path
+        from server.config import load_config
+        from server.vault import Vault
+
+        # Create a custom vault with page_size=2
+        tmp_dir = Path(test_config.database_path).parent
+        cfg = {
+            "database_path": test_config.database_path,
+            "yubikey_slot": 2,
+            "grace_period_seconds": 2,
+            "yubikey_poll_interval_seconds": 1,
+            "write_lock_timeout_seconds": 2,
+            "page_size": 2,
+            "allowed_groups": ["Servers"],
+            "audit_log_path": test_config.audit_log_path,
+        }
+        config_file = tmp_dir / "config_small.yaml"
+        config_file.write_text(yaml.dump(cfg))
+        small_config = load_config(str(config_file))
+        from server.yubikey import MockYubiKey
+        small_vault = Vault(small_config, MockYubiKey(present=True))
+        small_vault._unlocked = True
+        from server.audit import AuditLogger
+        small_audit = AuditLogger(small_config.audit_log_path)
+
+        mock_run.side_effect = [
+            # ls returns 5 entries
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="Entry1\nEntry2\nEntry3\nEntry4\nEntry5\n", stderr=""),
+            # show Entry1
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="Title: Entry1\nUserName: u1\nURL: \n", stderr=""),
+            # show Entry2
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="Title: Entry2\nUserName: u2\nURL: \n", stderr=""),
+            # Entry3-5 should never be called because page_size=2
+        ]
+        result = list_entries(small_vault, small_audit, group="Servers")
+        assert len(result) == 2
+
+
 class TestWriteTools:
     @patch("subprocess.run")
     def test_create_entry(self, mock_run, unlocked_vault, test_config):
@@ -390,3 +487,107 @@ class TestWriteTools:
                 content=b"key data",
                 group="SSH Keys",
             )
+
+    @patch("subprocess.run")
+    def test_acquire_lock_timeout_raises(self, mock_run, unlocked_vault, test_config):
+        """WriteLockTimeout when lock is held by another process."""
+        from server.tools.write import _acquire_lock
+        from server.vault import WriteLockTimeout
+        from filelock import FileLock
+
+        vault, audit = unlocked_vault
+        lock_path = test_config.database_path + ".lock"
+        # Acquire lock from outside to simulate contention
+        blocking_lock = FileLock(lock_path, timeout=0)
+        blocking_lock.acquire()
+        try:
+            with pytest.raises(WriteLockTimeout):
+                _acquire_lock(vault)
+        finally:
+            blocking_lock.release()
+
+    def test_shred_file_nonexistent(self, tmp_path):
+        """_shred_file on nonexistent file does not raise."""
+        from server.tools.write import _shred_file
+        fake_path = str(tmp_path / "nonexistent.tmp")
+        # Should not raise
+        _shred_file(fake_path)
+
+    def test_shred_file_zero_length(self, tmp_path):
+        """_shred_file on zero-length file still unlinks."""
+        import os
+        from server.tools.write import _shred_file
+        empty_file = tmp_path / "empty.tmp"
+        empty_file.write_bytes(b"")
+        _shred_file(str(empty_file))
+        assert not os.path.exists(str(empty_file))
+
+    @patch("subprocess.run")
+    def test_create_entry_partial_fields(self, mock_run, unlocked_vault):
+        """create_entry with only username (no password, url, notes)."""
+        from server.tools.write import create_entry
+
+        vault, audit = unlocked_vault
+        mock_run.side_effect = [
+            # ls returns no existing entries
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
+            # add succeeds
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
+        ]
+        create_entry(vault, audit, title="New", group="Servers", username="admin")
+        add_call = mock_run.call_args_list[-1]
+        cmd = add_call.args[0] if add_call.args else add_call[0][0]
+        assert "--username" in cmd
+        assert "--password" not in cmd
+        assert "--url" not in cmd
+        assert "--notes" not in cmd
+
+    @patch("subprocess.run")
+    def test_add_attachment_with_str_content(self, mock_run, unlocked_vault):
+        """str content is encoded to UTF-8 before writing to temp file."""
+        from server.tools.write import add_attachment
+
+        vault, audit = unlocked_vault
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="", stderr=""
+        )
+        # Pass string instead of bytes
+        add_attachment(
+            vault, audit,
+            title="SSH Key",
+            attachment_name="id_ed25519.pub",
+            content="ssh-ed25519 AAAA... user@host",
+            group="SSH Keys",
+        )
+
+    @patch("subprocess.run")
+    def test_write_tools_produce_audit_records(self, mock_run, unlocked_vault, test_config):
+        """All 3 write tools produce audit records."""
+        import json
+        from pathlib import Path
+        from server.tools.write import create_entry, deactivate_entry, add_attachment
+
+        vault, audit = unlocked_vault
+        mock_run.side_effect = [
+            # create_entry: ls for duplicates
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
+            # create_entry: add
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
+            # deactivate_entry: show for notes
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="Title: Entry2\nNotes: \n", stderr=""),
+            # deactivate_entry: edit title
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
+            # deactivate_entry: edit notes
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
+            # add_attachment: attachment-import
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
+        ]
+
+        create_entry(vault, audit, title="Entry1", group="Servers", username="u")
+        deactivate_entry(vault, audit, title="Entry2", group="Servers")
+        add_attachment(vault, audit, title="Entry3", attachment_name="f.txt", content=b"data", group="SSH Keys")
+
+        log_lines = Path(test_config.audit_log_path).read_text().strip().split("\n")
+        assert len(log_lines) == 3
+        tools = [json.loads(line)["tool"] for line in log_lines]
+        assert tools == ["create_entry", "deactivate_entry", "add_attachment"]

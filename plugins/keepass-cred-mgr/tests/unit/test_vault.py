@@ -129,6 +129,20 @@ class TestVaultRunCli:
         with pytest.raises(KeePassCLIError):
             vault.run_cli("show", test_config.database_path, "Nonexistent")
 
+    @patch("subprocess.run")
+    def test_run_cli_raises_on_timeout(self, mock_run, test_config, mock_yubikey):
+        """subprocess.TimeoutExpired propagates from run_cli."""
+        mock_run.side_effect = [
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
+            subprocess.TimeoutExpired(cmd=["keepassxc-cli"], timeout=30),
+        ]
+        from server.vault import Vault
+
+        vault = Vault(test_config, mock_yubikey)
+        vault.unlock()
+        with pytest.raises(subprocess.TimeoutExpired):
+            vault.run_cli("show", test_config.database_path, "Servers/Entry")
+
 
 class TestVaultEntryPath:
     def test_with_group(self, test_config, mock_yubikey):
@@ -142,6 +156,47 @@ class TestVaultEntryPath:
 
         vault = Vault(test_config, mock_yubikey)
         assert vault.entry_path("My Entry", None) == "My Entry"
+
+
+class TestVaultProperties:
+    @patch("subprocess.run")
+    def test_unlock_time_set_after_unlock(self, mock_run, test_config, mock_yubikey):
+        """unlock_time is a UTC datetime after successful unlock."""
+        from datetime import datetime, timezone
+        from server.vault import Vault
+
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="", stderr=""
+        )
+        vault = Vault(test_config, mock_yubikey)
+        assert vault.unlock_time is None
+        vault.unlock()
+        assert isinstance(vault.unlock_time, datetime)
+        assert vault.unlock_time.tzinfo == timezone.utc
+
+    def test_config_property(self, test_config, mock_yubikey):
+        """config property returns the Config object."""
+        from server.vault import Vault
+
+        vault = Vault(test_config, mock_yubikey)
+        assert vault.config is test_config
+        assert vault.config.database_path == test_config.database_path
+
+
+class TestVaultLock:
+    @patch("subprocess.run")
+    def test_lock_resets_state(self, mock_run, test_config, mock_yubikey):
+        """_lock() sets is_unlocked to False."""
+        from server.vault import Vault
+
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="", stderr=""
+        )
+        vault = Vault(test_config, mock_yubikey)
+        vault.unlock()
+        assert vault.is_unlocked is True
+        vault._lock()
+        assert vault.is_unlocked is False
 
 
 class TestVaultGraceTimer:
@@ -190,6 +245,52 @@ class TestVaultGraceTimer:
         yk.present = True  # Reinsert before grace expires
         await asyncio.sleep(2)  # Wait past original grace period
         assert vault.is_unlocked is True  # Should still be unlocked
+        poll_task.cancel()
+        try:
+            await poll_task
+        except asyncio.CancelledError:
+            pass
+
+    @pytest.mark.asyncio
+    async def test_cancel_polling_during_grace_timer(self, test_config):
+        """Cancelling poll task while grace timer is active cleans up both tasks."""
+        from server.vault import Vault
+
+        yk = MockYubiKey(present=True)
+        vault = Vault(test_config, yk)
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="", stderr=""
+            )
+            vault.unlock()
+
+        poll_task = asyncio.create_task(vault.start_polling())
+        await asyncio.sleep(0.1)
+        yk.present = False
+        # Wait for poll to detect removal and start grace timer (poll interval=1s)
+        await asyncio.sleep(1.5)
+        assert vault._grace_timer is not None
+        # Cancel polling while grace timer is mid-countdown (grace=2s, ~0.5s left)
+        poll_task.cancel()
+        try:
+            await poll_task
+        except asyncio.CancelledError:
+            pass
+        # Vault should still be unlocked (grace didn't finish)
+        assert vault.is_unlocked is True
+
+    @pytest.mark.asyncio
+    async def test_poll_noop_when_locked_and_yubikey_removed(self, test_config):
+        """No grace timer starts when vault is already locked."""
+        from server.vault import Vault
+
+        yk = MockYubiKey(present=False)
+        vault = Vault(test_config, yk)
+        # Vault starts locked, YubiKey absent
+        poll_task = asyncio.create_task(vault.start_polling())
+        await asyncio.sleep(1.5)
+        assert vault._grace_timer is None
+        assert vault.is_unlocked is False
         poll_task.cancel()
         try:
             await poll_task

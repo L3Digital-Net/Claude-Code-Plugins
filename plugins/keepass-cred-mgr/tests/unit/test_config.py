@@ -117,3 +117,45 @@ class TestConfigLoading:
 
         with pytest.raises(FileNotFoundError):
             load_config("/nonexistent/path.yaml")
+
+    def test_raises_when_no_path_and_no_env_var(self, monkeypatch):
+        """load_config() with no path and no env var."""
+        from server.config import load_config
+
+        monkeypatch.delenv("KEEPASS_CRED_MGR_CONFIG", raising=False)
+        with pytest.raises(FileNotFoundError, match="No config path provided"):
+            load_config()
+
+    def test_empty_yaml_file_raises(self, tmp_path):
+        """Empty YAML file still enforces required fields."""
+        from server.config import load_config
+
+        config_file = tmp_path / "empty.yaml"
+        config_file.write_text("")
+        with pytest.raises(ValueError, match="Missing required config field"):
+            load_config(str(config_file))
+
+    def test_invalid_yaml_raises(self, tmp_path):
+        """Malformed YAML raises yaml.YAMLError."""
+        import yaml as yaml_mod
+        from server.config import load_config
+
+        config_file = tmp_path / "bad.yaml"
+        config_file.write_text("{{invalid:: yaml::")
+        with pytest.raises(yaml_mod.YAMLError):
+            load_config(str(config_file))
+
+    def test_non_string_path_skips_tilde_expansion(self, tmp_path):
+        """Integer database_path bypasses expanduser but still works."""
+        from server.config import load_config
+
+        audit_path = tmp_path / "audit.jsonl"
+        cfg = {
+            "database_path": 12345,
+            "allowed_groups": ["Servers"],
+            "audit_log_path": str(audit_path),
+        }
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(yaml.dump(cfg))
+        config = load_config(str(config_file))
+        assert config.database_path == 12345
