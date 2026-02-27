@@ -57,7 +57,7 @@
     {
       "name": "linux-sysadmin-mcp",
       "description": "Linux system administration MCP server with 18 tools across 5 modules: knowledge-profile-driven service diagnostics, config validation, dependency analysis, port audits, security audits, cron computation, and git-backed documentation",
-      "version": "1.1.2",
+      "version": "1.1.3",
       "author": {
         "name": "L3Digital-Net",
         "url": "https://github.com/L3Digital-Net"
@@ -151,7 +151,7 @@
     },
     {
       "name": "qt-test-suite",
-      "description": "Qt testing pipeline for PySide6 and C++/Qt projects — AI test generation, coverage-gap analysis with gcov/lcov and coverage.py, and headless GUI testing via bundled Qt Pilot MCP server.",
+      "description": "Qt testing pipeline for PySide6 and C++/Qt projects \u2014 AI test generation, coverage-gap analysis with gcov/lcov and coverage.py, and headless GUI testing via bundled Qt Pilot MCP server.",
       "version": "0.1.0",
       "author": {
         "name": "L3Digital-Net",
@@ -163,7 +163,7 @@
     },
     {
       "name": "qt-dev-suite",
-      "description": "Qt GUI application development toolkit — proactive specialist agents, 13 domain skills, and scaffolding commands for PySide6, PyQt6, and C++/Qt. Companion to qt-test-suite.",
+      "description": "Qt GUI application development toolkit \u2014 proactive specialist agents, 13 domain skills, and scaffolding commands for PySide6, PyQt6, and C++/Qt. Companion to qt-test-suite.",
       "version": "0.1.0",
       "author": {
         "name": "L3Digital-Net",
