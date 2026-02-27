@@ -2,6 +2,22 @@
 
 All notable changes to the linux-sysadmin-mcp plugin are documented here.
 
+## [1.1.3] - 2026-02-27
+
+### Changed
+- Refactor: Remove SSH, storage, and user management tools
+- Update GitHub org references from L3DigitalNet to L3Digital-Net
+- reduce AI writing signals across all plugin READMEs
+- Enhance Release Pipeline and Repo Hygiene Plugins
+
+### Fixed
+- update TOOL_MODULES to reflect removed sysadmin tools
+- remove em dashes from all READMEs; add hygiene check
+- cross-cutting standards sweep across marketplace
+- correct post-install — bundle is pre-built, no npm install needed
+- replace \n with <br/> in mermaid node labels across all plugin READMEs
+
+
 ## [1.1.2] - 2026-02-22
 
 ### Fixed
