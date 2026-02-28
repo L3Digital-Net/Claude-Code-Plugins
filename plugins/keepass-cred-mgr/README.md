@@ -1,6 +1,6 @@
 # keepass-cred-mgr
 
-KeePassXC Credential Manager for Claude Code. Exposes a KeePass `.kdbx` vault via 8 MCP tools, authenticated by YubiKey HMAC-SHA1 challenge-response, with credential-type skills and guided rotation commands.
+KeePassXC Credential Manager for Claude Code. Exposes a KeePass `.kdbx` vault via 9 MCP tools, authenticated by YubiKey HMAC-SHA1 challenge-response, with credential-type skills and guided rotation commands.
 
 ## Summary
 
@@ -23,7 +23,7 @@ All vault operations go through `keepassxc-cli`; the YubiKey must be physically 
 ## Features
 
 - **Vault state machine**: YubiKey presence polling with configurable grace period; auto-lock on removal, explicit touch required to re-unlock
-- **8 MCP tools**: 5 read (list groups, list entries, search, get entry, get attachment) and 3 write (create entry, deactivate entry, add attachment)
+- **9 MCP tools**: 1 auth (`unlock_vault`), 5 read (list groups, list entries, search, get entry, get attachment), and 3 write (create entry, deactivate entry, add attachment)
 - **Credential-type skills**: Per-service rules for cPanel, FTP/SFTP, SSH keys, Brave Search API, and Anthropic API credentials
 - **Guided rotation**: `/keepass-rotate` walks through create-then-deactivate with safety checks at each step
 - **Audit logging**: Structured JSONL log for all secret-returning operations
@@ -68,33 +68,31 @@ cp config.example.yaml ~/.config/keepass-cred-mgr/config.yaml
 mkdir -p ~/.local/share/keepass-cred-mgr
 ```
 
-4. Install Python dependencies:
-
-```bash
-cd ~/.claude/plugins/cache/l3digitalnet-plugins/keepass-cred-mgr
-pip install -e .
-```
+The MCP server resolves its Python dependencies automatically via `uv run` on first launch — no manual `pip install` step required.
 
 ## How It Works
 
 ```mermaid
 flowchart TD
-    User([User or Claude]) -->|tool call| Server[keepass-cred-mgr<br/>MCP Server]
-    Server --> YK{YubiKey<br/>present?}
+    UnlockCall([unlock_vault]) --> YK{YubiKey<br/>present?}
     YK -->|no| Locked((VaultLocked<br/>error))
-    YK -->|yes, first access| Touch[YubiKey touch<br/>to unlock]
-    Touch --> Vault[keepassxc-cli]
-    YK -->|yes, already unlocked| Vault
+    YK -->|yes| Touch[YubiKey touch<br/>opens vault]
+    Touch --> Ready[Vault unlocked]
+
+    ToolCall([Any other tool]) --> Check{Vault<br/>unlocked?}
+    Check -->|no| Locked2((VaultLocked<br/>error))
+    Check -->|yes| Vault[keepassxc-cli]
     Vault -->|read tools| Read[Return entry<br/>metadata or secrets]
     Vault -->|write tools| Lock[Acquire<br/>file lock]
     Lock --> Write[Create, deactivate,<br/>or attach]
     Read -->|secret returned| Audit[Audit log<br/>JSONL record]
     Write --> Audit
+
     Poller[Background poller] -.->|ykman list<br/>every 5s| YK
     Poller -.->|removed > grace period| AutoLock[Auto-lock vault]
 ```
 
-The server runs as a stdio MCP process spawned by Claude Code. On startup it loads the YAML config, initializes the YubiKey poller, and registers all 8 tools. The vault starts locked; the first tool call that requires vault access triggers an unlock flow with a physical YubiKey touch. Once unlocked, the vault stays open as long as the YubiKey is inserted. Removal starts a grace timer (default 10 seconds) to handle transient USB interruptions; if the key isn't reinserted in time, the vault locks and all subsequent tool calls fail with `VaultLocked` until a fresh touch.
+The server runs as a stdio MCP process spawned by Claude Code via `scripts/start-server.sh`, which resolves Python dependencies through `uv run` and starts the FastMCP server. On startup it loads the YAML config, initializes the YubiKey poller, and registers all 9 tools. The vault starts locked; call `unlock_vault` first to verify YubiKey presence and perform a physical touch. Once unlocked, the vault stays open as long as the YubiKey is inserted. Removal starts a grace timer (default 10 seconds) to handle transient USB interruptions; if the key isn't reinserted in time, the vault locks and all subsequent tool calls fail with `VaultLocked` until `unlock_vault` is called again.
 
 ## Usage
 
@@ -118,6 +116,7 @@ For structured workflows, use the slash commands:
 
 | Tool | Parameters | Returns | Notes |
 |------|-----------|---------|-------|
+| `unlock_vault` | (none) | Confirmation | Must be called before any other vault tool; requires YubiKey touch |
 | `list_groups` | (none) | Group names | Filtered to `allowed_groups` |
 | `list_entries` | `group?`, `include_inactive?` | Title, username, URL per entry | N+1 CLI calls; capped at `page_size` |
 | `search_entries` | `query`, `group?`, `include_inactive?` | Matching entry metadata | Filtered to allowed groups |

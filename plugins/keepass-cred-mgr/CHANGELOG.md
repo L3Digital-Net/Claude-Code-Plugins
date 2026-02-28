@@ -4,34 +4,36 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.2] - 2026-02-28
+
+### Added
+
+- `unlock_vault` MCP tool: explicit vault unlock requiring YubiKey touch; must be called before any other vault tool
+- `scripts/start-server.sh`: bash wrapper that resolves Python dependencies via `uv run --with` and starts the FastMCP server; eliminates manual `pip install` step for users
+- PTH fake-tool simulation infrastructure (`scripts/fake-tools/`): fake `ykman` and `keepassxc-cli` binaries for plugin-test-harness sessions; prepended to PATH automatically by `start-server.sh` when the directory exists; never present in production
+
+### Fixed
+
+- MCP server startup: `.mcp.json` now uses flat `{"keepass": {...}}` format (the `mcpServers` wrapper is not supported in plugin context)
+- Dependency resolution: server uses `uv run --with mcp,structlog,pyyaml,filelock` — no manual Python dependency installation required after plugin install
+- `printf` format string handling in fake CLI: `printf -- '...'` prevents bash from interpreting leading dashes as option flags
+
 ## [0.1.1] - 2026-02-28
 
 ### Added
-- KeePassXC Credential Manager plugin v0.1.0
-- add manual setup guide for KeePass MCP plugin
 
-### Changed
-- add ruff + mypy config, fix lint and type issues
-- fill coverage gaps for handler and search_entries branches
-- fill integration test stubs with real keepassxc-cli calls
-- add PasswordVault helper for integration tests
-- add quality hardening implementation plan
-- add quality hardening design (integration tests, coverage, linting)
-- Release keepass-cred-mgr v0.1.1
-- comprehensive testing (58 -> 100 tests, ~90%+ coverage)
-
-
-## [0.1.1] - 2026-02-27
+- 100 unit tests (up from 58): full handler layer coverage, edge cases for config, vault, audit, and tools
+- `test_main.py` covering all 8 MCP handlers, `app_lifespan`, and helper functions (~90% coverage on `main.py`)
+- ruff + mypy strict configuration; integration test framework with test database creation script
 
 ### Fixed
 
 - `add_attachment` handler now catches `binascii.Error` from malformed base64 input
 - All 8 MCP handlers now catch `subprocess.TimeoutExpired` from hanging `keepassxc-cli` processes
 
-### Added
+### Changed
 
-- 100 unit tests (up from 58): full handler layer coverage, edge cases for config, vault, audit, and tools
-- `test_main.py` covering all 8 MCP handlers, `app_lifespan`, and helper functions (~90% coverage on `main.py`)
+- Comprehensive testing sweep: 58 → 100 tests, coverage raised to ~97%
 
 ## [0.1.0] - 2026-02-27
 

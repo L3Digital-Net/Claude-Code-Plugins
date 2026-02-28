@@ -74,6 +74,12 @@ claude --plugin-dir ./plugins/plugin-name
 
 CI runs the full matrix automatically on push to `testing` or `main`.
 
+## Plugin Test Harness (PTH)
+
+- PTH loads tests from previous sessions. ALWAYS clear/regenerate tests for the current target plugin before running.
+- PTH does NOT auto-execute tests — you must manually call MCP tools and record results.
+- When testing a plugin, confirm the target plugin name explicitly before generating tests to avoid stale/mismatched test data.
+
 ## Development Workflow
 
 **New plugin checklist:**
@@ -96,6 +102,13 @@ git checkout main && git merge testing --no-ff -m "Deploy: <description>" && git
 ```
 
 See [BRANCH_PROTECTION.md](BRANCH_PROTECTION.md) for emergency hotfix workflow.
+
+## Release Pipeline
+
+- Reconcile existing remote tags gracefully — compare local vs remote before pushing; never fail on pre-existing tags.
+- Handle API 400 errors with retry logic; save progress so releases can be resumed.
+- When releasing plugins: expect pre-existing tags or dirty state from prior sessions. Check remote tags before pushing; handle selective staging carefully when unrelated changes are present.
+- When the user waives pre-flight failures (dirty tree, missing tests, email config), proceed without re-asking — these are intentional overrides.
 
 ## Key Architectural Patterns
 
@@ -170,6 +183,7 @@ Ground truth schema: `~/.claude/plugins/marketplaces/claude-plugins-official/.cl
 - **Stale `enabledPlugins` entries** — removing a marketplace leaves stale `"plugin@marketplace": true` in `~/.claude/settings.json`. Remove manually.
 - **MCP plugins need `npm install`** — plugin install doesn't run it. Use `npx` in `.mcp.json` or pre-build.
 - **`installed_plugins.json` is the load source of truth** — editing `settings.json` alone doesn't unload a plugin.
+- **MCP server must be restarted after binary/cache updates** — ask which specific plugin(s) to target, kill the old process, verify the new process is running the updated binary before testing.
 
 ## Documentation Reference
 
