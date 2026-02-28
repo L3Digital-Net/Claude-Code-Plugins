@@ -71,23 +71,30 @@ case "$SUBCMD" in
         GROUP="${POSITIONAL[2]:-}"
         if [[ -z "$GROUP" ]]; then
             # Root listing — return groups matching allowlist
-            printf 'Servers/\nSSH Keys/\nGPG Keys/\nGit/\nAPI Keys/\nServices/\nPersonal/\n'
+            echo 'Servers/'
+            echo 'SSH Keys/'
+            echo 'GPG Keys/'
+            echo 'Git/'
+            echo 'API Keys/'
+            echo 'Services/'
+            echo 'Personal/'
         else
             case "$GROUP" in
                 Servers)
-                    printf 'test-server-1\ntest-server-2\n[INACTIVE] old-server\n'
+                    echo 'test-server-1'
+                    echo 'test-server-2'
+                    echo '[INACTIVE] old-server'
                     ;;
                 "SSH Keys")
-                    printf 'github-deploy-key\n'
+                    echo 'github-deploy-key'
                     ;;
                 "API Keys")
-                    printf 'openai-key\n'
+                    echo 'openai-key'
                     ;;
                 Git)
-                    printf 'github-token\n'
+                    echo 'github-token'
                     ;;
                 *)
-                    printf ''
                     ;;
             esac
         fi
@@ -109,20 +116,22 @@ case "$SUBCMD" in
         QUERY="${POSITIONAL[2]:-}"
         case "$QUERY" in
             *server*|*test*)
-                printf 'Servers/test-server-1\nServers/test-server-2\n'
+                echo 'Servers/test-server-1'
+                echo 'Servers/test-server-2'
                 ;;
             *github*|*deploy*|*ssh*)
-                printf 'SSH Keys/github-deploy-key\nGit/github-token\n'
+                echo 'SSH Keys/github-deploy-key'
+                echo 'Git/github-token'
                 ;;
             *)
-                printf ''
                 ;;
         esac
         ;;
 
     attachment-export)
         # keepassxc-cli --yubikey 2 attachment-export --stdout <db> <path> <name>
-        printf '-----BEGIN CERTIFICATE-----\nMIIBtestcertdata\n-----END CERTIFICATE-----\n'
+        # Use printf -- so leading dashes in format string are not parsed as flags
+        printf -- '-----BEGIN CERTIFICATE-----\nMIIBtestcertdata\n-----END CERTIFICATE-----\n'
         ;;
 
     add)
