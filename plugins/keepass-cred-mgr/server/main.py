@@ -1,6 +1,6 @@
 """keepass-cred-mgr: MCP server entry point.
 
-Wires config, YubiKey, vault, audit, and all 8 tools into a FastMCP server.
+Wires config, YubiKey, vault, audit, and all 9 tools into a FastMCP server.
 Runs over stdio transport. All logging goes to stderr.
 """
 
@@ -79,6 +79,22 @@ def _get_ctx(ctx: Context[Any, Any, Any]) -> AppContext:
 
 def _error_text(e: Exception) -> str:
     return f"{type(e).__name__}: {e}"
+
+
+# --- Auth ---
+
+
+@mcp.tool()
+def unlock_vault(ctx: Context[Any, Any, Any]) -> str:
+    """Unlock the vault with the connected YubiKey. Must be called before any other vault tool."""
+    app = _get_ctx(ctx)
+    if app.vault.is_unlocked:
+        return "Vault is already unlocked"
+    try:
+        app.vault.unlock()
+        return "Vault unlocked successfully"
+    except (YubiKeyNotPresent, KeePassCLIError, subprocess.TimeoutExpired) as e:
+        raise ValueError(_error_text(e))
 
 
 # --- Read Tools ---

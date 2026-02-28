@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+# Fake keepassxc-cli for PTH testing.
+#
+# vault.unlock()  calls: keepassxc-cli open --yubikey <slot> <db>
+# vault.run_cli() calls: keepassxc-cli --yubikey <slot> <subcmd> [args...]
+#
+# This script finds the subcommand by scanning positional args while skipping
+# known flags and their values, then returns hardcoded fixture data.
+
+# --- Arg parsing ---
+POSITIONAL=()
+SHOW_PROTECTED=0
+NOTES_VALUE=""
+TITLE_VALUE=""
+USERNAME_VALUE=""
+PASSWORD_VALUE=""
+URL_VALUE=""
+
+i=0
+args=("$@")
+while [[ $i -lt ${#args[@]} ]]; do
+    arg="${args[$i]}"
+    case "$arg" in
+        --yubikey|-y)
+            i=$((i + 1))  # skip slot value
+            ;;
+        --show-protected)
+            SHOW_PROTECTED=1
+            ;;
+        --stdout)
+            : # always write to stdout
+            ;;
+        --notes)
+            i=$((i + 1))
+            NOTES_VALUE="${args[$i]}"
+            ;;
+        --title)
+            i=$((i + 1))
+            TITLE_VALUE="${args[$i]}"
+            ;;
+        --username)
+            i=$((i + 1))
+            USERNAME_VALUE="${args[$i]}"
+            ;;
+        --password)
+            i=$((i + 1))
+            PASSWORD_VALUE="${args[$i]}"
+            ;;
+        --url)
+            i=$((i + 1))
+            URL_VALUE="${args[$i]}"
+            ;;
+        *)
+            POSITIONAL+=("$arg")
+            ;;
+    esac
+    i=$((i + 1))
+done
+
+SUBCMD="${POSITIONAL[0]:-}"
+
+case "$SUBCMD" in
+
+    open)
+        # vault.unlock(): keepassxc-cli open --yubikey 2 <db>
+        echo "Successfully opened database." >&2
+        ;;
+
+    ls)
+        # keepassxc-cli --yubikey 2 ls <db> [group]
+        GROUP="${POSITIONAL[2]:-}"
+        if [[ -z "$GROUP" ]]; then
+            # Root listing — return groups matching allowlist
+            echo 'Servers/'
+            echo 'SSH Keys/'
+            echo 'GPG Keys/'
+            echo 'Git/'
+            echo 'API Keys/'
+            echo 'Services/'
+            echo 'Personal/'
+        else
+            case "$GROUP" in
+                Servers)
+                    echo 'test-server-1'
+                    echo 'test-server-2'
+                    echo '[INACTIVE] old-server'
+                    ;;
+                "SSH Keys")
+                    echo 'github-deploy-key'
+                    ;;
+                "API Keys")
+                    echo 'openai-key'
+                    ;;
+                Git)
+                    echo 'github-token'
+                    ;;
+                *)
+                    ;;
+            esac
+        fi
+        ;;
+
+    show)
+        # keepassxc-cli --yubikey 2 show [--show-protected] <db> <group/title>
+        PATH_ARG="${POSITIONAL[2]:-}"
+        ENTRY="${PATH_ARG##*/}"
+        if [[ $SHOW_PROTECTED -eq 1 ]]; then
+            printf 'Title: %s\nUsername: admin\nPassword: s3cr3t!\nURL: https://example.com\nNotes: Test entry\n' "$ENTRY"
+        else
+            printf 'Title: %s\nUsername: admin\nURL: https://example.com\nNotes: Test entry\n' "$ENTRY"
+        fi
+        ;;
+
+    search)
+        # keepassxc-cli --yubikey 2 search <db> <query>
+        QUERY="${POSITIONAL[2]:-}"
+        case "$QUERY" in
+            *server*|*test*)
+                echo 'Servers/test-server-1'
+                echo 'Servers/test-server-2'
+                ;;
+            *github*|*deploy*|*ssh*)
+                echo 'SSH Keys/github-deploy-key'
+                echo 'Git/github-token'
+                ;;
+            *)
+                ;;
+        esac
+        ;;
+
+    attachment-export)
+        # keepassxc-cli --yubikey 2 attachment-export --stdout <db> <path> <name>
+        # Use printf -- so leading dashes in format string are not parsed as flags
+        printf -- '-----BEGIN CERTIFICATE-----\nMIIBtestcertdata\n-----END CERTIFICATE-----\n'
+        ;;
+
+    add)
+        # keepassxc-cli --yubikey 2 add <db> <path> [--username ...] [--password ...]
+        echo "Successfully added entry." >&2
+        ;;
+
+    edit)
+        # keepassxc-cli --yubikey 2 edit --title <new> <db> <path>
+        # keepassxc-cli --yubikey 2 edit --notes <notes> <db> <path>
+        echo "Successfully edited entry." >&2
+        ;;
+
+    attachment-import)
+        # keepassxc-cli --yubikey 2 attachment-import <db> <path> <name> <tmpfile>
+        echo "Successfully imported attachment." >&2
+        ;;
+
+    *)
+        echo "fake-keepassxc-cli: unknown subcommand: ${SUBCMD}" >&2
+        exit 1
+        ;;
+esac
