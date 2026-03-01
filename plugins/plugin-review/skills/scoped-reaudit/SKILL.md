@@ -4,8 +4,8 @@
   Loaded by: commands/review.md (orchestrator) at Phase 2, Pass 2+ only — not on Pass 1.
   Consumer: the orchestrator reads this file and applies the mapping table manually;
     there is no programmatic parsing of this file's output.
-  Output contract: the orchestrator extracts the Track A / Track B / Track C determination
-    from the File-to-Track Mapping section. Track letters (A, B, C) must match the agent
+  Output contract: the orchestrator extracts the Track A / Track B / Track C / Track D determination
+    from the File-to-Track Mapping section. Track letters (A, B, C, D) must match the agent
     names used in review.md Phase 2's spawn instructions.
   Autonomous mode addition: the regression-guard agent is an exception to the A/B/C mapping.
     It always runs on Pass 2+ in autonomous mode regardless of which files changed. Its spawn
@@ -30,6 +30,8 @@ The orchestrator has completed a batch of implementation changes and needs to de
 **Track B (UX Analyst)** is affected when any of these were modified: `commands/*.md`, `agents/*.md`, `templates/pass-report.md`, `templates/final-report.md`, `scripts/*.sh` (if they produce stdout), or any file in `src/` that produces formatted output or handles errors.
 
 **Track C (Docs Analyst)** is affected when **any file was modified**. Documentation drift can be introduced by any change. Track C always runs on re-audit.
+
+**Track D (Efficiency Analyst)** is affected when any of these were modified: `commands/*.md`, `agents/*.md`, `skills/*/SKILL.md`, `hooks/hooks.json`, `scripts/*.sh`, `.mcp.json`, `src/**`, or `templates/*.md`. Track D evaluates context efficiency patterns that appear in all component types; any component modification may introduce efficiency regressions.
 
 ## Decision Logic
 
