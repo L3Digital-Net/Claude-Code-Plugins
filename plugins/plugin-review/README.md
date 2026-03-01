@@ -86,6 +86,8 @@ The review loop is fully automated: analysts report findings, the orchestrator a
 | Command | Description |
 |---------|-------------|
 | `/review` | Launch a multi-pass plugin quality review. Accepts optional plugin name, `--max-passes=N`, and `--autonomous` flag. |
+| `/review-efficiency` | Standalone 5-stage interactive context efficiency review (P1–P12) for a plugin. |
+| `/tighten` | Prose tightening workflow for plugin markdown files. |
 
 ## Agents
 
@@ -95,6 +97,7 @@ The review loop is fully automated: analysts report findings, the orchestrator a
 | `ux-analyst` | B | Read-only. Audits user-facing code paths against terminal UX criteria across four categories: information density, user input, progress/feedback, and terminal-specific patterns. Returns severity-grouped findings and assertions. |
 | `docs-analyst` | C | Read-only. Compares documentation files against implementation structure across five drift categories: accuracy, completeness, orphaned references, principle-implementation consistency, and examples. Returns per-file freshness assessment and assertions. |
 | `regression-guard` | D | Read-only. Autonomous mode only, Pass 2+. Re-checks previously-fixed findings to verify fixes are still intact after subsequent implementation changes. Returns per-finding holding/regressed status with file-level evidence. |
+| `efficiency-analyst` | D | Read-only. Evaluates P1–P12 context efficiency compliance in parallel with Tracks A/B/C. Uses `track-d-criteria.md` to assess context footprint, enforcement layering, and composability across all plugin components. |
 | `fix-agent` | (n/a) | Write-capable. Invoked after `run-assertions.sh` finds failures. Implements the minimum change needed to make each failing assertion pass, then returns a structured summary. |
 | `build-fix-agent` | (n/a) | Write-capable. Autonomous mode only. Invoked in Phase 4.5 when `run-build-test.sh` reports failures. Implements minimal fixes for build or test breakage introduced during Phase 4. Spawned at most once per pass. |
 
@@ -103,6 +106,9 @@ The review loop is fully automated: analysts report findings, the orchestrator a
 | Skill | Loaded when |
 |-------|-------------|
 | `scoped-reaudit` | Consulted by the orchestrator at Phase 2 on Pass 2+ to determine which analyst tracks need re-running based on which files changed in the previous pass. Track C always re-runs; Tracks A and B run only when their mapped file types were modified. |
+| `context-efficiency-workflow` | Consulted during `/review-efficiency` to drive the approval-gated P1–P12 review workflow. |
+| `context-efficiency-reference` | Reference material for P1–P12 principle definitions and layer taxonomy; loaded by the efficiency-analyst and `/review-efficiency`. |
+| `markdown-tighten` | Loaded during `/tighten`; provides a five-step prose compression workflow for plugin markdown files. |
 
 ## Hooks
 
