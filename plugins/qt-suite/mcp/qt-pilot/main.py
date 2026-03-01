@@ -38,6 +38,7 @@ mcp = FastMCP("qt-pilot")
 _app_state = {
     "process": None,
     "socket_path": None,
+    "socket_dir": None,  # temp dir owning the socket file; cleaned up alongside the socket
     "display": None,
     "xvfb_process": None,
 }
@@ -67,9 +68,16 @@ def _cleanup_app() -> None:
     if _app_state["socket_path"] and os.path.exists(_app_state["socket_path"]):
         try:
             os.unlink(_app_state["socket_path"])
-        except Exception:
-            pass
-        _app_state["socket_path"] = None
+        except OSError as e:
+            logger.warning(f"Error removing socket: {e}")
+    _app_state["socket_path"] = None
+
+    if _app_state.get("socket_dir") and os.path.exists(_app_state["socket_dir"]):
+        try:
+            os.rmdir(_app_state["socket_dir"])
+        except OSError as e:
+            logger.warning(f"Error removing socket dir: {e}")
+    _app_state["socket_dir"] = None
 
 
 def _get_process_output() -> dict:
@@ -115,30 +123,26 @@ def _send_command(command: dict, timeout: float = 10.0) -> dict:
         return {"success": False, "error": error_msg}
 
     try:
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.settimeout(timeout)
-        sock.connect(_app_state["socket_path"])
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+            sock.settimeout(timeout)
+            sock.connect(_app_state["socket_path"])
 
-        # Send command as JSON
-        data = json.dumps(command).encode() + b"\n"
-        sock.sendall(data)
+            data = json.dumps(command).encode() + b"\n"
+            sock.sendall(data)
 
-        # Read response
-        response_data = b""
-        while True:
-            chunk = sock.recv(4096)
-            if not chunk:
-                break
-            response_data += chunk
-            if b"\n" in response_data:
-                break
+            response_data = b""
+            while True:
+                chunk = sock.recv(4096)
+                if not chunk:
+                    break
+                response_data += chunk
+                if b"\n" in response_data:
+                    break
 
-        sock.close()
         return json.loads(response_data.decode().strip())
     except socket.timeout:
         return {"success": False, "error": "Command timed out"}
     except ConnectionRefusedError:
-        # Check if app crashed
         proc_info = _get_process_output()
         if not proc_info["running"]:
             error_msg = f"App crashed (exit code: {proc_info['exit_code']})"
@@ -190,9 +194,12 @@ def launch_app(
     # Clean up any existing app
     _cleanup_app()
 
-    # Create socket path for communication
-    socket_path = tempfile.mktemp(suffix=".sock", prefix="qt_gui_tester_")
+    # Create socket path for communication — mkdtemp atomically creates the dir,
+    # eliminating the TOCTOU race that mktemp() had between name generation and use.
+    socket_dir = tempfile.mkdtemp(prefix="qt_gui_tester_")
+    socket_path = os.path.join(socket_dir, "qt.sock")
     _app_state["socket_path"] = socket_path
+    _app_state["socket_dir"] = socket_dir
 
     # Find available display number
     display_num = 99
@@ -293,9 +300,11 @@ def capture_screenshot(output_path: str = None) -> dict:
     if not _app_state["process"]:
         return {"success": False, "message": "No app is running"}
 
-    # Generate output path if not provided
+    # Generate output path if not provided — mkstemp atomically creates the file,
+    # avoiding the TOCTOU race that mktemp() has between name generation and use.
     if not output_path:
-        output_path = tempfile.mktemp(suffix=".png", prefix="screenshot_")
+        fd, output_path = tempfile.mkstemp(suffix=".png", prefix="screenshot_")
+        os.close(fd)
 
     result = _send_command({
         "cmd": "screenshot",
