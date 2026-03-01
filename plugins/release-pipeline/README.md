@@ -162,7 +162,7 @@ None currently documented in the changelog as unreleased.
 
 ## Known Issues
 
-- `sync-local-plugins.sh` is hardcoded to the `l3digitalnet-plugins` marketplace. It will not sync plugins from a differently named marketplace without modifying the script.
+- `sync-local-plugins.sh` defaults to the `l3digitalnet-plugins` marketplace. Set `RELEASE_PIPELINE_MARKETPLACE=<name>` in your environment to override for differently named marketplaces.
 - Batch Release runs plugins sequentially, not in parallel. Large monorepos with many unreleased plugins will take proportionally longer.
 - Quick Merge always merges `testing` into `main`. Repos using different branch naming must adjust manually.
 - Changelog generation uses conventional commit prefixes. Repos without conventional commits produce a generic "other" section with no semver signal.
