@@ -100,10 +100,13 @@ def test_socket_path_inside_mkdtemp_dir():
     """socket_path must be a file inside the mkdtemp directory, not the directory itself."""
     import tempfile
 
+    # Patch _cleanup_app so it does not clear _app_state between assignment and assertion;
+    # the cleanup-on-failure behaviour is tested separately via test_launch_app_uses_mkdtemp.
     with patch.object(tempfile, "mkdtemp", return_value="/tmp/fake_dir_abc"), \
          patch("subprocess.Popen") as mock_popen, \
          patch("time.sleep"), \
-         patch("os.path.exists", side_effect=_make_exists_side_effect("/fake/app.py")):
+         patch("os.path.exists", side_effect=_make_exists_side_effect("/fake/app.py")), \
+         patch.object(qt_main, "_cleanup_app"):
         mock_popen.return_value = MagicMock(**{"poll.return_value": None})
         try:
             qt_main.launch_app(script_path="/fake/app.py", timeout=0)
@@ -112,7 +115,7 @@ def test_socket_path_inside_mkdtemp_dir():
 
     # socket_path must be a path inside the temp dir, not the temp dir itself
     sp = qt_main._app_state["socket_path"]
-    if sp:
-        assert sp.startswith("/tmp/fake_dir_abc/"), (
-            f"socket_path '{sp}' should be inside the mkdtemp directory"
-        )
+    assert sp is not None, "socket_path was not set by launch_app"
+    assert sp.startswith("/tmp/fake_dir_abc/"), (
+        f"socket_path '{sp}' should be inside the mkdtemp directory"
+    )

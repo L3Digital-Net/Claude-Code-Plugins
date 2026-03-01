@@ -275,11 +275,13 @@ def launch_app(
         # Check if process died
         if _app_state["process"].poll() is not None:
             stdout, stderr = _app_state["process"].communicate()
+            _cleanup_app()
             return {
                 "success": False,
                 "message": f"App exited unexpectedly. stderr: {stderr.decode()[:500]}",
             }
 
+        _cleanup_app()
         return {"success": False, "message": f"Timeout waiting for app (socket: {socket_path})"}
 
     except Exception as e:
