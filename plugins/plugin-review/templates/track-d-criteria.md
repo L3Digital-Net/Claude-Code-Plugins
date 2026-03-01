@@ -59,15 +59,15 @@ Load this template when performing context efficiency analysis. It defines what 
 
 #### Layer 3 — Agent Architecture
 
-**P7 Decompose by Scope**: Work is decomposed at natural scope boundaries, not implementation boundaries. An agent whose "single responsibility" is actually several unrelated responsibilities bundled together is a violation. The test: could any part of this agent's output be removed without the other parts caring? If yes, decomposition is wrong.
+**P7 Decompose by Scope**: Each subagent's input context must be constructable from a small, targeted briefing. If a subagent requires the orchestrator's full context to do its work, the decomposition is wrong. The test: can this subagent be briefed with a focused subset of the overall task context, or does it need everything the orchestrator knows? Bundling unrelated responsibilities into one agent is a common way to fail this test — the combined scope forces the briefing to grow until it equals the orchestrator's full context.
 
 **P8 Subagents Return Structured Extracts**: Subagents return structured summaries, not raw transcripts. A subagent that returns its full reasoning chain, intermediate results, or tool call outputs as part of its response is a violation. The orchestrator should receive a clean, parseable extract — findings, status, assertions — not a replay of the subagent's work.
 
-**P9 Orchestrator Synthesizes**: The orchestrator aggregates and decides; subagents do not. A subagent that makes implementation decisions, proposes fixes, or deduces next steps for the orchestrator violates role boundaries. The subagent reports findings; the orchestrator chooses what to do with them.
+**P9 Orchestrator Synthesizes, Does Not Re-Analyze**: The orchestrator trusts subagent outputs and routes, integrates, and synthesizes. It does not re-analyze source data the subagent already processed. An orchestrator that re-reads files the subagent summarized, re-evaluates evidence the subagent already assessed, or duplicates analytical work already completed downstream is a violation. A subagent that makes implementation decisions or proposes next steps for the orchestrator is a secondary violation — it signals that role boundaries were not established clearly enough to prevent the orchestrator from needing to second-guess the output.
 
 #### Layer 4 — Token Budget
 
-**P10 Fail Fast**: When required context is missing, abort with a clear error immediately. Do not continue processing with degraded context, emit partial results, or guess at missing inputs. A command that proceeds without a required config value and produces incorrect output downstream is a violation.
+**P10 Fail Fast, Surface Early**: Surface ambiguity, infeasibility, or blockers at the earliest possible point, and emit partial results mid-process rather than holding them. A command that runs to completion before surfacing a known blocker, or that withholds valid partial results until the entire process finishes, is a violation. Aborting on a hard error (missing required input, unrecoverable failure) is correct; silently discarding partial work that could be useful is not.
 
 **P11 Choose Lighter Path**: When multiple approaches achieve equivalent outcomes, choose the one with lower context cost. This applies to tool selection (Read a specific section vs. reading the whole file), agent selection (spawning a full analyst vs. a targeted grep), and output format (a one-line status vs. a structured report for a binary decision).
 
