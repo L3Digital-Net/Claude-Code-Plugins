@@ -61,7 +61,7 @@ Use this template when the review loop terminates (Phase 6).
 ### Context Efficiency Status
 | Principle | Status | Notes |
 |-----------|--------|-------|
-| P1 Imperative Minimalism | ✅ / ⚠️ / ❌ | |
+| P1 Imperative Minimalism | | |
 | P2 Format Matches Data Type | | |
 | P3 Reference Over Repetition | | |
 | P4 Lazy Context Loading | | |
@@ -69,8 +69,8 @@ Use this template when the review loop terminates (Phase 6).
 | P6 Output Verbosity | | |
 | P7 Decompose by Scope | | |
 | P8 Subagents Return Structured Extracts | | |
-| P9 Orchestrator Synthesizes | | |
-| P10 Fail Fast | | |
+| P9 Orchestrator Synthesizes, Does Not Re-Analyze | | |
+| P10 Fail Fast, Surface Early | | |
 | P11 Choose Lighter Path | | |
 | P12 Verbosity Scales Inverse to Context Depth | | |
 
@@ -96,7 +96,7 @@ Confidence: N% (N/N assertions passing)
 
 ## Rules
 
-Every principle from the original checklist must appear in Principle Status. Every P1–P12 context efficiency principle must appear in Context Efficiency Status. Every checkpoint must appear in Checkpoint Status. Touchpoints clean from Pass 1 can be summarized in one line. Documentation Status lists every reviewed file. Accepted Gaps includes enough context for someone reading months later.
+Every principle from the original checklist must appear in Principle Status. Every P1–P12 principle must appear in Context Efficiency Status. Every checkpoint must appear in Checkpoint Status. Touchpoints clean from Pass 1 can be summarized in one line. Documentation Status lists every reviewed file. Accepted Gaps includes enough context for someone reading months later.
 
 Assertion Coverage is included when assertions were generated. If zero assertions were generated (all findings were judgment-only with no machine-verifiable check), omit the section and note "No machine-verifiable assertions generated."
 
