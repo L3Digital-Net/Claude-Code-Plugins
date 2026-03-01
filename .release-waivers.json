@@ -32,11 +32,6 @@
     },
     {
       "check": "missing_tests",
-      "plugin": "context-efficiency-toolkit",
-      "reason": "Markdown/script-only plugin — no executable test suite by design"
-    },
-    {
-      "check": "missing_tests",
       "plugin": "docs-manager",
       "reason": "Markdown/script-only plugin — no executable test suite by design"
     },
