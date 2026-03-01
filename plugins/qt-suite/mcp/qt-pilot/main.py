@@ -15,6 +15,7 @@ import dataclasses
 import json
 import logging
 import os
+import shutil
 import socket
 import subprocess
 import sys
@@ -88,11 +89,8 @@ def _cleanup_app() -> None:
     _app_state.socket_path = None
 
     socket_dir = _app_state.socket_dir
-    if socket_dir and os.path.exists(socket_dir):
-        try:
-            os.rmdir(socket_dir)
-        except OSError as e:
-            logger.warning(f"Error removing socket dir: {e}")
+    if socket_dir:
+        shutil.rmtree(socket_dir, ignore_errors=True)
     _app_state.socket_dir = None
 
 

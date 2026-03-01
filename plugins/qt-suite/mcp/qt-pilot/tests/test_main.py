@@ -1,8 +1,10 @@
 """Unit tests for main.py resource management."""
+import dataclasses
 import json
 import os
 import socket as socket_mod
 import sys
+import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -76,8 +78,6 @@ def _make_exists_side_effect(script_path: str):
 
 def test_launch_app_uses_mkdtemp():
     """launch_app must call tempfile.mkdtemp(), not the deprecated mktemp()."""
-    import tempfile
-
     mkdtemp_calls = []
 
     def fake_mkdtemp(**kwargs):
@@ -102,8 +102,6 @@ def test_launch_app_uses_mkdtemp():
 
 def test_socket_path_inside_mkdtemp_dir():
     """socket_path must be a file inside the mkdtemp directory, not the directory itself."""
-    import tempfile
-
     # Patch _cleanup_app so it does not clear _app_state between assignment and assertion;
     # the cleanup-on-failure behaviour is tested separately via test_launch_app_uses_mkdtemp.
     with patch.object(tempfile, "mkdtemp", return_value="/tmp/fake_dir_abc"), \
@@ -129,7 +127,6 @@ def test_socket_path_inside_mkdtemp_dir():
 
 def test_app_state_is_dataclass():
     """_app_state must be a dataclass instance, not a dict."""
-    import dataclasses
     assert dataclasses.is_dataclass(qt_main._app_state), (
         "_app_state should be an AppState dataclass instance"
     )
@@ -137,7 +134,6 @@ def test_app_state_is_dataclass():
 
 def test_app_state_has_expected_fields():
     """AppState must have exactly the five expected fields."""
-    import dataclasses
     field_names = {f.name for f in dataclasses.fields(qt_main._app_state)}
     expected = {"process", "socket_path", "socket_dir", "display", "xvfb_process"}
     assert expected == field_names, f"AppState fields mismatch: {field_names}"
@@ -155,8 +151,6 @@ def test_constants_defined():
 
 def test_launch_app_uses_display_start_constant():
     """launch_app must read display start from the constant, not a literal."""
-    import tempfile
-
     display_nums_seen = []
 
     original_exists = os.path.exists
