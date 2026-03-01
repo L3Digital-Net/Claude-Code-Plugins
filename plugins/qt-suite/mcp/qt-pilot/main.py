@@ -11,6 +11,7 @@ IMPORTANT: This is a stdio MCP server - NEVER use print() or write to stdout!
 All logging must go to stderr or a file.
 """
 
+import dataclasses
 import json
 import logging
 import os
@@ -31,17 +32,25 @@ logging.basicConfig(
 )
 logger = logging.getLogger("qt-pilot")
 
+@dataclasses.dataclass
+class AppState:
+    """Mutable state for a single launched Qt application session.
+
+    All fields default to None; set during launch_app() and cleared by _cleanup_app().
+    """
+
+    process: "subprocess.Popen[bytes] | None" = None
+    socket_path: str | None = None
+    socket_dir: str | None = None
+    display: str | None = None
+    xvfb_process: "subprocess.Popen[bytes] | None" = None
+
+
 # Create MCP server
 mcp = FastMCP("qt-pilot")
 
 # Global state for tracking launched apps
-_app_state = {
-    "process": None,
-    "socket_path": None,
-    "socket_dir": None,  # temp dir owning the socket file; cleaned up alongside the socket
-    "display": None,
-    "xvfb_process": None,
-}
+_app_state = AppState()
 
 # Path to the test harness script (same directory as this file)
 HARNESS_PATH = Path(__file__).parent / "harness.py"
@@ -49,44 +58,44 @@ HARNESS_PATH = Path(__file__).parent / "harness.py"
 
 def _cleanup_app() -> None:
     """Clean up any running app and xvfb."""
-    if _app_state["process"]:
+    if _app_state.process:
         try:
-            _app_state["process"].terminate()
-            _app_state["process"].wait(timeout=5)
+            _app_state.process.terminate()
+            _app_state.process.wait(timeout=5)
         except Exception as e:
             logger.warning(f"Error terminating app: {e}")
-        _app_state["process"] = None
+        _app_state.process = None
 
-    if _app_state["xvfb_process"]:
+    if _app_state.xvfb_process:
         try:
-            _app_state["xvfb_process"].terminate()
-            _app_state["xvfb_process"].wait(timeout=5)
+            _app_state.xvfb_process.terminate()
+            _app_state.xvfb_process.wait(timeout=5)
         except Exception as e:
             logger.warning(f"Error terminating xvfb: {e}")
-        _app_state["xvfb_process"] = None
+        _app_state.xvfb_process = None
 
-    if _app_state["socket_path"] and os.path.exists(_app_state["socket_path"]):
+    if _app_state.socket_path and os.path.exists(_app_state.socket_path):
         try:
-            os.unlink(_app_state["socket_path"])
+            os.unlink(_app_state.socket_path)
         except OSError as e:
             logger.warning(f"Error removing socket: {e}")
-    _app_state["socket_path"] = None
+    _app_state.socket_path = None
 
-    if _app_state.get("socket_dir") and os.path.exists(_app_state["socket_dir"]):
+    if _app_state.socket_dir and os.path.exists(_app_state.socket_dir):
         try:
-            os.rmdir(_app_state["socket_dir"])
+            os.rmdir(_app_state.socket_dir)
         except OSError as e:
             logger.warning(f"Error removing socket dir: {e}")
-    _app_state["socket_dir"] = None
+    _app_state.socket_dir = None
 
 
 def _get_process_output() -> dict:
     """Get any available output from the app process."""
-    if not _app_state["process"]:
+    if not _app_state.process:
         return {"stdout": "", "stderr": "", "running": False, "exit_code": None}
 
     # Check if process is still running
-    exit_code = _app_state["process"].poll()
+    exit_code = _app_state.process.poll()
     running = exit_code is None
 
     stdout = ""
@@ -95,7 +104,7 @@ def _get_process_output() -> dict:
     if not running:
         # Process has exited, get all output
         try:
-            out, err = _app_state["process"].communicate(timeout=1)
+            out, err = _app_state.process.communicate(timeout=1)
             stdout = out.decode() if out else ""
             stderr = err.decode() if err else ""
         except Exception:
@@ -111,7 +120,7 @@ def _get_process_output() -> dict:
 
 def _send_command(command: dict, timeout: float = 10.0) -> dict:
     """Send a command to the test harness via Unix socket."""
-    if not _app_state["socket_path"]:
+    if not _app_state.socket_path:
         return {"success": False, "error": "No app is running"}
 
     # Check if process is still alive before attempting communication
@@ -125,7 +134,7 @@ def _send_command(command: dict, timeout: float = 10.0) -> dict:
     try:
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
             sock.settimeout(timeout)
-            sock.connect(_app_state["socket_path"])
+            sock.connect(_app_state.socket_path)
 
             data = json.dumps(command).encode() + b"\n"
             sock.sendall(data)
@@ -198,20 +207,20 @@ def launch_app(
     # eliminating the TOCTOU race that mktemp() had between name generation and use.
     socket_dir = tempfile.mkdtemp(prefix="qt_gui_tester_")
     socket_path = os.path.join(socket_dir, "qt.sock")
-    _app_state["socket_path"] = socket_path
-    _app_state["socket_dir"] = socket_dir
+    _app_state.socket_path = socket_path
+    _app_state.socket_dir = socket_dir
 
     # Find available display number
     display_num = 99
     while os.path.exists(f"/tmp/.X{display_num}-lock"):
         display_num += 1
     display = f":{display_num}"
-    _app_state["display"] = display
+    _app_state.display = display
 
     try:
         # Start Xvfb
         xvfb_cmd = ["Xvfb", display, "-screen", "0", "1280x1024x24"]
-        _app_state["xvfb_process"] = subprocess.Popen(
+        _app_state.xvfb_process = subprocess.Popen(
             xvfb_cmd,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -249,7 +258,7 @@ def launch_app(
             logger.info(f"Python paths: {python_paths}")
 
         # Start the harness
-        _app_state["process"] = subprocess.Popen(
+        _app_state.process = subprocess.Popen(
             harness_cmd,
             cwd=cwd,
             env=env,
@@ -273,8 +282,8 @@ def launch_app(
             time.sleep(0.5)
 
         # Check if process died
-        if _app_state["process"].poll() is not None:
-            _, stderr = _app_state["process"].communicate()
+        if _app_state.process.poll() is not None:
+            _, stderr = _app_state.process.communicate()
             _cleanup_app()
             return {
                 "success": False,
@@ -299,7 +308,7 @@ def capture_screenshot(output_path: str = None) -> dict:
     Returns:
         {"success": bool, "path": str, "message": str}
     """
-    if not _app_state["process"]:
+    if not _app_state.process:
         return {"success": False, "message": "No app is running"}
 
     # Generate output path if not provided — mkstemp atomically creates the file,
@@ -337,7 +346,7 @@ def click_widget(widget_name: str, button: str = "left") -> dict:
     Returns:
         {"success": bool, "message": str}
     """
-    if not _app_state["process"]:
+    if not _app_state.process:
         return {"success": False, "message": "No app is running"}
 
     result = _send_command({
@@ -362,7 +371,7 @@ def hover_widget(widget_name: str) -> dict:
     Returns:
         {"success": bool, "message": str}
     """
-    if not _app_state["process"]:
+    if not _app_state.process:
         return {"success": False, "message": "No app is running"}
 
     result = _send_command({
@@ -387,7 +396,7 @@ def type_text(text: str, widget_name: str = None) -> dict:
     Returns:
         {"success": bool, "message": str}
     """
-    if not _app_state["process"]:
+    if not _app_state.process:
         return {"success": False, "message": "No app is running"}
 
     result = _send_command({
@@ -414,7 +423,7 @@ def press_key(key: str, modifiers: list[str] = None) -> dict:
     Returns:
         {"success": bool, "message": str}
     """
-    if not _app_state["process"]:
+    if not _app_state.process:
         return {"success": False, "message": "No app is running"}
 
     result = _send_command({
@@ -440,7 +449,7 @@ def find_widgets(name_pattern: str = "*") -> dict:
     Returns:
         {"success": bool, "widgets": list[dict]}
     """
-    if not _app_state["process"]:
+    if not _app_state.process:
         return {"success": False, "message": "No app is running"}
 
     result = _send_command({
@@ -472,7 +481,7 @@ def click_at(x: int, y: int, button: str = "left") -> dict:
     Returns:
         {"success": bool, "message": str, "widget_type": str}
     """
-    if not _app_state["process"]:
+    if not _app_state.process:
         return {"success": False, "message": "No app is running"}
 
     result = _send_command({
@@ -502,7 +511,7 @@ def list_all_widgets(include_invisible: bool = False) -> dict:
     Returns:
         {"success": bool, "widgets": list[dict], "count": int}
     """
-    if not _app_state["process"]:
+    if not _app_state.process:
         return {"success": False, "message": "No app is running"}
 
     result = _send_command({
@@ -533,7 +542,7 @@ def trigger_action(action_name: str) -> dict:
     Returns:
         {"success": bool, "message": str}
     """
-    if not _app_state["process"]:
+    if not _app_state.process:
         return {"success": False, "message": "No app is running"}
 
     result = _send_command({
@@ -557,7 +566,7 @@ def list_actions() -> dict:
     Returns:
         {"success": bool, "actions": list[dict], "count": int}
     """
-    if not _app_state["process"]:
+    if not _app_state.process:
         return {"success": False, "message": "No app is running"}
 
     result = _send_command({
@@ -584,7 +593,7 @@ def get_widget_info(widget_name: str) -> dict:
     Returns:
         {"success": bool, "info": dict} with size, position, visible, enabled, etc.
     """
-    if not _app_state["process"]:
+    if not _app_state.process:
         return {"success": False, "message": "No app is running"}
 
     result = _send_command({
@@ -607,7 +616,7 @@ def get_app_status() -> dict:
     Returns:
         {"running": bool, "exit_code": int|None, "stderr": str, "display": str}
     """
-    if not _app_state["process"]:
+    if not _app_state.process:
         return {
             "running": False,
             "exit_code": None,
@@ -620,8 +629,8 @@ def get_app_status() -> dict:
         "running": proc_info["running"],
         "exit_code": proc_info["exit_code"],
         "stderr": proc_info["stderr"][:1000] if proc_info["stderr"] else "",
-        "display": _app_state.get("display", ""),
-        "socket_path": _app_state.get("socket_path", ""),
+        "display": _app_state.display or "",
+        "socket_path": _app_state.socket_path or "",
     }
 
 
@@ -637,7 +646,7 @@ def wait_for_idle(timeout: float = 5.0) -> dict:
     Returns:
         {"success": bool, "message": str}
     """
-    if not _app_state["process"]:
+    if not _app_state.process:
         return {"success": False, "message": "No app is running"}
 
     result = _send_command({
@@ -658,7 +667,7 @@ def close_app() -> dict:
     Returns:
         {"success": bool, "message": str}
     """
-    if not _app_state["process"]:
+    if not _app_state.process:
         return {"success": False, "message": "No app is running"}
 
     # Try graceful shutdown first

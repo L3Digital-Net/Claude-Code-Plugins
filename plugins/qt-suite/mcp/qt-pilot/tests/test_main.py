@@ -11,15 +11,17 @@ import main as qt_main
 
 def _set_state(socket_path=None, process=None):
     """Helper to configure _app_state for tests."""
-    qt_main._app_state["socket_path"] = socket_path
-    qt_main._app_state["process"] = process
+    qt_main._app_state.socket_path = socket_path
+    qt_main._app_state.process = process
 
 
 def test_send_command_uses_context_manager():
     """socket.socket must be used as a context manager (__enter__/__exit__ called)."""
+    _mock_proc = MagicMock()
+    _mock_proc.poll.return_value = None
     _set_state(
         socket_path="/tmp/fake.sock",
-        process=MagicMock(**{"poll.return_value": None}),
+        process=_mock_proc,
     )
     mock_sock = MagicMock()
     mock_sock.__enter__ = MagicMock(return_value=mock_sock)
@@ -35,9 +37,11 @@ def test_send_command_uses_context_manager():
 
 def test_send_command_timeout_returns_error():
     """socket.timeout must map to the correct error dict."""
+    _mock_proc = MagicMock()
+    _mock_proc.poll.return_value = None
     _set_state(
         socket_path="/tmp/fake.sock",
-        process=MagicMock(**{"poll.return_value": None}),
+        process=_mock_proc,
     )
     mock_sock = MagicMock()
     mock_sock.__enter__ = MagicMock(return_value=mock_sock)
@@ -84,7 +88,9 @@ def test_launch_app_uses_mkdtemp():
          patch("subprocess.Popen") as mock_popen, \
          patch("time.sleep"), \
          patch("os.path.exists", side_effect=_make_exists_side_effect("/fake/app.py")):
-        mock_popen.return_value = MagicMock(**{"poll.return_value": None})
+        _mock_proc = MagicMock()
+        _mock_proc.poll.return_value = None
+        mock_popen.return_value = _mock_proc
         try:
             qt_main.launch_app(script_path="/fake/app.py", timeout=0)
         except Exception:
@@ -104,15 +110,33 @@ def test_socket_path_inside_mkdtemp_dir():
          patch("time.sleep"), \
          patch("os.path.exists", side_effect=_make_exists_side_effect("/fake/app.py")), \
          patch.object(qt_main, "_cleanup_app"):
-        mock_popen.return_value = MagicMock(**{"poll.return_value": None})
+        _mock_proc = MagicMock()
+        _mock_proc.poll.return_value = None
+        mock_popen.return_value = _mock_proc
         try:
             qt_main.launch_app(script_path="/fake/app.py", timeout=0)
         except Exception:
             pass
 
     # socket_path must be a path inside the temp dir, not the temp dir itself
-    sp = qt_main._app_state["socket_path"]
+    sp = qt_main._app_state.socket_path
     assert sp is not None, "socket_path was not set by launch_app"
     assert sp.startswith("/tmp/fake_dir_abc/"), (
         f"socket_path '{sp}' should be inside the mkdtemp directory"
     )
+
+
+def test_app_state_is_dataclass():
+    """_app_state must be a dataclass instance, not a dict."""
+    import dataclasses
+    assert dataclasses.is_dataclass(qt_main._app_state), (
+        "_app_state should be an AppState dataclass instance"
+    )
+
+
+def test_app_state_has_expected_fields():
+    """AppState must have exactly the five expected fields."""
+    import dataclasses
+    field_names = {f.name for f in dataclasses.fields(qt_main._app_state)}
+    expected = {"process", "socket_path", "socket_dir", "display", "xvfb_process"}
+    assert expected == field_names, f"AppState fields mismatch: {field_names}"
