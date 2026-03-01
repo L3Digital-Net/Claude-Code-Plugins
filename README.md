@@ -49,13 +49,12 @@ installed plugins at the start of each session.
 |--------|------|---------|-------------|
 | [Agent Orchestrator](#agent-orchestrator) | Commands + Hooks | `/orchestrate` | Delegates complex tasks to agent teams with context management |
 | [Autonomous Refactor](#autonomous-refactor) | Commands + Agents | `/refactor` | Test-driven autonomous refactoring against project design principles |
-| [Context Efficiency Toolkit](#context-efficiency-toolkit) | Commands + Skills | `/review-context-efficiency`, `/tighten-markdown` | Audits and reduces plugin context footprint |
 | [Design Assistant](#design-assistant) | Commands + Skills | `/design-draft`, `/design-review` | Guided design document authoring and principle-enforced review |
 | [Docs Manager](#docs-manager) | Commands + Agents + Hooks | `/docs` | Documentation lifecycle management with drift detection |
 | [GitHub Repo Manager](#github-repo-manager) | Commands + Skills | `/repo-manager` | Conversational GitHub repo health assessment and maintenance |
 | [Home Assistant Dev](#home-assistant-dev) | Commands + Skills + MCP | varies | Full HA integration development toolkit with 27 skills |
 | [Linux SysAdmin MCP](#linux-sysadmin-mcp) | MCP | 18 tools | Knowledge-profile-driven service diagnostics, security audits, cron computation, docs |
-| [Plugin Review](#plugin-review) | Commands + Agents + Hooks | `/review` | Multi-pass assertion-driven audit of plugin principles, UX, and docs |
+| [Plugin Review](#plugin-review) | Commands + Agents + Hooks | `/review`, `/review-efficiency`, `/tighten` | Multi-pass assertion-driven audit of plugin principles, UX, docs, and context efficiency |
 | [Plugin Test Harness](#plugin-test-harness) | MCP | 18 tools | Iterative test/fix/reload loop for plugin development |
 | [Release Pipeline](#release-pipeline) | Commands + Skills | `/release` | Semver releases with pre-flight checks and changelog generation |
 | [Repo Hygiene](#repo-hygiene) | Commands | `/hygiene` | Autonomous maintenance sweep for .gitignore, manifests, and READMEs |
@@ -289,31 +288,6 @@ isolated git worktree, and commits only changes that keep tests green.
 
 ---
 
-### Context Efficiency Toolkit
-
-**Audit and reduce plugin context footprint**: two structured workflows for eliminating
-token waste: a twelve-principle architectural audit and a prose-level rewriting pass.
-
-**Features:**
-
-- `/review-context-efficiency`: audits against 12 structural efficiency principles
-  (deferred loading, hook vs instruction, template extraction, and more)
-- `/tighten-markdown`: rewrites instruction files to remove motivational text,
-  restatements, hedging, and syntax narration without changing meaning
-- Approval-gated: findings presented before any file is modified
-- Designed to run in sequence: architecture first, prose second
-
-**Install:**
-
-```bash
-/plugin install context-efficiency-toolkit@l3digitalnet-plugins
-```
-
-**Learn more:**
-[plugins/context-efficiency-toolkit/README.md](plugins/context-efficiency-toolkit/README.md)
-
----
-
 ### Docs Manager
 
 **Documentation lifecycle management**: monitors file changes via hooks, accumulates
@@ -342,15 +316,16 @@ surfaces the queue for batch review at session end.
 
 ### Plugin Review
 
-**Multi-pass assertion-driven plugin audit**: three parallel analyst subagents cover
-principles alignment, terminal UX quality, and documentation freshness, then the
-orchestrator auto-implements all fixes and re-audits to convergence.
+**Multi-pass assertion-driven plugin audit**: four parallel analyst subagents cover
+principles alignment, terminal UX quality, documentation freshness, and context
+efficiency, then the orchestrator auto-implements all fixes and re-audits to convergence.
 
 **Features:**
 
-- Three parallel read-only analyst tracks: principles (A), UX (B), docs (C)
+- Four parallel read-only analyst tracks: principles (A), UX (B), docs (C), efficiency (D)
 - Assertion-based confidence scoring: loop continues until 100% or budget exhausted
-- `--autonomous` flag adds regression guard (Track D) and build/test validation
+- `/review-efficiency`: standalone 5-stage context efficiency audit against 12 structural principles
+- `/tighten`: prose-level rewriting pass to eliminate token waste without changing meaning
 - All fixes auto-implemented by the orchestrator, no manual copy/paste
 - Findings severity-sorted: critical → high → medium → low
 
@@ -499,7 +474,6 @@ Claude-Code-Plugins/
 ├── plugins/                     # All plugin implementations
 │   ├── agent-orchestrator/      # Agent team orchestration
 │   ├── autonomous-refactor/     # Test-driven autonomous refactoring
-│   ├── context-efficiency-toolkit/ # Plugin context footprint audit and reduction
 │   ├── design-assistant/        # Design document lifecycle
 │   ├── docs-manager/            # Documentation lifecycle management
 │   ├── github-repo-manager/     # Conversational GitHub repo maintenance
