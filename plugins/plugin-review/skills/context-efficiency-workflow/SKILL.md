@@ -1,8 +1,8 @@
 <!--
-Invoked by: commands/review-context-efficiency.md (which reads this file and CONTEXT_EFFICIENCY_REFERENCE.md).
+Invoked by: commands/review-efficiency.md (which reads this file and CONTEXT_EFFICIENCY_REFERENCE.md).
 Provides: Five-stage workflow for auditing a plugin against the twelve context efficiency principles.
 Interacts with: CONTEXT_EFFICIENCY_REFERENCE.md (principle definitions) and MARKDOWN_TIGHTEN.md (Stage 5 follow-up).
-If stage structure or checkpoint behavior changes here, update commands/review-context-efficiency.md
+If stage structure or checkpoint behavior changes here, update commands/review-efficiency.md
 and docs/USAGE.md to match.
 -->
 
