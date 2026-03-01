@@ -169,14 +169,14 @@ Display:
 Dry-run complete. N opportunities identified (max changes: M).
 
 Ranked opportunities:
-  1. [HIGH]   <file>:<line> — <opportunity description>
-  2. [MEDIUM] <file>:<line> — <opportunity description>
+  1. [HIGH]   <file>:<line>: <opportunity description>
+  2. [MEDIUM] <file>:<line>: <opportunity description>
   ...
 
 No changes applied. Run without --dry-run to execute.
 ```
 
-Exit cleanly after displaying this output.
+Exit cleanly after displaying this output. Do NOT proceed to Phase 3 or Phase 4.
 
 ---
 
