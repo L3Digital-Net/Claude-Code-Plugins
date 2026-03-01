@@ -154,7 +154,7 @@ Tests are defined in YAML and parsed into `PthTest` objects. The `id` field is a
 
 ```yaml
 id: pkg-info-valid-input          # optional; slugified from name if omitted
-name: pkg_info — valid input
+name: pkg_info - valid input
 mode: mcp
 type: single
 tool: pkg_info
@@ -170,7 +170,7 @@ tags: [smoke]
 ### Multi-step scenario (captures output between steps)
 
 ```yaml
-name: pth_get_commit — valid input
+name: pth_get_commit - valid input
 mode: mcp
 type: scenario
 steps:
@@ -198,7 +198,7 @@ generated_from: schema
 ### Plugin hook script validation
 
 ```yaml
-name: write-guard.sh — script exists and is readable
+name: write-guard.sh - script exists and is readable
 mode: plugin
 type: validate
 checks:
