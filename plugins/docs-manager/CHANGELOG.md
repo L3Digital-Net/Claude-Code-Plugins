@@ -4,6 +4,18 @@ All notable changes to the docs-manager plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.2.1] - 2026-03-02
+
+### Changed
+- Update GitHub org references from L3DigitalNet to L3Digital-Net
+- strengthen triggers and extract long content to references
+- Enhance Release Pipeline and Repo Hygiene Plugins
+
+### Fixed
+- remove em dashes from all READMEs; add hygiene check
+- cross-cutting standards sweep across marketplace
+
+
 ## [0.2.0] - 2026-02-20
 
 ### Added
