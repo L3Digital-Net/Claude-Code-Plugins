@@ -7,6 +7,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 ## [1.0.0] - 2026-03-02
 
 ### Added
+- add python-dev plugin v1.0.0
+
+
+## [1.0.0] - 2026-03-02
+
+### Added
 
 - 11 Python development skills with automatic context-triggered loading:
   - `python-anti-patterns`: checklist of common Python bugs and structural mistakes

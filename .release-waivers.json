@@ -74,6 +74,11 @@
       "check": "missing_tests",
       "plugin": "linux-sysadmin",
       "reason": "Skill-only plugin — 94 service knowledge files with no executable test suite by design"
+    },
+    {
+      "check": "missing_tests",
+      "plugin": "python-dev",
+      "reason": "Markdown/skill-only plugin — 11 knowledge files and one command with no executable test suite by design"
     }
   ]
 }
