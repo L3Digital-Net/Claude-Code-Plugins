@@ -160,6 +160,18 @@
       "category": "development",
       "source": "./plugins/qt-suite",
       "homepage": "https://github.com/L3Digital-Net/Claude-Code-Plugins/tree/main/plugins/qt-suite"
+    },
+    {
+      "name": "python-dev",
+      "description": "11 Python development skills covering async patterns, anti-patterns, type safety, testing, resilience, observability, configuration, design patterns, resource management, code style, and background jobs. Includes /python-code-review for comprehensive code audits across all domains.",
+      "version": "1.0.0",
+      "author": {
+        "name": "L3Digital-Net",
+        "url": "https://github.com/L3Digital-Net"
+      },
+      "category": "development",
+      "source": "./plugins/python-dev",
+      "homepage": "https://github.com/L3Digital-Net/Claude-Code-Plugins/tree/main/plugins/python-dev"
     }
   ]
 }
