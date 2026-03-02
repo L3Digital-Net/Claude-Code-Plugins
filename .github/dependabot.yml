@@ -4,18 +4,30 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      github-actions:
+        patterns: ["*"]
 
   - package-ecosystem: "npm"
     directory: "/plugins/github-repo-manager/helper"
     schedule:
       interval: "weekly"
+    groups:
+      all-dependencies:
+        patterns: ["*"]
 
   - package-ecosystem: "npm"
     directory: "/plugins/home-assistant-dev/mcp-server"
     schedule:
       interval: "weekly"
+    groups:
+      all-dependencies:
+        patterns: ["*"]
 
   - package-ecosystem: "npm"
     directory: "/plugins/plugin-test-harness"
     schedule:
       interval: "weekly"
+    groups:
+      all-dependencies:
+        patterns: ["*"]
