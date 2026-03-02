@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import shutil
+from typing import Any
 import socket
 import subprocess
 import sys
@@ -69,7 +70,7 @@ def _cleanup_app() -> None:
             _app_state.process.terminate()
             _app_state.process.wait(timeout=5)
         except Exception as e:
-            logger.warning(f"Error terminating app: {e}")
+            logger.warning("Error terminating app: %s", e)
         _app_state.process = None
 
     if _app_state.xvfb_process:
@@ -77,7 +78,7 @@ def _cleanup_app() -> None:
             _app_state.xvfb_process.terminate()
             _app_state.xvfb_process.wait(timeout=5)
         except Exception as e:
-            logger.warning(f"Error terminating xvfb: {e}")
+            logger.warning("Error terminating xvfb: %s", e)
         _app_state.xvfb_process = None
 
     socket_path = _app_state.socket_path
@@ -85,7 +86,7 @@ def _cleanup_app() -> None:
         try:
             os.unlink(socket_path)
         except OSError as e:
-            logger.warning(f"Error removing socket: {e}")
+            logger.warning("Error removing socket: %s", e)
     _app_state.socket_path = None
 
     socket_dir = _app_state.socket_dir
@@ -94,7 +95,7 @@ def _cleanup_app() -> None:
     _app_state.socket_dir = None
 
 
-def _get_process_output() -> dict:
+def _get_process_output() -> dict[str, Any]:
     """Get any available output from the app process."""
     if not _app_state.process:
         return {"stdout": "", "stderr": "", "running": False, "exit_code": None}
@@ -112,8 +113,8 @@ def _get_process_output() -> dict:
             out, err = _app_state.process.communicate(timeout=1)
             stdout = out.decode() if out else ""
             stderr = err.decode() if err else ""
-        except Exception:
-            pass
+        except (subprocess.TimeoutExpired, OSError) as e:
+            logger.debug("process_communicate_error: %s", e)
 
     return {
         "stdout": stdout,
@@ -123,7 +124,7 @@ def _get_process_output() -> dict:
     }
 
 
-def _send_command(command: dict, timeout: float = 10.0) -> dict:
+def _send_command(command: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
     """Send a command to the test harness via Unix socket."""
     if not _app_state.socket_path:
         return {"success": False, "error": "No app is running"}
@@ -175,7 +176,7 @@ def launch_app(
     working_dir: str | None = None,
     python_paths: list[str] | None = None,
     timeout: int = 10,
-) -> dict:
+) -> dict[str, Any]:
     """Launch a Qt application headlessly via xvfb.
 
     Supports two modes:
@@ -256,11 +257,11 @@ def launch_app(
             for path in python_paths:
                 harness_cmd.extend(["--python-path", path])
 
-        logger.info(f"Launching harness: {' '.join(harness_cmd)}")
-        logger.info(f"Working dir: {cwd}")
-        logger.info(f"Display: {display}")
+        logger.info("Launching harness: %s", " ".join(harness_cmd))
+        logger.info("Working dir: %s", cwd)
+        logger.info("Display: %s", display)
         if python_paths:
-            logger.info(f"Python paths: {python_paths}")
+            logger.info("Python paths: %s", python_paths)
 
         # Start the harness
         _app_state.process = subprocess.Popen(
@@ -304,7 +305,7 @@ def launch_app(
 
 
 @mcp.tool()
-def capture_screenshot(output_path: str | None = None) -> dict:
+def capture_screenshot(output_path: str | None = None) -> dict[str, Any]:
     """Capture screenshot of current application.
 
     Args:
@@ -341,7 +342,7 @@ def capture_screenshot(output_path: str | None = None) -> dict:
 
 
 @mcp.tool()
-def click_widget(widget_name: str, button: str = "left") -> dict:
+def click_widget(widget_name: str, button: str = "left") -> dict[str, Any]:
     """Click a widget by its object name.
 
     Args:
@@ -367,7 +368,7 @@ def click_widget(widget_name: str, button: str = "left") -> dict:
 
 
 @mcp.tool()
-def hover_widget(widget_name: str) -> dict:
+def hover_widget(widget_name: str) -> dict[str, Any]:
     """Hover over a widget by its object name.
 
     Args:
@@ -391,7 +392,7 @@ def hover_widget(widget_name: str) -> dict:
 
 
 @mcp.tool()
-def type_text(text: str, widget_name: str | None = None) -> dict:
+def type_text(text: str, widget_name: str | None = None) -> dict[str, Any]:
     """Type text into a widget or the currently focused widget.
 
     Args:
@@ -418,7 +419,7 @@ def type_text(text: str, widget_name: str | None = None) -> dict:
 
 
 @mcp.tool()
-def press_key(key: str, modifiers: list[str] | None = None) -> dict:
+def press_key(key: str, modifiers: list[str] | None = None) -> dict[str, Any]:
     """Simulate a key press.
 
     Args:
@@ -445,7 +446,7 @@ def press_key(key: str, modifiers: list[str] | None = None) -> dict:
 
 
 @mcp.tool()
-def find_widgets(name_pattern: str = "*") -> dict:
+def find_widgets(name_pattern: str = "*") -> dict[str, Any]:
     """List widgets matching a name pattern.
 
     Args:
@@ -473,7 +474,7 @@ def find_widgets(name_pattern: str = "*") -> dict:
 
 
 @mcp.tool()
-def click_at(x: int, y: int, button: str = "left") -> dict:
+def click_at(x: int, y: int, button: str = "left") -> dict[str, Any]:
     """Click at specific screen coordinates.
 
     Useful for clicking widgets that don't have object names.
@@ -504,7 +505,7 @@ def click_at(x: int, y: int, button: str = "left") -> dict:
 
 
 @mcp.tool()
-def list_all_widgets(include_invisible: bool = False) -> dict:
+def list_all_widgets(include_invisible: bool = False) -> dict[str, Any]:
     """List all widgets with their coordinates (including unnamed ones).
 
     Useful for understanding the complete widget hierarchy and finding
@@ -535,7 +536,7 @@ def list_all_widgets(include_invisible: bool = False) -> dict:
 
 
 @mcp.tool()
-def trigger_action(action_name: str) -> dict:
+def trigger_action(action_name: str) -> dict[str, Any]:
     """Trigger a QAction by its object name.
 
     This directly triggers menu actions without needing to click through menus.
@@ -562,7 +563,7 @@ def trigger_action(action_name: str) -> dict:
 
 
 @mcp.tool()
-def list_actions() -> dict:
+def list_actions() -> dict[str, Any]:
     """List all QActions in the application.
 
     Returns menu items, toolbar actions, etc. with their names, text,
@@ -589,7 +590,7 @@ def list_actions() -> dict:
 
 
 @mcp.tool()
-def get_widget_info(widget_name: str) -> dict:
+def get_widget_info(widget_name: str) -> dict[str, Any]:
     """Get detailed information about a specific widget.
 
     Args:
@@ -613,7 +614,7 @@ def get_widget_info(widget_name: str) -> dict:
 
 
 @mcp.tool()
-def get_app_status() -> dict:
+def get_app_status() -> dict[str, Any]:
     """Check if the application is still running and get diagnostics.
 
     Use this to check app health without attempting a command.
@@ -640,7 +641,7 @@ def get_app_status() -> dict:
 
 
 @mcp.tool()
-def wait_for_idle(timeout: float = 5.0) -> dict:
+def wait_for_idle(timeout: float = 5.0) -> dict[str, Any]:
     """Wait for the Qt application to process pending events.
 
     Useful after clicks or other actions to let the UI settle.
@@ -666,7 +667,7 @@ def wait_for_idle(timeout: float = 5.0) -> dict:
 
 
 @mcp.tool()
-def close_app() -> dict:
+def close_app() -> dict[str, Any]:
     """Close the currently running application.
 
     Returns:

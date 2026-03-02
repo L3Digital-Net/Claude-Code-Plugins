@@ -16,6 +16,7 @@ import fnmatch
 import importlib.util
 import json
 import os
+import queue as queue_mod
 import socket
 import sys
 import threading
@@ -24,10 +25,110 @@ import traceback
 from pathlib import Path
 
 # Must import Qt before creating QApplication
-from PySide6.QtCore import QCoreApplication, QPoint, QTimer, Qt
+from PySide6.QtCore import QCoreApplication, QObject, QPoint, QTimer, Qt, Slot
 from PySide6.QtGui import QAction, QGuiApplication
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QMenu, QMenuBar, QWidget
+
+# Qt key name → Qt.Key mapping for press_key commands.
+# Module-level constant — built once, not rebuilt per keypress call.
+_KEY_MAP: dict[str, Qt.Key] = {
+    # Navigation
+    "Enter": Qt.Key.Key_Enter,
+    "Return": Qt.Key.Key_Return,
+    "Tab": Qt.Key.Key_Tab,
+    "Escape": Qt.Key.Key_Escape,
+    "Backspace": Qt.Key.Key_Backspace,
+    "Delete": Qt.Key.Key_Delete,
+    "Space": Qt.Key.Key_Space,
+    "Up": Qt.Key.Key_Up,
+    "Down": Qt.Key.Key_Down,
+    "Left": Qt.Key.Key_Left,
+    "Right": Qt.Key.Key_Right,
+    "Home": Qt.Key.Key_Home,
+    "End": Qt.Key.Key_End,
+    "PageUp": Qt.Key.Key_PageUp,
+    "PageDown": Qt.Key.Key_PageDown,
+    "Insert": Qt.Key.Key_Insert,
+    # Function keys
+    "F1": Qt.Key.Key_F1,
+    "F2": Qt.Key.Key_F2,
+    "F3": Qt.Key.Key_F3,
+    "F4": Qt.Key.Key_F4,
+    "F5": Qt.Key.Key_F5,
+    "F6": Qt.Key.Key_F6,
+    "F7": Qt.Key.Key_F7,
+    "F8": Qt.Key.Key_F8,
+    "F9": Qt.Key.Key_F9,
+    "F10": Qt.Key.Key_F10,
+    "F11": Qt.Key.Key_F11,
+    "F12": Qt.Key.Key_F12,
+    # Punctuation and symbols
+    "Comma": Qt.Key.Key_Comma,
+    ",": Qt.Key.Key_Comma,
+    "Period": Qt.Key.Key_Period,
+    ".": Qt.Key.Key_Period,
+    "Semicolon": Qt.Key.Key_Semicolon,
+    ";": Qt.Key.Key_Semicolon,
+    "Colon": Qt.Key.Key_Colon,
+    ":": Qt.Key.Key_Colon,
+    "Slash": Qt.Key.Key_Slash,
+    "/": Qt.Key.Key_Slash,
+    "Backslash": Qt.Key.Key_Backslash,
+    "\\": Qt.Key.Key_Backslash,
+    "Minus": Qt.Key.Key_Minus,
+    "-": Qt.Key.Key_Minus,
+    "Plus": Qt.Key.Key_Plus,
+    "+": Qt.Key.Key_Plus,
+    "Equal": Qt.Key.Key_Equal,
+    "=": Qt.Key.Key_Equal,
+    "BracketLeft": Qt.Key.Key_BracketLeft,
+    "[": Qt.Key.Key_BracketLeft,
+    "BracketRight": Qt.Key.Key_BracketRight,
+    "]": Qt.Key.Key_BracketRight,
+    "BraceLeft": Qt.Key.Key_BraceLeft,
+    "{": Qt.Key.Key_BraceLeft,
+    "BraceRight": Qt.Key.Key_BraceRight,
+    "}": Qt.Key.Key_BraceRight,
+    "Apostrophe": Qt.Key.Key_Apostrophe,
+    "'": Qt.Key.Key_Apostrophe,
+    "QuoteDbl": Qt.Key.Key_QuoteDbl,
+    '"': Qt.Key.Key_QuoteDbl,
+    "Underscore": Qt.Key.Key_Underscore,
+    "_": Qt.Key.Key_Underscore,
+    "At": Qt.Key.Key_At,
+    "@": Qt.Key.Key_At,
+    "NumberSign": Qt.Key.Key_NumberSign,
+    "#": Qt.Key.Key_NumberSign,
+    "Dollar": Qt.Key.Key_Dollar,
+    "$": Qt.Key.Key_Dollar,
+    "Percent": Qt.Key.Key_Percent,
+    "%": Qt.Key.Key_Percent,
+    "Ampersand": Qt.Key.Key_Ampersand,
+    "&": Qt.Key.Key_Ampersand,
+    "Asterisk": Qt.Key.Key_Asterisk,
+    "*": Qt.Key.Key_Asterisk,
+    "ParenLeft": Qt.Key.Key_ParenLeft,
+    "(": Qt.Key.Key_ParenLeft,
+    "ParenRight": Qt.Key.Key_ParenRight,
+    ")": Qt.Key.Key_ParenRight,
+    "Less": Qt.Key.Key_Less,
+    "<": Qt.Key.Key_Less,
+    "Greater": Qt.Key.Key_Greater,
+    ">": Qt.Key.Key_Greater,
+    "Question": Qt.Key.Key_Question,
+    "?": Qt.Key.Key_Question,
+    "Exclam": Qt.Key.Key_Exclam,
+    "!": Qt.Key.Key_Exclam,
+    "AsciiTilde": Qt.Key.Key_AsciiTilde,
+    "~": Qt.Key.Key_AsciiTilde,
+    "QuoteLeft": Qt.Key.Key_QuoteLeft,
+    "`": Qt.Key.Key_QuoteLeft,
+    "Bar": Qt.Key.Key_Bar,
+    "|": Qt.Key.Key_Bar,
+    "AsciiCircum": Qt.Key.Key_AsciiCircum,
+    "^": Qt.Key.Key_AsciiCircum,
+}
 
 
 class CommandHandler:
@@ -231,109 +332,10 @@ class CommandHandler:
         key_name = cmd.get("key", "")
         modifiers = cmd.get("modifiers", [])
 
-        # Map key names to Qt keys - comprehensive list
-        key_map = {
-            # Navigation
-            "Enter": Qt.Key.Key_Enter,
-            "Return": Qt.Key.Key_Return,
-            "Tab": Qt.Key.Key_Tab,
-            "Escape": Qt.Key.Key_Escape,
-            "Backspace": Qt.Key.Key_Backspace,
-            "Delete": Qt.Key.Key_Delete,
-            "Space": Qt.Key.Key_Space,
-            "Up": Qt.Key.Key_Up,
-            "Down": Qt.Key.Key_Down,
-            "Left": Qt.Key.Key_Left,
-            "Right": Qt.Key.Key_Right,
-            "Home": Qt.Key.Key_Home,
-            "End": Qt.Key.Key_End,
-            "PageUp": Qt.Key.Key_PageUp,
-            "PageDown": Qt.Key.Key_PageDown,
-            "Insert": Qt.Key.Key_Insert,
-            # Function keys
-            "F1": Qt.Key.Key_F1,
-            "F2": Qt.Key.Key_F2,
-            "F3": Qt.Key.Key_F3,
-            "F4": Qt.Key.Key_F4,
-            "F5": Qt.Key.Key_F5,
-            "F6": Qt.Key.Key_F6,
-            "F7": Qt.Key.Key_F7,
-            "F8": Qt.Key.Key_F8,
-            "F9": Qt.Key.Key_F9,
-            "F10": Qt.Key.Key_F10,
-            "F11": Qt.Key.Key_F11,
-            "F12": Qt.Key.Key_F12,
-            # Punctuation and symbols
-            "Comma": Qt.Key.Key_Comma,
-            ",": Qt.Key.Key_Comma,
-            "Period": Qt.Key.Key_Period,
-            ".": Qt.Key.Key_Period,
-            "Semicolon": Qt.Key.Key_Semicolon,
-            ";": Qt.Key.Key_Semicolon,
-            "Colon": Qt.Key.Key_Colon,
-            ":": Qt.Key.Key_Colon,
-            "Slash": Qt.Key.Key_Slash,
-            "/": Qt.Key.Key_Slash,
-            "Backslash": Qt.Key.Key_Backslash,
-            "\\": Qt.Key.Key_Backslash,
-            "Minus": Qt.Key.Key_Minus,
-            "-": Qt.Key.Key_Minus,
-            "Plus": Qt.Key.Key_Plus,
-            "+": Qt.Key.Key_Plus,
-            "Equal": Qt.Key.Key_Equal,
-            "=": Qt.Key.Key_Equal,
-            "BracketLeft": Qt.Key.Key_BracketLeft,
-            "[": Qt.Key.Key_BracketLeft,
-            "BracketRight": Qt.Key.Key_BracketRight,
-            "]": Qt.Key.Key_BracketRight,
-            "BraceLeft": Qt.Key.Key_BraceLeft,
-            "{": Qt.Key.Key_BraceLeft,
-            "BraceRight": Qt.Key.Key_BraceRight,
-            "}": Qt.Key.Key_BraceRight,
-            "Apostrophe": Qt.Key.Key_Apostrophe,
-            "'": Qt.Key.Key_Apostrophe,
-            "QuoteDbl": Qt.Key.Key_QuoteDbl,
-            '"': Qt.Key.Key_QuoteDbl,
-            "Underscore": Qt.Key.Key_Underscore,
-            "_": Qt.Key.Key_Underscore,
-            "At": Qt.Key.Key_At,
-            "@": Qt.Key.Key_At,
-            "NumberSign": Qt.Key.Key_NumberSign,
-            "#": Qt.Key.Key_NumberSign,
-            "Dollar": Qt.Key.Key_Dollar,
-            "$": Qt.Key.Key_Dollar,
-            "Percent": Qt.Key.Key_Percent,
-            "%": Qt.Key.Key_Percent,
-            "Ampersand": Qt.Key.Key_Ampersand,
-            "&": Qt.Key.Key_Ampersand,
-            "Asterisk": Qt.Key.Key_Asterisk,
-            "*": Qt.Key.Key_Asterisk,
-            "ParenLeft": Qt.Key.Key_ParenLeft,
-            "(": Qt.Key.Key_ParenLeft,
-            "ParenRight": Qt.Key.Key_ParenRight,
-            ")": Qt.Key.Key_ParenRight,
-            "Less": Qt.Key.Key_Less,
-            "<": Qt.Key.Key_Less,
-            "Greater": Qt.Key.Key_Greater,
-            ">": Qt.Key.Key_Greater,
-            "Question": Qt.Key.Key_Question,
-            "?": Qt.Key.Key_Question,
-            "Exclam": Qt.Key.Key_Exclam,
-            "!": Qt.Key.Key_Exclam,
-            "AsciiTilde": Qt.Key.Key_AsciiTilde,
-            "~": Qt.Key.Key_AsciiTilde,
-            "QuoteLeft": Qt.Key.Key_QuoteLeft,
-            "`": Qt.Key.Key_QuoteLeft,
-            "Bar": Qt.Key.Key_Bar,
-            "|": Qt.Key.Key_Bar,
-            "AsciiCircum": Qt.Key.Key_AsciiCircum,
-            "^": Qt.Key.Key_AsciiCircum,
-        }
-
         # Single character keys (letters and numbers)
         if len(key_name) == 1:
-            if key_name in key_map:
-                key = key_map[key_name]
+            if key_name in _KEY_MAP:
+                key = _KEY_MAP[key_name]
             elif key_name.isalpha():
                 key = getattr(Qt.Key, f"Key_{key_name.upper()}", None)
             elif key_name.isdigit():
@@ -341,7 +343,7 @@ class CommandHandler:
             else:
                 key = None
         else:
-            key = key_map.get(key_name)
+            key = _KEY_MAP.get(key_name)
 
         if not key:
             return {"success": False, "error": f"Unknown key: {key_name}"}
@@ -609,27 +611,77 @@ class CommandHandler:
         return {"success": True}
 
 
+class CommandDispatcher(QObject):
+    """Routes socket commands to the Qt main thread via a polling QTimer.
+
+    The background socket thread calls dispatch(), which enqueues the command
+    and blocks on a per-request response queue. The QTimer fires every 10 ms
+    on the main thread, dequeues one command, executes it via CommandHandler
+    (safe because Qt APIs run on the main thread), and puts the result back.
+
+    Why QTimer polling instead of QMetaObject.invokeMethod: invokeMethod with
+    QueuedConnection requires the target to be a Slot with a fixed signature.
+    The queue+timer pattern avoids boilerplate and works without Qt's
+    meta-object system knowing about each individual command type.
+    """
+
+    def __init__(self, handler: CommandHandler, parent: QObject | None = None) -> None:
+        super().__init__(parent)
+        self._handler = handler
+        self._request_queue: queue_mod.Queue[
+            tuple[dict, queue_mod.Queue[dict]]
+        ] = queue_mod.Queue()
+        self._timer = QTimer(self)
+        self._timer.setInterval(10)  # 10 ms — invisible to users, keeps main thread responsive
+        self._timer.timeout.connect(self._process_pending)
+        self._timer.start()
+
+    def dispatch(self, command: dict, timeout: float = 10.0) -> dict:
+        """Thread-safe: submit a command and block until the main thread returns a result."""
+        response_queue: queue_mod.Queue[dict] = queue_mod.Queue()
+        self._request_queue.put((command, response_queue))
+        try:
+            return response_queue.get(timeout=timeout)
+        except queue_mod.Empty:
+            return {"success": False, "error": "Command timed out in dispatcher"}
+
+    @Slot()
+    def _process_pending(self) -> None:
+        """Main thread: process one pending command per timer tick."""
+        try:
+            command, response_queue = self._request_queue.get_nowait()
+        except queue_mod.Empty:
+            return
+        result = self._handler.handle(command)
+        response_queue.put(result)
+
+
 class SocketServer:
     """Unix socket server for receiving commands."""
 
-    def __init__(self, socket_path: str, handler: CommandHandler):
+    def __init__(self, socket_path: str, dispatcher: CommandDispatcher):
         self.socket_path = socket_path
-        self.handler = handler
+        self.dispatcher = dispatcher
         self.running = False
         self.server_socket = None
 
-    def start(self):
+    def start(self) -> None:
         """Start the socket server in a background thread."""
         # Remove existing socket file
         if os.path.exists(self.socket_path):
             os.unlink(self.socket_path)
 
         self.server_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.server_socket.bind(self.socket_path)
-        self.server_socket.listen(5)
-        self.server_socket.settimeout(1.0)
-        self.running = True
+        try:
+            self.server_socket.bind(self.socket_path)
+            self.server_socket.listen(5)
+            self.server_socket.settimeout(1.0)
+        except OSError:
+            self.server_socket.close()
+            self.server_socket = None
+            raise
 
+        self.running = True
         thread = threading.Thread(target=self._server_loop, daemon=True)
         thread.start()
 
@@ -668,8 +720,9 @@ class SocketServer:
 
             if data:
                 command = json.loads(data.decode().strip())
-                # Execute command in the main thread via Qt
-                result = self.handler.handle(command)
+                # dispatch() routes the command to the Qt main thread and blocks
+                # until the result is ready — safe for all Qt API calls.
+                result = self.dispatcher.dispatch(command)
                 response = json.dumps(result) + "\n"
                 conn.sendall(response.encode())
 
@@ -746,16 +799,17 @@ def main():
     # We'll hook into the existing one after the script loads
 
     socket_path = args.socket
-    handler = None
+    dispatcher = None
     server = None
 
     def setup_harness():
         """Set up the harness after QApplication exists."""
-        nonlocal handler, server
+        nonlocal dispatcher, server
         app = QApplication.instance()
         if app:
             handler = CommandHandler(app)
-            server = SocketServer(socket_path, handler)
+            dispatcher = CommandDispatcher(handler)
+            server = SocketServer(socket_path, dispatcher)
             server.start()
             print(f"Harness started, socket: {socket_path}", file=sys.stderr)
 
