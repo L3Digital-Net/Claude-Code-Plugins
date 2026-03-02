@@ -1,10 +1,10 @@
 # repo-hygiene
 
-Autonomous maintenance sweep for the Claude-Code-Plugins monorepo.
+Autonomous maintenance sweep for any git repository.
 
 ## Summary
 
-`/hygiene` runs four parallel mechanical checks against the repository and Claude Code's local plugin state, then performs a three-phase semantic pass: plugin READMEs (leaf-to-root), the root README.md, and the `docs/` directory. Findings are classified automatically: safe corrections (missing `.gitignore` patterns, trailing slashes in `marketplace.json`) are applied without confirmation; destructive or ambiguous changes (orphan deletion, stale commits, README edits, stale docs references) require explicit approval via a multi-select prompt. A `--dry-run` flag shows the full plan without touching anything.
+`/hygiene` runs four parallel mechanical checks against the repository and Claude Code's local plugin state, then performs a three-phase semantic pass for Claude Code plugin marketplace repos: plugin READMEs (leaf-to-root), the root README.md, and the `docs/` directory. The plugin auto-detects the repository type — checks that require a Claude Code plugin layout run only when the relevant files are present. Findings are classified automatically: safe corrections (missing `.gitignore` patterns, trailing slashes in `marketplace.json`) are applied without confirmation; destructive or ambiguous changes (orphan deletion, stale commits, README edits, stale docs references) require explicit approval via a multi-select prompt. A `--dry-run` flag shows the full plan without touching anything.
 
 ## Principles
 
@@ -20,7 +20,8 @@ Autonomous maintenance sweep for the Claude-Code-Plugins monorepo.
 
 - Claude Code (any recent version)
 - Python 3 (used by all four mechanical scan scripts; no external packages required)
-- Must be run from within the Claude-Code-Plugins repository (scripts call `git rev-parse --show-toplevel` to locate repo root)
+- Must be run from within any git repository (scripts call `git rev-parse --show-toplevel` to locate repo root)
+- Claude Code plugin marketplace checks (Check 2, Check 3) require `.claude-plugin/marketplace.json` at the repo root; they are skipped gracefully in other repos
 
 ## Installation
 
@@ -54,7 +55,7 @@ flowchart TD
     CL -->|severity == info| IN[Collect info notes]
     NA --> AP[Step 6: Apply approved fixes<br/>delete / stage / display for review / edit]
     AF & AP & IN --> SUM[Step 7: Final summary<br/>Auto-fixed / Approved / Deferred / Info]
-    SUM --> PUSH((Step 8: Commit auto-fixes<br/>push branch → merge to main))
+    SUM --> PUSH((Step 8: Commit auto-fixes<br/>push branch → merge to default branch))
 ```
 
 ## Usage
@@ -81,7 +82,7 @@ The sweep always runs all checks. With `--dry-run`, no files are modified and no
 - Plugins present in `installed_plugins.json` but absent from `settings.json` `enabledPlugins`
 
 **After the sweep (Step 8):**
-Any file changes made by the sweep (auto-fixes and approved edits) are committed automatically as `fix(hygiene): apply auto-fixes from /hygiene sweep`, pushed to the current branch, then merged to `main` and pushed. Files staged via `stale-commits` approvals are called out separately; they require a user-authored commit message. The remote is always left up-to-date after a successful sweep. Skipped when `--dry-run` is active or when no files were modified.
+Any file changes made by the sweep (auto-fixes and approved edits) are committed automatically as `fix(hygiene): apply auto-fixes from /hygiene sweep`, then pushed to the current branch. If the current branch differs from the repo's remote default branch (detected automatically), it is also merged to the default branch and pushed. Files staged via `stale-commits` approvals are called out separately before the push begins; they require a user-authored commit message. The remote is always left up-to-date after a successful sweep. Skipped when `--dry-run` is active or when no files were modified.
 
 ## Commands
 
@@ -92,13 +93,15 @@ Any file changes made by the sweep (auto-fixes and approved edits) are committed
 
 ## Checks
 
-| # | Check | Script | What it inspects | Auto-fixable |
-|---|---|---|---|---|
-| 1 | `.gitignore` missing patterns | `check-gitignore.sh` | All non-auto-generated `.gitignore` files in the repo tree. Flags missing `node_modules/` when `package.json` is co-located; flags missing `__pycache__/` and `*.pyc` when `.py` files exist within 3 directory levels. Skips the root `.gitignore` (already provides global coverage) and pytest-generated files (contain only `*`). | Yes: appends missing lines |
-| 2 | Marketplace manifest consistency | `check-manifests.sh` | Cross-references `.claude-plugin/marketplace.json` against each plugin's `.claude-plugin/plugin.json`: source directory existence, `plugin.json` presence, and version match between the marketplace entry and the manifest. Also checks `~/.claude/plugins/installed_plugins.json` for entries whose `installPath` no longer exists on disk. Flags trailing slashes in `source` paths as auto-fixable normalisation. | Trailing slash only; all other mismatches need approval |
-| 3 | README and docs accuracy | inline AI (Step 2) | Three-phase scan in leaf-to-root order: **(2a) Plugin READMEs**: detects unmodified template placeholders; checks all required sections are present; cross-references each Commands/Skills/Agents/Hooks/Tools table entry against actual files on disk; scans `Known Issues` for resolved issues; checks `Principles` for clear codebase contradictions. **(2b) Root README.md**: verifies all marketplace plugins are mentioned and a plugin inventory is present. **(2c) `docs/` files** (excluding `plans/`): checks every repo-relative path reference and plugin name mention against actual files on disk. | No |
-| 4 | Plugin state orphans | `check-orphans.sh` | Compares three state sources: `installed_plugins.json`, `settings.json` `enabledPlugins`, and `~/.claude/plugins/cache/`. Flags `enabledPlugins` keys absent from `installed_plugins.json` (stale toggle) as warnings; flags the inverse (installed but not enabled) as info notes. Flags `temp_*` directories at the top level of the cache dir as orphaned. | No |
-| 5 | Stale uncommitted changes | `check-stale-commits.sh` | Runs `git status --porcelain` and identifies modified or untracked files (excluding git-ignored) whose `mtime` is older than 24 hours. Reports the file path and age in days and hours. On approval, stages the file with `git add`; does not commit. | No |
+The plugin detects the repository type at startup and skips checks that require a Claude Code plugin marketplace layout. Checks marked **conditional** run only when `.claude-plugin/marketplace.json` is present at the repo root.
+
+| # | Check | Scope | Script | What it inspects | Auto-fixable |
+|---|---|---|---|---|---|
+| 1 | `.gitignore` missing patterns | Universal | `check-gitignore.sh` | All non-auto-generated `.gitignore` files in the repo tree. Flags missing `node_modules/` when `package.json` is co-located; flags missing `__pycache__/` and `*.pyc` when `.py` files exist within 3 directory levels. Skips the root `.gitignore` (already provides global coverage) and pytest-generated files (contain only `*`). | Yes: appends missing lines |
+| 2 | Manifest consistency | Conditional | `check-manifests.sh` | **Source A (conditional):** Cross-references `.claude-plugin/marketplace.json` against each plugin's `.claude-plugin/plugin.json`: source directory existence, `plugin.json` presence, and version match. Skipped when `marketplace.json` is absent. **Source B (universal):** checks `~/.claude/plugins/installed_plugins.json` for entries whose `installPath` no longer exists on disk. Flags trailing slashes in `source` paths as auto-fixable normalisation. | Trailing slash only; all other mismatches need approval |
+| 3 | README and docs accuracy | Conditional | inline AI (Step 2) | Three-phase scan (only runs in Claude Code plugin repos): **(2a) Plugin READMEs**: detects unmodified template placeholders; checks all required sections are present; cross-references each Commands/Skills/Agents/Hooks/Tools table entry against actual files on disk; scans `Known Issues` for resolved issues; checks `Principles` for clear codebase contradictions. **(2b) Root README.md**: verifies all marketplace plugins are mentioned and a plugin inventory is present. **(2c) `docs/` files** (excluding `plans/`): checks every repo-relative path reference and plugin name mention against actual files on disk. | No |
+| 4 | Plugin state orphans | Universal | `check-orphans.sh` | Compares three Claude Code state sources: `installed_plugins.json`, `settings.json` `enabledPlugins`, and `~/.claude/plugins/cache/`. Flags `enabledPlugins` keys absent from `installed_plugins.json` (stale toggle) as warnings; flags the inverse (installed but not enabled) as info notes. Flags `temp_*` directories at the top level of the cache dir as orphaned. Produces zero findings when Claude Code is not installed. | No |
+| 5 | Stale uncommitted changes | Universal | `check-stale-commits.sh` | Runs `git status --porcelain` and identifies modified or untracked files (excluding git-ignored) whose `mtime` is older than 24 hours. Reports the file path and age in days and hours. On approval, stages the file with `git add`; does not commit. | No |
 
 ## Planned Features
 

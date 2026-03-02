@@ -1,21 +1,17 @@
 # Changelog
 
-## [1.1.1] - 2026-03-02
-
-### Added
-- add Step 8 — auto-commit fixes and push to remote (v1.1.1)
-- expand Check 3 to leaf-to-root README and docs/ accuracy scan (v1.1.0)
+## [1.2.0] - 2026-03-02
 
 ### Changed
-- Update GitHub org references from L3DigitalNet to L3Digital-Net
-- Enhance Release Pipeline and Repo Hygiene Plugins
-- update plugin docs, PTH README for v0.6.0, and repo template
-
-### Fixed
-- remove em dashes from all READMEs; add hygiene check
-- cross-cutting standards sweep across marketplace
-- replace \n with <br/> in mermaid node labels across all plugin READMEs
-
+- Plugin is now universal: works in any git repository, not only the Claude-Code-Plugins monorepo
+- `check-manifests.sh` treats `marketplace.json` as optional — Source A (plugin manifest checks) is skipped gracefully when the file is absent; Source B (installed_plugins.json path checks) runs in all repos
+- `/hygiene` command adds repo-type detection at Step 0 via `IS_CLAUDE_PLUGIN_REPO` flag; Step 2 (README/docs scan) is gated on that flag and skipped in generic repos
+- Step 8 detects the remote default branch dynamically instead of hardcoding `main`; merge-to-default-branch only runs when the current branch differs from the default
+- Step 8 warns about staged stale-commit files before the push sequence begins, with an `AskUserQuestion` gate to let users commit first
+- Step 5 DRY_RUN now shows the full grouped findings list instead of a count-only message
+- `stale-commits` and `orphans` approval items retain per-item multi-select granularity regardless of N (prevents category-collapse for destructive actions)
+- Step 6 no longer double-confirms gitignore removals already approved via Step 5 multi-select
+- README updated to reflect universal scope, conditional check table with Scope column, and dynamic branch detection in Step 8 description
 
 ## [1.1.1] - 2026-02-22
 
@@ -37,20 +33,6 @@
 ## [1.0.0] - 2026-02-20
 
 ### Added
-- add /hygiene orchestrating command
-- add check-stale-commits.sh
-- add check-orphans.sh
-- add check-manifests.sh
-- add check-gitignore.sh
-- scaffold plugin structure v1.0.0
-
-### Fixed
-- address code review — stale-pattern false positives, fix_cmd absolute paths, orphan safety guard, trailing-slash auto-fix, .claude/state note
-
-
-## [1.0.0] - 2026-02-20
-
-### Added
 - `/hygiene` command with `--dry-run` flag
 - Check 1: `.gitignore` stale pattern detection and missing-pattern suggestions
 - Check 2: Marketplace manifest `source` path cross-reference
@@ -58,3 +40,6 @@
 - Check 4: Plugin state orphan detection (`installed_plugins.json` vs `settings.json` vs FS)
 - Check 5: Uncommitted changes older than 24 hours
 - Auto-fix for safe findings; `AskUserQuestion` multi-select for risky changes
+
+### Fixed
+- Address code review — stale-pattern false positives, fix_cmd absolute paths, orphan safety guard, trailing-slash auto-fix, .claude/state note

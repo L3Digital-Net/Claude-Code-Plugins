@@ -5,7 +5,7 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion
 
 # /hygiene [--dry-run]
 
-Autonomous maintenance sweep for the Claude-Code-Plugins monorepo.
+Autonomous maintenance sweep for any git repository.
 
 ## Step 0: Setup
 
@@ -22,6 +22,12 @@ Establish repo root as working directory for all subsequent bash commands:
 git rev-parse --show-toplevel
 ```
 Store the output as `REPO_ROOT`. All bash commands in subsequent steps must be run from `REPO_ROOT`.
+
+Detect the repository type to determine which checks apply:
+```bash
+test -f "$REPO_ROOT/.claude-plugin/marketplace.json" && echo "true" || echo "false"
+```
+Store the output as `IS_CLAUDE_PLUGIN_REPO`. When `true`, the repo is a Claude Code plugin marketplace — run all checks including Steps 2a–2c. When `false`, skip Step 2 entirely and run only the universal checks (gitignore, stale-commits, orphans, manifests Source B).
 
 ## Step 1: Run Mechanical Scans (parallel)
 
@@ -46,7 +52,9 @@ Collect all `findings` arrays. Tag each finding with its `check` field value.
 
 ## Step 2: Semantic README and Docs Scan (Check 3 — inline)
 
-Perform this scan in **leaf-to-root order**: process plugin READMEs first (2a), then the root README.md (2b), then docs/ files (2c). This ordering ensures child artifacts are verified before the parent documents that reference them.
+**If `IS_CLAUDE_PLUGIN_REPO` is `false`**: skip this step entirely. Collect zero findings for Check 3 and proceed to Step 3. Steps 2a–2c reference `plugins/`, `docs/plugin-readme-template.md`, and `.claude-plugin/marketplace.json` — structures that only exist in Claude Code plugin marketplace repos.
+
+**If `IS_CLAUDE_PLUGIN_REPO` is `true`**: perform this scan in **leaf-to-root order**: process plugin READMEs first (2a), then the root README.md (2b), then docs/ files (2c). This ordering ensures child artifacts are verified before the parent documents that reference them.
 
 ### Step 2a: Plugin READMEs (leaf level)
 
@@ -168,15 +176,13 @@ Otherwise, display all needs-approval findings grouped by check type, numbered:
 
 Then use `AskUserQuestion` with multi-select to let the user choose actions:
 - If N ≤ 4: show each item as an individual option (label: item number + path truncated to 40 chars)
-- If N > 4: show these category options (only include categories that have findings):
-  - "All orphaned temp dirs (N items)"
-  - "All gitignore stale patterns (N items)"
-  - "All stale commit files — stage only (N items)"
-  - "All README freshness findings — open for review (N items)"
-  - "All docs/ accuracy findings — open for review (N items)"
-  - "None — defer all"
+- If N > 4: use a hybrid approach:
+  - **`stale-commits` and `orphans` (destructive)**: always show per-item options regardless of N — staging the wrong file or deleting the wrong directory is consequential and irreversible
+  - **`readme-freshness` and `docs-accuracy` (review-only)**: collapse to category options: "All README freshness findings — open for review (N items)" / "All docs/ accuracy findings — open for review (N items)"
+  - **`gitignore` (edit)**: collapse to "All gitignore stale patterns (N items)" when more than 4
+  - Always include "None — defer all" as the last option
 
-**If DRY_RUN is true:** Skip the AskUserQuestion. Display `[DRY RUN] Would present N items for approval`.
+**If DRY_RUN is true:** Skip the AskUserQuestion. Display the full grouped findings list (same format as live mode — all items with their check type and detail) but without the approval prompt. Use the same header: `[DRY RUN] Would present N items for approval:` followed by the grouped list.
 
 ## Step 6: Apply Approved Fixes
 
@@ -207,7 +213,7 @@ Report: `📦 Staged: <filepath>` — remind the user to commit with their own m
 
 **`docs-accuracy` (stale docs/ reference):** Read the surrounding context of the flagged reference from the docs file (display ±5 lines around it). Do NOT automatically edit the file — present it for the user to review. Report: `📖 Displayed for review: <path>`
 
-**`gitignore` (stale patterns):** For patterns flagged as needs-approval (stale, not auto-fixable), ask the user to confirm before removing. Use the Edit tool to remove the specific line from the .gitignore file.
+**`gitignore` (stale patterns):** Use the Edit tool to remove the specific line from the .gitignore file. The Step 5 multi-select is the single approval gate — do not ask again here.
 
 ## Step 7: Final Summary
 
@@ -237,11 +243,12 @@ git status --porcelain
 ```
 
 **Staged files (from stale-commits approvals):**
-If any staged files are present, do NOT auto-commit them. Display:
+If any staged files are present, do NOT auto-commit them. Warn the user BEFORE beginning any push or commit operations:
 ```
-⚠ N staged file(s) from stale-commits approvals — commit these yourself with your own message before or after this push:
+⚠ N staged file(s) from stale-commits approvals need a manual commit — commit these with your own message before continuing.
   • <filepath>
 ```
+Then use `AskUserQuestion` to ask whether to continue pushing or stop so the user can commit first. If the user chooses to stop, skip the rest of Step 8.
 
 **Unstaged changes (from auto-fixes and approved gitignore edits):**
 If any modified-but-unstaged files exist, stage and commit them:
@@ -260,24 +267,32 @@ If there were no unstaged changes (only staged stale-commits files), skip the co
 
 **Push and deploy:**
 
-Get the current branch:
+Get the current branch and detect the remote default branch:
 ```bash
 git branch --show-current
+git remote show origin 2>/dev/null | grep 'HEAD branch' | sed 's/.*: //'
 ```
+Store the outputs as `CURRENT_BRANCH` and `DEFAULT_BRANCH` (fall back to `main` if detection fails or there is no remote).
 
 Push the current branch:
 ```bash
 git push origin <current-branch>
 ```
 
-Then merge to `main` and push:
+If `CURRENT_BRANCH` differs from `DEFAULT_BRANCH`, merge to the default branch and push:
 ```bash
-git checkout main && git pull origin main && git merge <current-branch> --no-ff -m "Deploy: hygiene sweep fixes" && git push origin main && git checkout <current-branch>
+git checkout <default-branch> && git pull origin <default-branch> && git merge <current-branch> --no-ff -m "Deploy: hygiene sweep fixes" && git push origin <default-branch> && git checkout <current-branch>
 ```
 
-Report:
+If `CURRENT_BRANCH` equals `DEFAULT_BRANCH` (already on the default branch), skip the merge step — the push above is sufficient.
+
+Report (use the actual detected branch name, not a hardcoded string):
 ```
-🚀 Pushed <current-branch> and merged to main.
+🚀 Pushed <current-branch> and merged to <default-branch>.
+```
+or if already on the default branch:
+```
+🚀 Pushed <current-branch>.
 ```
 
 If any git command fails, surface the error and stop — do not continue with the deploy.
