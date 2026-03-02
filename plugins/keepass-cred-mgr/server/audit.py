@@ -14,6 +14,21 @@ import structlog
 
 log: structlog.stdlib.BoundLogger = structlog.get_logger("keepass-cred-mgr.audit")
 
+# Keys whose values are redacted in the extra-kwargs dict before writing to disk.
+# This guards against callers accidentally passing sensitive data through **extra.
+_SENSITIVE_KEY_FRAGMENTS = frozenset(
+    {"password", "secret", "token", "api_key", "credential", "auth", "key"}
+)
+
+
+def _sanitize_extra(extra: dict[str, object]) -> dict[str, object]:
+    return {
+        k: "**REDACTED**"
+        if any(fragment in k.lower() for fragment in _SENSITIVE_KEY_FRAGMENTS)
+        else v
+        for k, v in extra.items()
+    }
+
 
 class AuditLogger:
     def __init__(self, audit_log_path: str) -> None:
@@ -42,7 +57,7 @@ class AuditLogger:
             "secret_returned": secret_returned,
             "attachment": attachment,
         }
-        record.update(extra)
+        record.update(_sanitize_extra(extra))
         try:
             with open(self._path, "a") as f:
                 f.write(json.dumps(record) + "\n")
