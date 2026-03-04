@@ -3,7 +3,7 @@
 > **⚠ DESIGN DOCUMENT STATUS: PARTIALLY SUPERSEDED**
 > This document describes the original pre-implementation design. Several major architectural elements were revised or removed during implementation:
 > - **No container/VM isolation** — PTH runs tests in a git worktree on the host, not Docker/VM environments
-> - **19 tools implemented** (not 45 as planned) — dynamic tool registration via `notifications/tools/list_changed` was not implemented
+> - **20 tools implemented** (not 45 as planned) — dynamic tool registration via `notifications/tools/list_changed` was not implemented
 > - **No parallel test execution** — tests are driven by Claude sequentially
 > - **No CI export or doc patch generation** — these remain planned features
 >

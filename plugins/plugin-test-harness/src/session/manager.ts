@@ -1,3 +1,8 @@
+// Role: session lifecycle orchestrator for the three PTH state transitions (start/resume/end).
+// Owns shared module-level state exported to server.ts: testStore (authoritative test list)
+// and iterationHistory (convergence table for the end-session report).
+// Note: buildCommitMessage() appears here and in git.ts — this copy avoids a circular
+// dependency between the session/ and git/ layers (git.ts imports session/types.ts).
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
@@ -114,7 +119,7 @@ export async function startSession(args: { pluginPath: string; sessionNote?: str
         process.kill(lock.pid, 0);  // throws if PID is dead
         throw new PTHError(
           PTHErrorCode.SESSION_ALREADY_ACTIVE,
-          `Session already active (PID ${lock.pid}, branch ${lock.branch}). Call pth_end_session first, or run pth_preflight to verify.`
+          `Session already active (PID ${lock.pid}, branch ${lock.branch}). Call pth_end_session first, or run pth_preflight to verify. If the PID no longer exists (process reuse), delete ${lockPath} (active-session.lock) manually to clear the stale lock.`
         );
       } catch (e) {
         if (e instanceof PTHError) throw e;  // re-throw our own error, not the kill signal error
@@ -233,7 +238,7 @@ export async function startSession(args: { pluginPath: string; sessionNote?: str
       `Mode:      ${pluginMode}`,
       `Plugin:    ${pluginName}`,
       pluginRelPath ? `Subpath:   ${pluginRelPath}` : '',
-      `Plugin dir: ${path.join(worktreePath, pluginRelPath)}`,
+      pluginRelPath ? `Plugin dir: ${path.join(worktreePath, pluginRelPath)}` : ``,
       savedTests.length > 0 ? `Tests:     ${savedTests.length} loaded from persistent store (~/.pth/${pluginName.replace(/[^a-z0-9-]/gi, '-').toLowerCase()}/)` : `Tests:     0 (run pth_generate_tests to create them)`,
       ...gapLines,
       ``,
@@ -419,7 +424,7 @@ function buildEndSummary(opts: EndSummaryOptions): string {
   // ── Convergence table ──
   if (iterationHistory.length > 0) {
     lines.push(``);
-    lines.push(`── Convergence ─────────────────────────────────────────────`);
+    lines.push(`**Convergence**`);
     lines.push(` Iter  Passing  Failing  Fixes`);
     iterationHistory.forEach((s, i) => {
       const iter = String(i + 1).padStart(4);
@@ -430,9 +435,8 @@ function buildEndSummary(opts: EndSummaryOptions): string {
     });
   }
 
-  // ── Fixes applied ──
   lines.push(``);
-  lines.push(`── Fixes Applied (${fixHistory.length}) ─────────────────────────────────────`);
+  lines.push(`**Fixes Applied (${fixHistory.length})**`);
   if (fixHistory.length === 0) {
     lines.push(`  (no fixes applied this session)`);
   } else {
@@ -454,7 +458,7 @@ function buildEndSummary(opts: EndSummaryOptions): string {
     }
     if (fileCounts.size > 0) {
       lines.push(``);
-      lines.push(`── Files Modified (${fileCounts.size} unique) ──────────────────────────────────`);
+      lines.push(`**Files Modified (${fileCounts.size} unique)**`);
       for (const [file, count] of [...fileCounts.entries()].sort()) {
         lines.push(`  ${file}${count > 1 ? `  (${count} fixes)` : ''}`);
       }
@@ -465,7 +469,7 @@ function buildEndSummary(opts: EndSummaryOptions): string {
   const failing = exportedResults.filter(r => r.latestStatus === 'failing');
   const passing = exportedResults.filter(r => r.latestStatus === 'passing');
   lines.push(``);
-  lines.push(`── Test Results (${testCount} total) ─────────────────────────────────────`);
+  lines.push(`**Test Results (${testCount} total)**`);
   lines.push(`  ✓ ${passing.length} passing`);
   lines.push(`  ✗ ${failing.length} failing`);
   if (failing.length > 0) {

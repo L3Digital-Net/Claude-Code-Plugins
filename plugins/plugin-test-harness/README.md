@@ -112,10 +112,11 @@ Each session runs in a git worktree at `/tmp/pth-worktree-<branch-slug>`. The ma
 
 | Tool | Description |
 |------|-------------|
-| `pth_generate_tests` | Auto-discover tool schemas by spawning the target MCP server, then generate test cases (valid input + missing-required-field variants). Upserts existing tests rather than duplicating. Accepts optional `tools[]` for gap-targeted generation. |
+| `pth_generate_tests` | Auto-discover tool schemas by spawning the target MCP server, then generate test cases (valid input + missing-required-field variants). Upserts existing tests; skips tests with `pinned: true` (hand-edited via `pth_edit_test`). Accepts optional `tools[]` for gap-targeted generation. |
 | `pth_list_tests` | List tests with optional filters: `mode` (mcp/plugin), `status` (passing/failing/pending), `tag`. |
 | `pth_create_test` | Add a new test from a YAML definition. |
-| `pth_edit_test` | Update an existing test by ID with a new YAML definition. |
+| `pth_edit_test` | Update an existing test by ID with a new YAML definition. Sets `pinned: true` on the test, protecting it from being overwritten by `pth_generate_tests`. |
+| `pth_delete_test` | Remove a test from the suite by ID. Also clears its result history from the in-session results tracker. |
 
 ### Execution and Results
 
@@ -170,7 +171,7 @@ tags: [smoke]
 ### Multi-step scenario (captures output between steps)
 
 ```yaml
-name: pth_get_commit - valid input
+name: apply fix then inspect history
 mode: mcp
 type: scenario
 steps:
@@ -184,11 +185,11 @@ steps:
       success: true
     capture:
       commitHash: "text:Fix committed: (\\w+)"
-  - tool: pth_get_commit
-    input:
-      commitHash: ${commitHash}
+  - tool: pth_get_fix_history
+    input: {}
     expect:
       success: true
+      output_contains: ${commitHash}
 expect:
   success: true
 timeout_seconds: 30
@@ -310,7 +311,9 @@ Use `pth_generate_tests` with the `tools[]` parameter to generate tests only for
 
 ## Planned Features
 
-None currently documented in the changelog as unreleased.
+- CI export: write `pth-results.json` to a configurable output path for integration with CI pipelines
+- Doc patch generation: auto-propose README updates when generated tests reveal undocumented behavior
+- Parallel test execution: run independent tests concurrently to reduce iteration time on large suites
 
 ## Known Issues
 

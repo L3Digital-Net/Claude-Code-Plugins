@@ -132,13 +132,16 @@ export function createServer(): Server {
       if (err instanceof PTHError) {
         // Surface context (stderr, stdout) alongside the structured error code and message.
         // PTHError.context carries raw diagnostic output that Claude needs to decide next steps.
+        // isError: true required — respond() omits it (success helper only); MCP callers need
+        // the protocol-level signal to distinguish errors from success without parsing text.
         const ctxLines = err.context && Object.keys(err.context).length > 0
           ? '\n' + Object.entries(err.context).map(([k, v]) => `  ${k}: ${v}`).join('\n')
           : '';
-        return respond(`PTH Error [${err.code}]: ${err.message}${ctxLines}`);
+        const text = `PTH Error [${err.code}]: ${err.message}${ctxLines}`;
+        return { content: [{ type: 'text' as const, text }], isError: true };
       }
       const msg = err instanceof Error ? err.message : String(err);
-      return respond(`PTH Error: ${msg}`);
+      return { content: [{ type: 'text' as const, text: `PTH Error: ${msg}` }], isError: true };
     }
   }
 
@@ -404,7 +407,7 @@ export function createServer(): Server {
           `Fix committed: ${hash.slice(0, 7)} (iteration ${session.iteration})\n` +
           `${commitTitle}\n` +
           `Files: ${files.map(f => f.path).join(', ')}\n` +
-          `\nNext: re-run affected tests, then call pth_get_test_impact to identify which tests to re-record.`
+          `\nNext: call pth_get_test_impact to identify which tests need re-recording, then re-run them.`
         );
       }
 
@@ -474,8 +477,7 @@ export function createServer(): Server {
         const newHash = (await run('git', ['rev-parse', 'HEAD'], { cwd: session.worktreePath })).stdout.trim();
         return respond(
           `Reverted: ${commitHash.slice(0, 7)} — ${originalTitle}\n` +
-          `Revert commit: ${newHash.slice(0, 7)}\n` +
-          `\nNext: re-run affected tests to verify the revert resolved the regression.`
+          `Revert commit: ${newHash.slice(0, 7)}`
         );
       }
 
