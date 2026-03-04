@@ -7,31 +7,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [1.0.4] - 2026-03-02
 
 ### Changed
-- Update GitHub org references from L3DigitalNet to L3DigitalNet
-- reduce AI writing signals across all plugin READMEs
-- Enhance documentation and structure for multiple plugins
+- Reduce AI writing signals across README
+- Enhance documentation structure
 
 ### Fixed
-- standardize agent-orchestrator author; fix ha-dev skill count
-- remove em dashes from all READMEs; add hygiene check
-- cross-cutting standards sweep across marketplace
-- remove invalid plugin.json fields and refactor mutation guards
+- Standardize author field
+- Remove em dashes from README
+- Cross-cutting standards sweep across manifest and documentation
+- Remove invalid plugin.json fields; refactor mutation guards
 
 
 ## [1.0.3] - 2026-02-20
 
 ### Changed
-- release: 6 plugin releases — agent-orchestrator 1.0.2, home-assistant-dev 2.2.0, release-pipeline 1.4.0, linux-sysadmin-mcp 1.0.2, design-assistant 0.3.0, plugin-test-harness 0.1.1
+- Restructured README with expanded sections and updated Mermaid diagram
 
 
 ## [1.0.2] - 2026-02-19
 
 ### Added
-- audit and split wide-scope skills across all plugins
+- Split wide-scope orchestration skill into three focused skills (orchestration-context, orchestration-execution, orchestration-state)
 
 ### Changed
-- release: 5 plugin releases — design-assistant 0.3.0, linux-sysadmin-mcp 1.0.2, agent-orchestrator 1.0.2, release-pipeline 1.4.0, home-assistant-dev 2.2.0
-- move DESIGN.md to docs/
-- add Principles section to all 7 plugin READMEs
-- standardise all plugin READMEs with consistent sections
+- Move DESIGN.md to docs/
+- Add Principles section to README
+- Standardise README with consistent sections across plugins
 

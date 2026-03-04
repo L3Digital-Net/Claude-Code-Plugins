@@ -1,6 +1,7 @@
 #!/bin/bash
 # Remove worktrees and orchestrator branches after all merges are verified.
 # Run ONLY after merge-branches.sh has completed successfully.
+# Exits non-zero and names skipped branches if any have unmerged changes.
 
 set -euo pipefail
 
@@ -17,13 +18,27 @@ if [ -d ".worktrees" ]; then
   rmdir .worktrees 2>/dev/null || true
 fi
 
-# Delete orchestrator branches (safe delete — warns if unmerged)
+# Delete orchestrator branches (safe delete — fails if unmerged)
+SKIPPED=()
 BRANCHES=$(git branch --list 'orchestrator/*' | sed 's/^[* ]*//')
 if [ -n "$BRANCHES" ]; then
   for branch in $BRANCHES; do
     echo "  Deleting branch: $branch"
-    git branch -d "$branch" 2>/dev/null || echo "    WARNING: $branch has unmerged changes, skipping"
+    if ! git branch -d "$branch" 2>/dev/null; then
+      echo "    WARNING: $branch has unmerged changes, skipping"
+      SKIPPED+=("$branch")
+    fi
   done
+fi
+
+if [ "${#SKIPPED[@]}" -gt 0 ]; then
+  echo ""
+  echo "=== Worktree cleanup incomplete — ${#SKIPPED[@]} branch(es) skipped (unmerged changes):"
+  for b in "${SKIPPED[@]}"; do
+    echo "    $b"
+  done
+  echo "  Merge or force-delete manually: git branch -D <branch>"
+  exit 1
 fi
 
 echo "=== Worktree cleanup complete ==="

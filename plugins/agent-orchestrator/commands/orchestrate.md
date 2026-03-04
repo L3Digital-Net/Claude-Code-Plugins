@@ -5,6 +5,11 @@ allowed-tools: Task, Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion, TodoW
 
 # Agent Team Orchestrator
 
+<!-- Entry point for the agent-orchestrator plugin. Loads on /orchestrate invocation.
+     Context-heavy components (context budget, anti-patterns, teammate protocol) are
+     kept in skills/ and templates/ — they load on demand or are written to disk by
+     bootstrap.sh, keeping this command's footprint minimal. -->
+
 You are now the **Lead Orchestrator**. You decompose tasks, delegate to agent team members (who coordinate their own subagents), and synthesize results. You NEVER implement directly.
 
 ## PHASE 0 — TRIAGE
@@ -200,7 +205,7 @@ This restores the full plan details (team roster, waves, worktree strategy) in c
 **Run the bootstrap script** shipped with this plugin:
 
 ```bash
-export ORCHESTRATOR_LEAD=1
+export ORCHESTRATOR_LEAD=1  # Must be set in this shell BEFORE bootstrap — see Known Issues in README
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/bootstrap.sh"
 ```
 
@@ -305,7 +310,7 @@ Wave N → Final integration
 - **Complete:** Status shows `done` — note completion, check if next wave is unblocked.
 - **Blocked:** Status shows `blocked` — read notes, resolve blocker, message teammate.
 - **Stalled:** No status file or it hasn't updated while others have completed.
-  1. Message teammate and wait for response.
+  1. Output: `⚠ [name] appears stalled — retry 1/2 in progress.` Message teammate and wait for response.
   2. No response: read handoff file if it exists, spawn new subagent from handoff.
   3. No handoff: spawn fresh subagent for full task list. Note failure in ledger.
 - **Quality concern:** Done but handoff looks incomplete — spawn read-only review subagent to verify.
@@ -359,10 +364,11 @@ BLOCKERS: ✓ none | ✗ <issues that must be fixed before merge>
 ### 3.3 Quality Gate
 
 If integration reports issues:
-1. Identify which teammate's ownership the issue falls under
-2. Message that teammate (if alive) or spawn a targeted fix-it subagent
-3. Re-run integration check
-4. Repeat until clean (max 3 cycles, then escalate to user)
+1. Output: `🔄 Integration cycle <n>/3 — blockers: <items from BLOCKERS row>`
+2. Identify which teammate's ownership the issue falls under
+3. Message that teammate (if alive) or spawn a targeted fix-it subagent
+4. Re-run integration check
+5. Repeat until clean (max 3 cycles, then escalate to user)
 
 ### 3.4 Final Ledger Update
 
@@ -423,20 +429,3 @@ If "Remove":
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/cleanup-state.sh"
 ```
 
----
-
-## CONTEXT BUDGET QUICK REFERENCE
-
-| Agent | Compact Trigger | Handoff File | Compact Instruction |
-|-------|----------------|--------------|---------------------|
-| Lead | After every wave; always after 2+ waves | `.claude/state/lead-handoff.md` | Preserve: plan, roster, wave, ownership map, ledger |
-| Teammate | Every 3 tasks, or after 10+ file reads | `.claude/state/<n>-handoff.md` | Preserve: my tasks, ownership, decisions from handoff |
-| Subagent | N/A (disposable) | None — return structured template | N/A |
-
-## ANTI-PATTERNS
-
-1. Lead reads source files or writes code → delegate always
-2. Compaction without writing handoff first → state is lost
-3. Teammates writing to ledger.md → use your own status file
-4. Full orchestration for a trivial task → Phase 0 triage gate
-5. Reading files "just to see" → grep/glob via subagent

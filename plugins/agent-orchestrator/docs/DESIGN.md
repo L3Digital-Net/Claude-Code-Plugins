@@ -221,8 +221,12 @@ agent-orchestrator/
 │   ├── integration-checker.md   # Read-only + Bash agent for Phase 3.2
 │   └── conflict-resolver.md     # Scoped agent for merge conflict resolution
 ├── skills/
-│   └── orchestration/
-│       └── SKILL.md             # On-demand reference for context patterns
+│   ├── orchestration-context/
+│   │   └── SKILL.md             # Context management, compaction, handoff writing
+│   ├── orchestration-execution/
+│   │   └── SKILL.md             # Wave execution, teammate health, spawn templates
+│   └── orchestration-state/
+│       └── SKILL.md             # Ledger updates, worktree paths, structured templates
 ├── hooks/
 │   └── hooks.json               # Declarative hook registration (3 hooks)
 ├── scripts/
@@ -236,8 +240,9 @@ agent-orchestrator/
 ├── templates/
 │   ├── ledger.md                # Ledger template (copied by bootstrap)
 │   └── teammate-protocol.md     # Full teammate operating protocol
-├── README.md                    # User-facing documentation
-└── DESIGN.md                    # This file
+├── docs/
+│   └── DESIGN.md                # This file
+└── README.md                    # User-facing documentation
 ```
 
 **Context cost of each component:**
@@ -247,7 +252,9 @@ agent-orchestrator/
 | `orchestrate.md` | Yes | On `/orchestrate` invocation |
 | `integration-checker.md` | No | Loaded by the integration checker agent itself |
 | `conflict-resolver.md` | No | Loaded by the conflict resolver agent itself |
-| `SKILL.md` | Conditionally | Only if Claude determines it's relevant to current task |
+| `orchestration-context/SKILL.md` | Conditionally | Only if Claude determines it's relevant to current task |
+| `orchestration-execution/SKILL.md` | Conditionally | Only if Claude determines it's relevant to current task |
+| `orchestration-state/SKILL.md` | Conditionally | Only if Claude determines it's relevant to current task |
 | `hooks.json` | No | Processed by Claude Code at plugin install |
 | All `scripts/*.sh` | No (stdout only) | Scripts run externally; only their printed output returns |
 | `templates/*.md` | No | Copied to disk by bootstrap; teammates read them, lead doesn't |
@@ -261,8 +268,6 @@ agent-orchestrator/
 **Adaptive context heuristics.** The "every 3 tasks / 10 file reads" triggers are fixed values. Tracking actual context consumption per session and adjusting thresholds based on observed patterns would be more robust. This could be a PostToolUse hook that estimates token counts.
 
 **Metrics collection.** Tracking orchestration outcomes (time, token cost, first-pass correctness, number of quality gate cycles) across runs would provide data to tune the system. A lightweight log in `.claude/state/metrics.json` could capture this.
-
-**Plugin marketplace distribution.** The plugin is currently a local directory. Publishing to a marketplace would make it installable via `/plugin install agent-orchestrator@<marketplace>`.
 
 **SessionStart hook for auto-setup.** A SessionStart hook could detect when a user invokes `/orchestrate` and automatically set `ORCHESTRATOR_LEAD=1` without requiring the manual export. This would tighten the enforcement chain.
 
