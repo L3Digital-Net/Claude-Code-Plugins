@@ -1,7 +1,7 @@
 {
   "name": "plugin-review",
   "description": "Multi-pass plugin quality review covering principles alignment, terminal UX, documentation freshness, and context efficiency via orchestrator-subagent architecture.",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "author": {
     "name": "L3DigitalNet",
     "url": "https://github.com/L3DigitalNet"
