@@ -3,6 +3,16 @@
 All notable changes to the autonomous-refactor plugin will be documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.1] - 2026-03-04
+
+### Changed
+- update remaining L3Digital-Net references
+- update org references from L3Digital-Net to L3DigitalNet
+
+### Fixed
+- apply audit findings — CHANGELOG, README, command
+
+
 ## [Unreleased]
 
 ## [0.2.0] - 2026-03-02
