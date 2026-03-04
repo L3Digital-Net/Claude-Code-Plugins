@@ -21,9 +21,11 @@ find <path> -name "*.py" -not -path "*/\.*" -not -path "*/__pycache__/*" | sort
 # For a glob or specific file, adjust accordingly
 ```
 
-If no `.py` files are found, stop and report that clearly.
+If no `.py` files are found, stop and report: `No Python files found in <path>. Check the path or pass a specific file with /python-code-review <path>.`
 
 Read all target files before beginning the review.
+
+Emit a brief anchor before domain processing: `Reviewing <N> Python files across 11 domains...`
 
 ## Step 2 — Domain Audits
 
@@ -83,7 +85,7 @@ Check for style and documentation quality:
 - Import organization: missing stdlib/third-party/local grouping; relative imports used
 - Long functions (>50 lines) that do multiple distinct things
 - Public functions/classes/methods missing docstrings
-- Inconsistent quote style, trailing whitespace, or other issues fixable by ruff
+- Inconsistent quote style or trailing whitespace (flag specific files; let ruff handle the details)
 - No ruff or mypy configuration present in the project
 
 ---
