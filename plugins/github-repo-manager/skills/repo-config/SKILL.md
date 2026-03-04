@@ -1,4 +1,5 @@
 ---
+name: repo-config
 description: GitHub Repo Manager configuration system — per-repo and portfolio config files, precedence rules, and validation. Use when reading, writing, or troubleshooting repo-manager configuration.
 ---
 

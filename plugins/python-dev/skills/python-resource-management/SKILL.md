@@ -164,7 +164,7 @@ def timed_block(name: str):
         yield
     finally:
         elapsed = time.perf_counter() - start
-        logger.info(f"{name} completed", duration_seconds=round(elapsed, 3))
+        logger.info("block_completed", name=name, duration_seconds=round(elapsed, 3))
 
 # Usage
 with timed_block("data_processing"):

@@ -4,39 +4,31 @@ All notable changes to the docs-manager plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
 ## [0.2.1] - 2026-03-02
 
 ### Changed
-- Update GitHub org references from L3DigitalNet to L3DigitalNet
-- strengthen triggers and extract long content to references
-- Enhance Release Pipeline and Repo Hygiene Plugins
-
-### Fixed
-- remove em dashes from all READMEs; add hygiene check
-- cross-cutting standards sweep across marketplace
-
+- Strengthen skill triggers and extract long content to reference files
 
 ## [0.2.0] - 2026-02-20
 
 ### Added
-- complete v0.1.0 — documentation lifecycle management plugin
-- add skills and agents
-- add template registration script
-- expand /docs command with all subcommands
-- add index system with register, query, locking, and Path B detection
-- add /docs command router with queue, status, help
-- add Stop hook and hooks.json registration
-- add PostToolUse hook detection (Path A)
-- add survival-context classifier (P5 rule)
-- add frontmatter reader utility with tests
-- add queue clear and fallback merge scripts
-- add queue read script with fallback merge
-- add queue append script with dedup and fallback
-- add state bootstrap script with tests
-- add plugin scaffold and marketplace entry
+- Complete documentation lifecycle management plugin (v0.2.0)
+- Skills: `doc-creation`, `project-entry`, `session-boundary`
+- Agents: `bulk-onboard`, `full-review`, `upstream-verify`
+- Template registration script
+- `/docs` command router with `queue`, `status`, `help`, and 20+ subcommands
+- Index system: register, query, locking, rebuild-md, source-lookup, and Path B detection
+- PostToolUse hook (Path A and Path B detection)
+- Stop hook for session-end queue surfacing
+- Survival-context classifier (P5 rule)
+- Frontmatter reader utility (Python 3 stdlib, no pyyaml dependency)
+- Queue scripts: append with dedup, read with fallback merge, clear, merge-fallback
+- State bootstrap script
 
 ### Changed
-- Add Principles Registry for docs-manager with enforcement heuristics and risk areas
+- Add Principles Registry with enforcement heuristics and risk areas
 
 
 ## [0.1.0] - 2026-02-20

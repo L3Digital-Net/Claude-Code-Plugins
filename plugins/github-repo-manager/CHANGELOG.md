@@ -2,6 +2,8 @@
 
 All notable changes to the github-repo-manager plugin are documented here.
 
+## [Unreleased]
+
 ## [0.3.0] - 2026-03-04
 
 ### Added
@@ -11,33 +13,23 @@ All notable changes to the github-repo-manager plugin are documented here.
 - **Community health: CODEOWNERS team pattern validation**: `@org/team-name` patterns are accepted as valid for org repos; flagged as likely invalid for user repos (personal accounts have no teams).
 - **Security: org ruleset audit** (new Step 6): For org repos, checks `GET /orgs/{org}/rulesets` for org-level branch rulesets. Rulesets that cover the default branch suppress or contextualize per-repo "unprotected branch" findings.
 - **Security: branch protection Applicability column**: The branch protection recommendation table now shows which rules apply to all repos vs. org repos only (e.g., team reviewers are only recommended for org repos).
+- **Mutation guard hook** (`scripts/gh-manager-guard.sh`): PreToolUse hook that emits a mutation warning to the agent context window before any `gh-manager` write command runs. Exits 0 (non-blocking). Complements the existing PostToolUse audit trail in `gh-manager-monitor.sh`.
+- `hooks/hooks.json` updated to register the PreToolUse Bash hook (`gh-manager-guard.sh`) alongside the existing PostToolUse hook (`gh-manager-monitor.sh`).
+
 
 ## [0.2.3] - 2026-03-02
 
-### Changed
-- Update GitHub org references from L3DigitalNet to L3DigitalNet
-- reduce AI writing signals across all plugin READMEs
-- Enhance documentation and structure for multiple plugins
-
 ### Fixed
-- add missing waivers and fix gh-manager PATH detection
-- remove em dashes from all READMEs; add hygiene check
-- apply auto-fixes from /hygiene sweep
-- remove invalid plugin.json fields and refactor mutation guards
+- Add missing waivers and fix gh-manager PATH detection
+- Remove invalid plugin.json fields and refactor mutation guards
+- Apply auto-fixes from hygiene sweep
 
 
 ## [0.2.2] - 2026-02-20
 
 ### Changed
-- align plugin principles with trust-based philosophy
-- pre-release staging — update github-repo-manager, linux-sysadmin-mcp, release-pipeline
+- Align plugin principles with trust-based philosophy
 
-
-## [Unreleased]
-
-### Added
-- `scripts/gh-manager-guard.sh` — PreToolUse hook that emits a mutation-warning to the agent context window before any `gh-manager` write command runs. Exits 0 (non-blocking warning). Complements the existing PostToolUse audit trail in `gh-manager-monitor.sh`.
-- `hooks/hooks.json` updated to register the PreToolUse Bash hook (`gh-manager-guard.sh`) alongside the existing PostToolUse hook (`gh-manager-monitor.sh`).
 
 ## [0.2.1] - 2026-02-19
 
@@ -49,6 +41,7 @@ All notable changes to the github-repo-manager plugin are documented here.
 - `repo labels create/update`: flattened label fields to top level (`name`, `color`, `description`) instead of nesting under `label` object
 - `branches create`: added `name` alias alongside `branch` field in response shapes for consistent key naming
 - All three self-test tiers now pass (Tier A: 61/61, Tier B: 28/28, Tier C: 40/40 + 3 expected skips)
+
 
 ## [0.2.0] - 2026-02-18
 
@@ -68,14 +61,13 @@ All notable changes to the github-repo-manager plugin are documented here.
 - Removed stale Phase 0 "not yet implemented" note from orchestrator skill
 - Changed Phase 6 status from ⏳ to ✅ in orchestrator skill availability section
 - Updated `docs/SETUP.md` with working directory clarification and script references
-- Added `set -e` omission comment in `tests/run-all.sh`
-- Added explanatory comments for hardcoded `master` branch in wiki operations
-- Added pagination limitation comment in `notifications list`
+
 
 ## [0.1.1] - 2026-02-17
 
 ### Fixed
 - `hooks/hooks.json` schema corrected from empty array `[]` to valid record `{"hooks": {}}`
+
 
 ## [0.1.0] - 2026-02-17
 
@@ -101,13 +93,11 @@ All notable changes to the github-repo-manager plugin are documented here.
 #### Test Framework
 - Three-tier test architecture: Tier A (offline/infrastructure), Tier B (read-only API), Tier C (mutation tests)
 - Shared test library (`lib.sh`) with JSON assertion helpers
-- `run-all.sh` orchestrator with per-tier selection
 
 #### Configuration System
 - Per-repo config (`.github-repo-manager.yml` committed to repo)
 - Portfolio config (`~/.config/github-repo-manager/portfolio.yml` for multi-repo)
 - Schema validation via `config validate` command
-- Config resolution with source precedence chain
 
 #### Skills and Intelligence
 - 11 module skill files with YAML frontmatter for context-aware loading

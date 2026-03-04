@@ -11,8 +11,6 @@ A reference checklist of common mistakes and anti-patterns in Python code. Revie
 
 - Reviewing code before merge
 - Debugging mysterious issues
-- Teaching or learning Python best practices
-- Establishing team coding standards
 - Refactoring legacy code
 
 **Note:** This skill focuses on what to avoid. For guidance on positive patterns and architecture, see the `python-design-patterns` skill.
@@ -317,18 +315,23 @@ def test_user_service():
 
 Before finalizing code, verify:
 
+**🔴 Critical — fix before merge**
+- [ ] No bare `except Exception: pass` (swallowed errors)
+- [ ] No hard-coded configuration or secrets
+- [ ] No missing input validation on external data
+- [ ] No blocking calls in async code
+
+**🟡 Needs attention — fix soon**
 - [ ] No scattered timeout/retry logic (centralized)
 - [ ] No double retry (app + infrastructure)
-- [ ] No hard-coded configuration or secrets
 - [ ] No exposed internal types (ORM models, protobufs)
 - [ ] No mixed I/O and business logic
-- [ ] No bare `except Exception: pass`
 - [ ] No ignored partial failures in batches
-- [ ] No missing input validation
-- [ ] No unclosed resources (using context managers)
-- [ ] No blocking calls in async code
+- [ ] No unclosed resources (use context managers)
+
+**🟢 Good practice — verify coverage**
 - [ ] All public functions have type hints
-- [ ] Collections have type parameters
+- [ ] Collections have type parameters (`list[str]`, not `list`)
 - [ ] Error paths are tested
 - [ ] Edge cases are covered
 

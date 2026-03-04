@@ -140,4 +140,5 @@ All hooks are registered declaratively via `hooks/hooks.json`; no runtime setup 
 
 - Repository: [L3DigitalNet/Claude-Code-Plugins](https://github.com/L3DigitalNet/Claude-Code-Plugins)
 - Changelog: [CHANGELOG.md](CHANGELOG.md)
+- Design document: [docs/DESIGN.md](docs/DESIGN.md)
 - Issues and feedback: [GitHub Issues](https://github.com/L3DigitalNet/Claude-Code-Plugins/issues)

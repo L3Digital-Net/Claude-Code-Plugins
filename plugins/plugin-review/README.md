@@ -65,7 +65,7 @@ flowchart TD
     Decision -->|"Yes or budget reached"| Final(("Phase 6:<br/>Final Report"))
 ```
 
-In `--autonomous` mode, a fourth subagent (Regression Guard) runs on every Pass 2+ in parallel with the analysts, and Phase 4.5 runs build/test validation after each implementation pass.
+In `--autonomous` mode, a fifth subagent (Regression Guard) runs on every Pass 2+ in parallel with the analysts, and Phase 4.5 runs build/test validation after each implementation pass.
 
 ## Usage
 
@@ -169,7 +169,7 @@ On every Pass 2+, re-reads files affected by previously-fixed findings and verif
 
 ## Planned Features
 
-None currently documented in the changelog as unreleased.
+No planned features at this time.
 
 ## Known Issues
 

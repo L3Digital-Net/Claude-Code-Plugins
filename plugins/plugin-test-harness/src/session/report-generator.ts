@@ -57,39 +57,8 @@ export function buildReportContent(options: ReportOptions): string {
 // Deprecated: use buildReportContent() + write the result yourself.
 // Kept for backwards compatibility with any external callers.
 export async function generateReport(worktreePath: string, options: ReportOptions): Promise<void> {
-  const { state, iterationHistory } = options;
-  const lines: string[] = [
-    `# PTH Session Report`,
-    ``,
-    `**Plugin:** ${state.pluginName}`,
-    `**Mode:** ${state.pluginMode}`,
-    `**Branch:** ${state.branch}`,
-    `**Started:** ${state.startedAt}`,
-    `**Ended:** ${new Date().toISOString()}`,
-    `**Total Iterations:** ${state.iteration}`,
-    ``,
-    `## Test Results`,
-    ``,
-    `| Tests | Passing | Failing |`,
-    `|-------|---------|---------|`,
-    `| ${state.testCount} | ${state.passingCount} | ${state.failingCount} |`,
-    ``,
-    `## Convergence`,
-    ``,
-    `| Iteration | Passing | Failing | Fixes Applied |`,
-    `|-----------|---------|---------|---------------|`,
-    ...iterationHistory.map(h =>
-      `| ${h.iteration} | ${h.passing} | ${h.failing} | ${h.fixesApplied} |`
-    ),
-    ``,
-    `## Status`,
-    ``,
-    state.failingCount === 0
-      ? `All ${state.testCount} tests passing.`
-      : `${state.failingCount} tests still failing at session end.`,
-  ];
-
+  const content = buildReportContent(options);
   const dir = path.join(worktreePath, '.pth');
   await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(path.join(worktreePath, '.pth/SESSION-REPORT.md'), lines.join('\n'), 'utf-8');
+  await fs.writeFile(path.join(worktreePath, '.pth/SESSION-REPORT.md'), content, 'utf-8');
 }

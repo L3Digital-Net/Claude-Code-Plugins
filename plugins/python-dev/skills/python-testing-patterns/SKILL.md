@@ -875,10 +875,11 @@ pytest --cov=myapp --cov-report=term-missing tests/
 # test_database_models.py
 import pytest
 from sqlalchemy import create_engine, Column, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import DeclarativeBase, sessionmaker, Session
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
 
 
 class User(Base):

@@ -25,14 +25,9 @@ Design decisions in this plugin are evaluated against these principles.
 
 ## Installation
 
-```bash
-claude plugin install python-dev
 ```
-
-Or via marketplace:
-
-```bash
-claude plugin install python-dev@l3digitalnet-plugins
+/plugin marketplace add L3DigitalNet/Claude-Code-Plugins
+/plugin install python-dev@l3digitalnet-plugins
 ```
 
 ## How It Works
@@ -51,6 +46,20 @@ graph TD
     J --> K["🔴 Critical / 🟡 Attention / 🟢 Good"]
     K --> L["Top 3 action items"]
 ```
+
+## Usage
+
+Skills load automatically during coding sessions — no explicit invocation needed. When you write async code, the `async-python-patterns` skill loads. When you add retries, `python-resilience` loads. The mermaid diagram above shows the general flow.
+
+For a one-pass audit of existing code, run `/python-code-review` with an optional path:
+
+```
+/python-code-review                        # audit current directory
+/python-code-review src/api/handlers.py    # audit a specific file
+/python-code-review src/                   # audit a subdirectory
+```
+
+The review works through all 11 domains and emits a prioritized summary at the end.
 
 ## Commands
 
@@ -88,4 +97,5 @@ None.
 ## Links
 
 - [Plugin source](https://github.com/L3DigitalNet/Claude-Code-Plugins/tree/main/plugins/python-dev)
+- [Changelog](CHANGELOG.md)
 - [Plugin development docs](https://github.com/L3DigitalNet/Claude-Code-Plugins/blob/main/docs/plugins.md)

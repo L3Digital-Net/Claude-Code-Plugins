@@ -4,17 +4,17 @@ Autonomous maintenance sweep for any git repository.
 
 ## Summary
 
-`/hygiene` runs four parallel mechanical checks against the repository and Claude Code's local plugin state, then performs a three-phase semantic pass for Claude Code plugin marketplace repos: plugin READMEs (leaf-to-root), the root README.md, and the `docs/` directory. The plugin auto-detects the repository type — checks that require a Claude Code plugin layout run only when the relevant files are present. Findings are classified automatically: safe corrections (missing `.gitignore` patterns, trailing slashes in `marketplace.json`) are applied without confirmation; destructive or ambiguous changes (orphan deletion, stale commits, README edits, stale docs references) require explicit approval via a multi-select prompt. A `--dry-run` flag shows the full plan without touching anything.
+`/hygiene` runs four parallel mechanical checks against the repository and Claude Code's local plugin state, then performs a three-phase semantic pass for Claude Code plugin marketplace repos: plugin READMEs (leaf-to-root), the root README.md, and the `docs/` directory. The plugin auto-detects the repository type. Checks that require a Claude Code plugin layout run only when the relevant files are present. Findings are classified automatically: safe corrections (missing `.gitignore` patterns, trailing slashes in `marketplace.json`) are applied without confirmation; destructive or ambiguous changes (orphan deletion, stale commits, README edits, stale docs references) require explicit approval via a multi-select prompt. A `--dry-run` flag shows the full plan without touching anything.
 
 ## Principles
 
-**Act on Intent**: Invoking `/hygiene` is consent to a full sweep. The command runs all checks unconditionally and presents findings rather than asking which checks to run. It gates only on operations that are destructive or whose scope exceeds what a maintenance sweep implies.
+**[P1] Act on Intent**: Invoking `/hygiene` is consent to a full sweep. The command runs all checks unconditionally and presents findings rather than asking which checks to run. It gates only on operations that are destructive or whose scope exceeds what a maintenance sweep implies.
 
-**Succeed Quietly, Fail Transparently**: Scripts emit structured JSON. If any script exits non-zero the sweep stops immediately and surfaces the raw error with the script name. Individual fix-command failures are logged and skipped rather than aborting the whole sweep.
+**[P2] Succeed Quietly, Fail Transparently**: Scripts emit structured JSON. If any script exits non-zero the sweep stops immediately and surfaces the raw error with the script name. Individual fix-command failures are logged and skipped rather than aborting the whole sweep.
 
-**Scope Fidelity**: Auto-fix is reserved for findings where the correct action is unambiguous (appending a missing `.gitignore` line, normalising a trailing slash). Everything with judgement involved surfaces for approval.
+**[P3] Scope Fidelity**: Auto-fix is reserved for findings where the correct action is unambiguous (appending a missing `.gitignore` line, normalising a trailing slash). Everything with judgement involved surfaces for approval.
 
-**Safety by Construction**: Orphan `temp_*` directory deletion is gated on three independent path checks (prefix, no `..`, basename) enforced in the command itself, not just the script. No rm command runs unless all three pass.
+**[P4] Safety by Construction**: Orphan `temp_*` directory deletion is gated on three independent path checks (prefix, no `..`, basename) enforced in the command itself, not just the script. No rm command runs unless all three pass.
 
 ## Requirements
 
