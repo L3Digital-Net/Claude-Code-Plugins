@@ -28,10 +28,12 @@ from server.vault import (
     INACTIVE_PREFIX,
     DuplicateEntry,
     EntryInactive,
+    EntryReadOnly,
     KeePassCLIError,
     Vault,
     WriteLockTimeout,
 )
+from server.tools.read import _parse_tags
 
 log: structlog.stdlib.BoundLogger = structlog.get_logger("keepass-cred-mgr.tools.write")
 
@@ -82,8 +84,6 @@ async def create_entry(
     if "/" in title:
         raise ValueError("Entry titles cannot contain a slash (/)")
 
-    vault.check_group_allowed(group)
-
     # Check for duplicate active entry
     db = vault.config.database_path
     stdout = await vault.run_cli("ls", db, group)
@@ -126,14 +126,15 @@ async def deactivate_entry(
     if title.startswith(INACTIVE_PREFIX):
         raise EntryInactive(f"Entry '{title}' is already deactivated")
 
-    if group is not None:
-        vault.check_group_allowed(group)
-
     db = vault.config.database_path
     path = vault.entry_path(title, group)
 
-    # Read existing notes
+    # Read existing entry to check tags and capture notes
     show_out = await vault.run_cli("show", db, path)
+    tags = _parse_tags(show_out)
+    if "read only" in tags:
+        raise EntryReadOnly(f"Entry '{title}' is tagged READ ONLY; write operations are not permitted")
+
     existing_notes = ""
     for line in show_out.strip().splitlines():
         if line.startswith("Notes: "):
@@ -169,11 +170,14 @@ async def add_attachment(
     if title.startswith(INACTIVE_PREFIX):
         raise EntryInactive(f"Entry '{title}' is deactivated")
 
-    if group is not None:
-        vault.check_group_allowed(group)
-
     db = vault.config.database_path
     path = vault.entry_path(title, group)
+
+    # Check READ ONLY tag before writing
+    show_out = await vault.run_cli("show", db, path)
+    tags = _parse_tags(show_out)
+    if "read only" in tags:
+        raise EntryReadOnly(f"Entry '{title}' is tagged READ ONLY; write operations are not permitted")
 
     if isinstance(content, str):
         content = content.encode("utf-8")
@@ -347,7 +351,7 @@ async def import_entries(
     to continue using the vault.
 
     Each entry dict requires 'group' and 'title'. Optional: 'username',
-    'password', 'url', 'notes'. Groups must be in the configured allowlist.
+    'password', 'url', 'notes'.
     """
     if not entries:
         return "No entries provided"
@@ -356,7 +360,6 @@ async def import_entries(
     for e in entries:
         if "group" not in e or "title" not in e:
             raise ValueError("Each entry must have 'group' and 'title'")
-        vault.check_group_allowed(e["group"])
         if "/" in e["title"]:
             raise ValueError(f"Entry title cannot contain a slash: {e['title']!r}")
 

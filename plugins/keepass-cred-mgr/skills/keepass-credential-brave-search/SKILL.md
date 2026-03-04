@@ -7,7 +7,7 @@ description: >
 
 # Brave Search API Credential Handling
 
-GROUP: API Keys
+STORAGE DEFAULT: API Keys (vault layout is user-organized; if not found there, use search_entries)
 TITLE FORMAT: Brave Search API - <purpose or project>
 PASSWORD FIELD: API key value
 URL: https://api.search.brave.com

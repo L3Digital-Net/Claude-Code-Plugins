@@ -62,12 +62,34 @@ class TestParseShowOutput:
 
 
 # ---------------------------------------------------------------------------
+# _parse_tags
+# ---------------------------------------------------------------------------
+
+class TestParseTags:
+    def test_tags_parsed(self):
+        from server.tools.read import _parse_tags
+        result = _parse_tags("Title: Entry\nTags: AI RESTRICTED;READ ONLY\n")
+        assert result == {"ai restricted", "read only"}
+
+    def test_empty_tags_value(self):
+        from server.tools.read import _parse_tags
+        result = _parse_tags("Title: Entry\nTags: \n")
+        assert result == set()
+
+    def test_no_tags_line(self):
+        from server.tools.read import _parse_tags
+        result = _parse_tags("Title: Entry\nUserName: admin\n")
+        assert result == set()
+
+
+# ---------------------------------------------------------------------------
 # Read tools
 # ---------------------------------------------------------------------------
 
 class TestReadTools:
 
     async def test_list_groups(self, unlocked_vault):
+        """list_groups returns all groups with no filtering."""
         from server.tools.read import list_groups
 
         vault, audit = unlocked_vault
@@ -75,7 +97,7 @@ class TestReadTools:
             _repl_resp(b"Servers/\nSSH Keys/\nAPI Keys/\nBanking/\nRecycle Bin/\n"),
         ]
         result = await list_groups(vault)
-        assert set(result) == {"Servers", "SSH Keys", "API Keys"}
+        assert set(result) == {"Servers", "SSH Keys", "API Keys", "Banking", "Recycle Bin"}
 
 
     async def test_list_entries_filters_inactive(self, unlocked_vault):
@@ -155,18 +177,20 @@ class TestReadTools:
 
 
     async def test_search_entries(self, unlocked_vault):
+        """search_entries returns results from all groups vault-wide."""
         from server.tools.read import search_entries
 
         vault, audit = unlocked_vault
         vault._repl_proc.stdout.readuntil.side_effect = [
             _repl_resp(b"Servers/Web Server\nBanking/My Bank\nAPI Keys/Anthropic\n"),
             _repl_resp(b"Title: Web Server\nUserName: admin\nURL: https://web.example.com\n"),
+            _repl_resp(b"Title: My Bank\nUserName: user\nURL: https://bank.example.com\n"),
             _repl_resp(b"Title: Anthropic\nUserName: key\nURL: https://api.anthropic.com\n"),
         ]
         result = await search_entries(vault, audit, query="server")
-        assert len(result) == 2
+        assert len(result) == 3
         groups = [e["group"] for e in result]
-        assert "Banking" not in groups
+        assert "Banking" in groups
 
 
     @patch("asyncio.create_subprocess_exec")
@@ -220,22 +244,29 @@ class TestReadTools:
             )
 
 
-    async def test_list_entries_group_not_allowed(self, unlocked_vault):
+    async def test_list_entries_any_group_accessible(self, unlocked_vault):
+        """Any group is accessible — no allowlist restriction."""
         from server.tools.read import list_entries
-        from server.vault import GroupNotAllowed
 
         vault, audit = unlocked_vault
-        with pytest.raises(GroupNotAllowed):
-            await list_entries(vault, audit, group="Banking")
+        vault._repl_proc.stdout.readuntil.side_effect = [
+            _repl_resp(b"Checking Account\nSavings\n"),
+            _repl_resp(b"Title: Checking Account\nUserName: user\nURL: \n"),
+            _repl_resp(b"Title: Savings\nUserName: user\nURL: \n"),
+        ]
+        result = await list_entries(vault, audit, group="Banking")
+        assert len(result) == 2
+        assert all(e["group"] == "Banking" for e in result)
 
 
     async def test_list_entries_group_none_iterates_all(self, unlocked_vault):
-        """group=None iterates all allowed_groups."""
+        """group=None iterates all vault groups, not just an allowlist."""
         from server.tools.read import list_entries
 
         vault, audit = unlocked_vault
-        # 3 allowed groups × (1 ls + 1 show each) = 6 readuntil calls
+        # list_groups (1 ls) + 3 groups × (1 ls + 1 show) = 7 readuntil calls
         vault._repl_proc.stdout.readuntil.side_effect = [
+            _repl_resp(b"Servers/\nSSH Keys/\nAPI Keys/\n"),  # list_groups
             _repl_resp(b"Web Server\n"),
             _repl_resp(b"Title: Web Server\nUserName: admin\nURL: https://web\n"),
             _repl_resp(b"My SSH Key\n"),
@@ -266,7 +297,6 @@ class TestReadTools:
             "yubikey_poll_interval_seconds": 1,
             "write_lock_timeout_seconds": 2,
             "page_size": 2,
-            "allowed_groups": ["Servers"],
             "audit_log_path": test_config.audit_log_path,
         }
         config_file = tmp_dir / "config_small.yaml"
@@ -332,13 +362,16 @@ class TestWriteTools:
             await create_entry(vault, audit, title="Bad/Title", group="Servers")
 
 
-    async def test_create_entry_group_not_allowed(self, unlocked_vault):
+    async def test_create_entry_any_group_accessible(self, unlocked_vault):
+        """create_entry accepts any group — no allowlist restriction."""
         from server.tools.write import create_entry
-        from server.vault import GroupNotAllowed
 
         vault, audit = unlocked_vault
-        with pytest.raises(GroupNotAllowed):
-            await create_entry(vault, audit, title="New Entry", group="Banking")
+        vault._repl_proc.stdout.readuntil.side_effect = [
+            _repl_resp(b""),  # ls: empty group
+            _repl_resp(b""),  # add: success
+        ]
+        await create_entry(vault, audit, title="New Entry", group="Banking")
 
 
     async def test_deactivate_entry(self, unlocked_vault):
@@ -387,6 +420,7 @@ class TestWriteTools:
 
         vault, audit = unlocked_vault
         vault._repl_proc.stdout.readuntil.side_effect = [
+            _repl_resp(b"Title: SSH Key\nUserName: root\nNotes: \n"),  # show (tag check)
             _repl_resp(b""),  # attachment-import success
         ]
         await add_attachment(
@@ -403,7 +437,10 @@ class TestWriteTools:
         from server.tools.write import add_attachment
 
         vault, audit = unlocked_vault
-        vault._repl_proc.stdout.readuntil.side_effect = [_repl_resp(b"")]
+        vault._repl_proc.stdout.readuntil.side_effect = [
+            _repl_resp(b"Title: SSH Key\nUserName: root\nNotes: \n"),  # show (tag check)
+            _repl_resp(b""),  # attachment-import success
+        ]
 
         original_ntf = tempfile.NamedTemporaryFile
         created_paths = []
@@ -519,7 +556,10 @@ class TestWriteTools:
         from server.tools.write import add_attachment
 
         vault, audit = unlocked_vault
-        vault._repl_proc.stdout.readuntil.side_effect = [_repl_resp(b"")]
+        vault._repl_proc.stdout.readuntil.side_effect = [
+            _repl_resp(b"Title: SSH Key\nUserName: root\nNotes: \n"),  # show (tag check)
+            _repl_resp(b""),  # attachment-import success
+        ]
         await add_attachment(
             vault, audit,
             title="SSH Key", attachment_name="id_ed25519.pub",
@@ -541,6 +581,7 @@ class TestWriteTools:
             _repl_resp(b"Title: Entry2\nNotes: \n"),          # deactivate: show
             _repl_resp(b""),                                   # deactivate: edit title
             _repl_resp(b""),                                   # deactivate: edit notes
+            _repl_resp(b"Title: Entry3\nNotes: \n"),          # attachment: show (tag check)
             _repl_resp(b""),                                   # attachment-import
         ]
         await create_entry(vault, audit, title="Entry1", group="Servers", username="u")
@@ -601,6 +642,20 @@ class TestSearchEntries:
         result = await search_entries(vault, audit, query="Standalone")
         assert len(result) == 1
         assert result[0]["group"] is None
+
+    async def test_search_multilevel_path(self, unlocked_vault):
+        """rsplit handles multi-level paths: 'SSH Keys/Personal/SSH - laptop'."""
+        from server.tools.read import search_entries
+
+        vault, audit = unlocked_vault
+        vault._repl_proc.stdout.readuntil.side_effect = [
+            _repl_resp(b"SSH Keys/Personal/SSH - laptop\n"),
+            _repl_resp(b"Title: SSH - laptop\nUserName: chris\nURL: \n"),
+        ]
+        result = await search_entries(vault, audit, query="laptop")
+        assert len(result) == 1
+        assert result[0]["title"] == "SSH - laptop"
+        assert result[0]["group"] == "SSH Keys/Personal"
 
 
 # ---------------------------------------------------------------------------
@@ -669,16 +724,22 @@ class TestImportEntries:
             )
 
 
-    async def test_disallowed_group_raises(self, unlocked_vault):
+    @patch("subprocess.run")
+    async def test_any_group_importable(self, mock_run, unlocked_vault):
+        """import_entries accepts any group — no allowlist restriction."""
         from server.tools.write import import_entries
-        from server.vault import GroupNotAllowed
 
         vault, audit = unlocked_vault
-        with pytest.raises(GroupNotAllowed):
-            await import_entries(
-                vault, audit,
-                entries=[{"group": "Banking", "title": "Entry"}],
-            )
+        mock_run.side_effect = [
+            self._make_subprocess_result(0),  # keepassxc-cli import
+            self._make_subprocess_result(0),  # keepassxc-cli merge
+        ]
+        result = await import_entries(
+            vault, audit,
+            entries=[{"group": "Banking", "title": "Entry"}],
+        )
+        assert "Imported 1" in result
+        assert "Banking" in result
 
 
     @patch("subprocess.run")
@@ -872,3 +933,110 @@ class TestBuildImportXml:
         assert root_group is not None
         names = {g.findtext("Name") for g in root_group.findall("Group")}
         assert names == {"Servers", "API Keys"}
+
+
+# ---------------------------------------------------------------------------
+# AI RESTRICTED enforcement
+# ---------------------------------------------------------------------------
+
+class TestAiRestrictedEnforcement:
+
+    async def test_get_entry_raises_on_restricted(self, unlocked_vault):
+        from server.tools.read import get_entry
+        from server.vault import EntryRestricted
+
+        vault, audit = unlocked_vault
+        vault._repl_proc.stdout.readuntil.side_effect = [
+            _repl_resp(b"Title: Secret Project\nTags: AI RESTRICTED\n"),
+        ]
+        with pytest.raises(EntryRestricted):
+            await get_entry(vault, audit, title="Secret Project", group="API Keys")
+
+    @patch("asyncio.create_subprocess_exec")
+    async def test_get_attachment_raises_on_restricted(self, mock_exec, unlocked_vault):
+        from server.tools.read import get_attachment
+        from server.vault import EntryRestricted
+
+        vault, audit = unlocked_vault
+        vault._repl_proc.stdout.readuntil.side_effect = [
+            _repl_resp(b"Title: Secret Project\nTags: AI RESTRICTED\n"),
+        ]
+        with pytest.raises(EntryRestricted):
+            await get_attachment(
+                vault, audit,
+                title="Secret Project", attachment_name="key.pem", group="API Keys",
+            )
+
+    async def test_search_entries_excludes_restricted(self, unlocked_vault):
+        from server.tools.read import search_entries
+
+        vault, audit = unlocked_vault
+        vault._repl_proc.stdout.readuntil.side_effect = [
+            _repl_resp(b"API Keys/Anthropic\nAPI Keys/Secret Project\n"),
+            _repl_resp(b"Title: Anthropic\nUserName: key\nURL: https://api.anthropic.com\n"),
+            _repl_resp(b"Title: Secret Project\nTags: AI RESTRICTED\n"),
+        ]
+        result = await search_entries(vault, audit, query="api")
+        assert len(result) == 1
+        assert result[0]["title"] == "Anthropic"
+
+    async def test_list_entries_excludes_restricted(self, unlocked_vault):
+        from server.tools.read import list_entries
+
+        vault, audit = unlocked_vault
+        vault._repl_proc.stdout.readuntil.side_effect = [
+            _repl_resp(b"Anthropic API - main\nSecret Project\n"),
+            _repl_resp(b"Title: Anthropic API - main\nUserName: key\nURL: \n"),
+            _repl_resp(b"Title: Secret Project\nTags: AI RESTRICTED\n"),
+        ]
+        result = await list_entries(vault, audit, group="API Keys")
+        assert len(result) == 1
+        assert result[0]["title"] == "Anthropic API - main"
+
+
+# ---------------------------------------------------------------------------
+# READ ONLY enforcement
+# ---------------------------------------------------------------------------
+
+class TestReadOnlyEnforcement:
+
+    async def test_deactivate_entry_raises_on_read_only(self, unlocked_vault):
+        from server.tools.write import deactivate_entry
+        from server.vault import EntryReadOnly
+
+        vault, audit = unlocked_vault
+        vault._repl_proc.stdout.readuntil.side_effect = [
+            _repl_resp(b"Title: Production DB\nNotes: \nTags: READ ONLY\n"),
+        ]
+        with pytest.raises(EntryReadOnly):
+            await deactivate_entry(vault, audit, title="Production DB", group="Servers")
+
+    async def test_add_attachment_raises_on_read_only(self, unlocked_vault):
+        from server.tools.write import add_attachment
+        from server.vault import EntryReadOnly
+
+        vault, audit = unlocked_vault
+        vault._repl_proc.stdout.readuntil.side_effect = [
+            _repl_resp(b"Title: Production DB\nNotes: \nTags: READ ONLY\n"),
+        ]
+        with pytest.raises(EntryReadOnly):
+            await add_attachment(
+                vault, audit,
+                title="Production DB", attachment_name="backup.sql",
+                content=b"data", group="Servers",
+            )
+
+    async def test_get_entry_succeeds_on_read_only(self, unlocked_vault):
+        """READ ONLY tag blocks writes but allows reads."""
+        from server.tools.read import get_entry
+
+        vault, audit = unlocked_vault
+        vault._repl_proc.stdout.readuntil.side_effect = [
+            _repl_resp(
+                b"Title: Production DB\nUserName: dba\nPassword: prodpass\n"
+                b"URL: https://prod.example.com\nNotes: \nTags: READ ONLY\n"
+            ),
+        ]
+        result = await get_entry(vault, audit, title="Production DB", group="Servers")
+        assert result["username"] == "dba"
+        assert result["password"] == "prodpass"

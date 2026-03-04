@@ -9,7 +9,7 @@ description: >
 
 ## FTP / FTPS
 
-GROUP: Servers
+STORAGE DEFAULT: Servers (vault layout is user-organized; if not found there, use search_entries)
 TITLE FORMAT: FTP - <host>
 REQUIRED FIELDS: username, password, url (host), port (if non-standard)
 NOTES FIELD: protocol variant and lftp connection string
@@ -29,13 +29,13 @@ PLAIN FTP RULE: If the entry uses plain unencrypted FTP (no TLS), you MUST:
 SFTP entries are split across two groups:
 
 CONNECTION CREDENTIAL:
-- Group: Servers
+- Storage default: Servers (search by title if not there)
 - Title: SFTP - <host>
 - Fields: username, url (host), port (if non-standard)
 - Notes: reference to the SSH Keys entry (e.g. "SSH key: SSH - <host>")
 
 SSH KEY (handle per keepass-credential-ssh skill):
-- Group: SSH Keys
+- Storage default: SSH Keys (search by title if not there)
 - Title: SSH - <host>
 - Notes: must reference back to the SFTP connection entry
 

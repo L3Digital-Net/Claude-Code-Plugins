@@ -8,7 +8,7 @@ description: >
 
 # Anthropic API Credential Handling
 
-GROUP: API Keys
+STORAGE DEFAULT: API Keys (vault layout is user-organized; if not found there, use search_entries)
 TITLE FORMAT: Anthropic API - <project name>
 PASSWORD FIELD: API key value
 URL: https://api.anthropic.com

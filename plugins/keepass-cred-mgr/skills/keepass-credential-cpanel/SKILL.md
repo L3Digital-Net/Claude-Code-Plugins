@@ -7,7 +7,7 @@ description: >
 
 # cPanel Credential Handling
 
-GROUP: Servers
+STORAGE DEFAULT: Servers (vault layout is user-organized; if not found there, use search_entries)
 TITLE FORMAT: cPanel - <domain>
 REQUIRED FIELDS: username, password, url (https://<domain>:2083)
 NOTES: hosting provider name, all associated domains

@@ -26,7 +26,8 @@ from server.tools import write as write_tools
 from server.vault import (
     DuplicateEntry,
     EntryInactive,
-    GroupNotAllowed,
+    EntryReadOnly,
+    EntryRestricted,
     KeePassCLIError,
     Vault,
     VaultLocked,
@@ -122,7 +123,7 @@ async def unlock_vault(ctx: Context[Any, Any, Any]) -> str:
 
 @mcp.tool()
 async def list_groups(ctx: Context[Any, Any, Any]) -> list[str]:
-    """List accessible KeePass groups (filtered by allowlist)."""
+    """List all KeePass groups."""
     log.info("tool_invoked", tool="list_groups")
     app = _get_ctx(ctx)
     try:
@@ -144,7 +145,7 @@ async def list_entries(
         return await read_tools.list_entries(
             app.vault, app.audit, group=group, include_inactive=include_inactive
         )
-    except (VaultLocked, GroupNotAllowed, KeePassCLIError, TimeoutError) as e:
+    except (VaultLocked, KeePassCLIError, TimeoutError) as e:
         raise ValueError(_error_text(e)) from e
 
 
@@ -155,7 +156,7 @@ async def search_entries(
     group: str | None = None,
     include_inactive: bool = False,
 ) -> list[dict[str, str | None]]:
-    """Search entries by keyword. Filters to allowed groups only."""
+    """Search entries vault-wide by keyword."""
     log.info("tool_invoked", tool="search_entries")
     app = _get_ctx(ctx)
     try:
@@ -163,7 +164,7 @@ async def search_entries(
             app.vault, app.audit,
             query=query, group=group, include_inactive=include_inactive,
         )
-    except (VaultLocked, GroupNotAllowed, KeePassCLIError, TimeoutError) as e:
+    except (VaultLocked, KeePassCLIError, TimeoutError) as e:
         raise ValueError(_error_text(e)) from e
 
 
@@ -179,7 +180,7 @@ async def get_entry(
             app.vault, app.audit, title=title, group=group,
         )
     except (
-        VaultLocked, EntryInactive, GroupNotAllowed,
+        VaultLocked, EntryInactive, EntryRestricted,
         KeePassCLIError, TimeoutError,
     ) as e:
         raise ValueError(_error_text(e)) from e
@@ -199,7 +200,7 @@ async def get_attachment(
         )
         return base64.b64encode(data).decode("ascii")
     except (
-        VaultLocked, EntryInactive, GroupNotAllowed,
+        VaultLocked, EntryInactive, EntryRestricted,
         KeePassCLIError, TimeoutError,
     ) as e:
         raise ValueError(_error_text(e)) from e
@@ -229,7 +230,7 @@ async def create_entry(
         )
         return f"Created entry '{title}' in {group}"
     except (
-        VaultLocked, GroupNotAllowed, DuplicateEntry,
+        VaultLocked, DuplicateEntry,
         WriteLockTimeout, KeePassCLIError, ValueError,
         TimeoutError,
     ) as e:
@@ -249,7 +250,7 @@ async def deactivate_entry(
         )
         return f"Deactivated entry '{title}'"
     except (
-        VaultLocked, EntryInactive, GroupNotAllowed,
+        VaultLocked, EntryInactive, EntryReadOnly,
         WriteLockTimeout, KeePassCLIError,
         TimeoutError,
     ) as e:
@@ -276,7 +277,7 @@ async def add_attachment(
         )
         return f"Attached '{attachment_name}' to '{title}'"
     except (
-        VaultLocked, EntryInactive, GroupNotAllowed,
+        VaultLocked, EntryInactive, EntryReadOnly,
         WriteLockTimeout, KeePassCLIError,
         binascii.Error, TimeoutError,
     ) as e:
@@ -293,14 +294,14 @@ async def import_entries(
     call unlock_vault to continue.
 
     Each entry requires 'group' and 'title'. Optional: 'username', 'password', 'url',
-    'notes'. All groups must be in the configured allowlist."""
+    'notes'."""
     log.info("tool_invoked", tool="import_entries")
     app = _get_ctx(ctx)
     try:
         return await write_tools.import_entries(
             app.vault, app.audit, entries=entries,
         )
-    except (VaultLocked, GroupNotAllowed, KeePassCLIError, ValueError) as e:
+    except (VaultLocked, KeePassCLIError, ValueError) as e:
         raise ValueError(_error_text(e)) from e
 
 

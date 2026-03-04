@@ -12,7 +12,7 @@ import pytest
 from server.vault import (
     DuplicateEntry,
     EntryInactive,
-    GroupNotAllowed,
+    EntryRestricted,
     KeePassCLIError,
     VaultLocked,
     WriteLockTimeout,
@@ -247,13 +247,15 @@ class TestListEntriesHandler:
             )
 
     @pytest.mark.asyncio
-    async def test_group_not_allowed_maps_to_value_error(self):
+    async def test_any_group_accessible(self):
+        """list_entries no longer raises for any group — Banking is now valid."""
         from server.main import list_entries
         ctx, app = _app()
-        mock_le = AsyncMock(side_effect=GroupNotAllowed("nope"))
-        with patch("server.tools.read.list_entries", mock_le), \
-             pytest.raises(ValueError, match="GroupNotAllowed"):
-            await list_entries(ctx, group="Banking")
+        entries = [{"title": "Checking", "group": "Banking", "username": "u", "url": ""}]
+        mock_le = AsyncMock(return_value=entries)
+        with patch("server.tools.read.list_entries", mock_le):
+            result = await list_entries(ctx, group="Banking")
+            assert result == entries
 
 
 class TestSearchEntriesHandler:
@@ -283,14 +285,15 @@ class TestSearchEntriesHandler:
 
 class TestGetAttachmentErrors:
     @pytest.mark.asyncio
-    async def test_group_not_allowed_maps_to_value_error(self):
+    async def test_entry_restricted_maps_to_value_error(self):
+        """EntryRestricted (AI RESTRICTED tag) maps to ValueError in the handler."""
         from server.main import get_attachment
         ctx, app = _app()
-        mock_ga = AsyncMock(side_effect=GroupNotAllowed("nope"))
+        mock_ga = AsyncMock(side_effect=EntryRestricted("restricted"))
         with patch("server.tools.read.get_attachment", mock_ga), \
-             pytest.raises(ValueError, match="GroupNotAllowed"):
+             pytest.raises(ValueError, match="EntryRestricted"):
             await get_attachment(
-                ctx, title="Test", attachment_name="file.txt", group="Banking",
+                ctx, title="Test", attachment_name="file.txt", group="API Keys",
             )
 
 
@@ -340,13 +343,14 @@ class TestImportEntriesHandler:
             await import_entries(ctx, entries=[{"group": "Servers", "title": "X"}])
 
     @pytest.mark.asyncio
-    async def test_group_not_allowed_maps_to_value_error(self):
+    async def test_any_group_importable(self):
+        """import_entries no longer restricts groups — Banking is now valid."""
         from server.main import import_entries
         ctx, app = _app()
-        mock_ie = AsyncMock(side_effect=GroupNotAllowed("Banking not allowed"))
-        with patch("server.tools.write.import_entries", mock_ie), \
-             pytest.raises(ValueError, match="GroupNotAllowed"):
-            await import_entries(ctx, entries=[{"group": "Banking", "title": "X"}])
+        mock_ie = AsyncMock(return_value="Imported 1 entries: Banking (1). Vault is now locked...")
+        with patch("server.tools.write.import_entries", mock_ie):
+            result = await import_entries(ctx, entries=[{"group": "Banking", "title": "X"}])
+        assert "Banking" in result
 
     @pytest.mark.asyncio
     async def test_value_error_propagates(self):
