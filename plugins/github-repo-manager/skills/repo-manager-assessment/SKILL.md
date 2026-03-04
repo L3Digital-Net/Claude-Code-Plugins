@@ -1,4 +1,5 @@
 ---
+name: repo-manager-assessment
 description: Full assessment orchestration for GitHub Repo Manager. Use when running a complete multi-module health assessment, presenting unified findings across modules, or generating a maintenance report.
 ---
 

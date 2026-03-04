@@ -1,4 +1,5 @@
 ---
+name: pr-management
 description: Manage pull requests — triage, staleness detection, label management, review requests, and merge workflow. Use when asked about PRs, pull requests, code review, or merge status.
 ---
 

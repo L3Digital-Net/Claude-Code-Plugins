@@ -1,4 +1,5 @@
 ---
+name: notifications
 description: Process GitHub notifications with priority classification. Use when asked about notifications, unread alerts, or notification backlog.
 ---
 

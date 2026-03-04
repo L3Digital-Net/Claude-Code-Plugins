@@ -1,4 +1,5 @@
 ---
+name: repo-manager-reference
 description: GitHub Repo Manager helper command reference. Use when looking up gh-manager command syntax or checking what operations are available.
 ---
 

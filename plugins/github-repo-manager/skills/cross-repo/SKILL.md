@@ -1,4 +1,5 @@
 ---
+name: cross-repo
 description: Cross-repository operations for GitHub Repo Manager — scope inference, batch mutations, and portfolio scanning. Use when asked to check or fix something across multiple repos.
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: issue-triage
 description: Triage GitHub issues — label, categorize, detect linked PRs, identify stale issues, and close resolved ones. Use when asked about issues, issue backlog, or issue triage.
 ---
 

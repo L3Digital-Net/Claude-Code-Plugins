@@ -1,4 +1,5 @@
 ---
+name: release-health
 description: Audit release health — unreleased commits, CHANGELOG drift, release cadence, and draft releases. Use when asked about releases, versioning, changelog, or release status.
 ---
 

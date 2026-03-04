@@ -1,4 +1,5 @@
 ---
+name: repo-manager
 description: GitHub Repo Manager session behavior — onboarding, tier system, communication style, and error handling. Use when starting a repository management session.
 ---
 
