@@ -17,10 +17,11 @@ fi
 COUNT=$((COUNT + 1))
 echo "$COUNT" > "$COUNT_FILE"
 
-# Emit threshold warnings — stdout is injected into the agent's context
+# Emit threshold warnings — stdout is injected into the agent's context.
+# Warns at 10 (notice), 20 (pressure), then every 10 reads thereafter.
 if [[ "$COUNT" -eq 10 ]]; then
     echo "⚠ CONTEXT NOTICE — design-assistant: $COUNT files read this session. Context is growing. For long /design-review sessions, consider using \`pause\` to snapshot state before the next pass."
-elif [[ "$COUNT" -eq 20 ]]; then
+elif [[ "$COUNT" -ge 20 && $((COUNT % 10)) -eq 0 ]]; then
     echo "⚠⚠ CONTEXT PRESSURE — design-assistant: $COUNT files read this session. High context load. Strongly recommended: use \`pause\` before continuing and resume in a fresh session with the saved document."
 fi
 
