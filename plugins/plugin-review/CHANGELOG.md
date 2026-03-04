@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.1] - 2026-03-04
+
+### Changed
+- update remaining L3Digital-Net references
+- update org references from L3Digital-Net to L3DigitalNet
+
+### Fixed
+- apply audit findings — CHANGELOG, plugin.json, README, commands, agents, scripts
+
+
 ## [Unreleased]
 
 ## [0.5.0] - 2026-03-02
