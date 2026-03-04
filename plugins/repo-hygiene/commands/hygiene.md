@@ -1,5 +1,5 @@
 ---
-description: Autonomous maintenance sweep — validates .gitignore patterns, manifest paths, plugin state consistency, stale uncommitted changes, README freshness (leaf-to-root with implementation cross-reference), and docs/ accuracy.
+description: Autonomous maintenance sweep: validates .gitignore patterns, manifest paths, plugin state consistency, stale uncommitted changes, README freshness (leaf-to-root with implementation cross-reference), and docs/ accuracy.
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion
 ---
 
@@ -50,11 +50,15 @@ Parse each result as JSON. If any script exits non-zero, surface the error immed
 
 Collect all `findings` arrays. Tag each finding with its `check` field value.
 
+After collecting, emit: `Step 1 complete: N finding(s) from 4 scripts.` (where N is the total count across all four scripts)
+
 ## Step 2: Semantic README and Docs Scan (Check 3 — inline)
 
 **If `IS_CLAUDE_PLUGIN_REPO` is `false`**: skip this step entirely. Collect zero findings for Check 3 and proceed to Step 3. Steps 2a–2c reference `plugins/`, `docs/plugin-readme-template.md`, and `.claude-plugin/marketplace.json` — structures that only exist in Claude Code plugin marketplace repos.
 
 **If `IS_CLAUDE_PLUGIN_REPO` is `true`**: perform this scan in **leaf-to-root order**: process plugin READMEs first (2a), then the root README.md (2b), then docs/ files (2c). This ordering ensures child artifacts are verified before the parent documents that reference them.
+
+**Standard finding schema** (used throughout Steps 2a–2c unless noted): `auto_fix: false`, `fix_cmd: null`. Sub-checks below specify only the variable fields: `check`, `severity`, `path`, and `detail`.
 
 ### Step 2a: Plugin READMEs (leaf level)
 
@@ -258,7 +262,7 @@ git add -A
 git commit -m "$(cat <<'EOF'
 fix(hygiene): apply auto-fixes from /hygiene sweep
 
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+Co-Authored-By: Claude Code <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -279,7 +283,16 @@ Push the current branch:
 git push origin <current-branch>
 ```
 
-If `CURRENT_BRANCH` differs from `DEFAULT_BRANCH`, merge to the default branch and push:
+If `CURRENT_BRANCH` differs from `DEFAULT_BRANCH`, use **AskUserQuestion** to confirm the deploy step before proceeding:
+- question: `"Deploy hygiene changes: merge <current-branch> into <default-branch> and push?"`
+- header: `"Deploy"`
+- options:
+  1. label: `"Yes, deploy"`, description: `"Merge and push to <default-branch>"`
+  2. label: `"No, skip deploy"`, description: `"Keep changes on <current-branch> only"`
+
+If `"No, skip deploy"` is chosen, skip the merge and report: `"Changes pushed to <current-branch>. Deploy to <default-branch> skipped."`
+
+If `"Yes, deploy"`, merge to the default branch and push:
 ```bash
 git checkout <default-branch> && git pull origin <default-branch> && git merge <current-branch> --no-ff -m "Deploy: hygiene sweep fixes" && git push origin <default-branch> && git checkout <current-branch>
 ```

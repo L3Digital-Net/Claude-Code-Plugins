@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Check 5 of 5: finds uncommitted files (modified or untracked, excluding ignored)
-# that were last modified more than 24 hours ago.
+# check-stale-commits.sh — Check 5 of 5: stale uncommitted file scanner
+# Called from: /hygiene command (hygiene.md Step 1) in parallel with check-gitignore.sh,
+#              check-manifests.sh, and check-orphans.sh.
+# Output contract: JSON {check: "stale-commits", findings: [...]} to stdout.
+#                  On error: JSON {check: "stale-commits", error: "<msg>", findings: []} to stdout + exit 1.
+# findings entries: {severity: "warn", path, detail, auto_fix: false, fix_cmd: null}
 # All findings are needs-approval — staging/committing requires user intent.
-# Output: JSON {check, findings[]} to stdout. No auto_fix, fix_cmd is always null.
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
@@ -15,10 +18,14 @@ import json, os, sys, subprocess, time
 repo_root = sys.argv[1]
 cutoff = time.time() - 86400  # 24 hours ago
 
-result = subprocess.run(
-    ["git", "-C", repo_root, "status", "--porcelain"],
-    capture_output=True, text=True, check=True
-)
+try:
+    result = subprocess.run(
+        ["git", "-C", repo_root, "status", "--porcelain"],
+        capture_output=True, text=True, check=True
+    )
+except Exception as e:
+    print(json.dumps({"check": "stale-commits", "error": str(e), "findings": []}))
+    sys.exit(1)
 
 findings = []
 for line in result.stdout.splitlines():
