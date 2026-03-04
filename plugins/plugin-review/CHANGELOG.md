@@ -1,57 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
 ## [0.5.0] - 2026-03-02
 
 ### Added
-- bump to v0.5.0 — Track D context efficiency integration
-- migrate tighten command with corrected skill path
-- migrate review-efficiency command with corrected skill paths
-- add context-efficiency-workflow, context-efficiency-reference, markdown-tighten skills
-- add Track D file-to-track mapping in scoped-reaudit skill
-- register Track D in cross-track impact map
-- add Track D context efficiency status to final-report template
-- add Track D context efficiency to pass-report template
-- add efficiency-analyst Track D to Phase 2 spawn and tier table
-- add efficiency-analyst agent for Track D
-- add track-d-criteria template for context efficiency
-
-### Changed
-- update P9 and hooks table to say 'blocks' not 'warns'
-- em dash cleanup, root README sync
-- Update GitHub org references from L3DigitalNet to L3DigitalNet
-- reduce AI writing signals across all plugin READMEs
-- Enhance Release Pipeline and Repo Hygiene Plugins
-- update plugin docs, PTH README for v0.6.0, and repo template
-
-### Fixed
-- fix path injection in validate-agent-frontmatter.sh; fix CHANGELOG em dashes
-- extend doc-write-tracker to cover hooks/ (including hooks.json)
-- make validate-agent-frontmatter.sh blocking (exit 2)
-- final review fixes — Track D label, type enum, cross-refs, diagram
-- resolve Track D collision and update Summary/P7 in README
-- update stale skill cross-references to new structured paths
-- add state file pattern and Track D to Decision Logic in scoped-reaudit
-- correct A→D relationship to P10 and tighten P1 paraphrase
-- align P9/P10 names and clean up P1 placeholder in final-report
-- add context efficiency to Upheld roll-up in pass-report
-- anchor efficiency-analyst spawn to concrete Phase 1 artifacts
-- clarify output contract and align assertion schema in efficiency-analyst
-- align track-d P7/P9/P10 definitions with canonical source
-- remove em dashes from all READMEs; add hygiene check
-- replace \n with <br/> in mermaid node labels across all plugin READMEs
-
-
-## [Unreleased]
-
-### Fixed
-
-- `validate-agent-frontmatter.sh` now exits 2 (blocking) instead of 0 (warn-only) when disallowed write tools are detected in analyst agent YAML frontmatter; this closes the P9 enforcement gap
-- `doc-write-tracker.sh` now tracks all `hooks/` files (including `hooks/hooks.json`) as implementation files; changes to hook configuration now trigger the P6 co-mutation warning
-
-## [0.5.0] - 2026-03-01
-
-### Added
-
 - Track D context efficiency analysis: `efficiency-analyst` agent evaluates P1–P12 compliance in parallel with Tracks A/B/C
 - `track-d-criteria.md` template: P1–P12 evaluation criteria with component examination table
 - `review-efficiency` command: standalone 5-stage interactive context efficiency review (migrated from context-efficiency-toolkit)
@@ -61,6 +14,25 @@
 - `markdown-tighten` skill: five-step prose compression workflow
 - Track D entries in `pass-report.md` and `final-report.md` templates
 - Track D mapping in `cross-track-impact.md` and `scoped-reaudit/SKILL.md`
+
+### Changed
+- Update P9 and hooks table to say 'blocks' not 'warns'
+- Em dash cleanup throughout plugin files
+
+### Fixed
+- Fix path injection in `validate-agent-frontmatter.sh`; fix CHANGELOG em dashes
+- Extend `doc-write-tracker.sh` to cover `hooks/` (including `hooks/hooks.json`)
+- Make `validate-agent-frontmatter.sh` blocking (exit 2) instead of warn-only (exit 0)
+- Final review fixes: Track D label, type enum, cross-refs, diagram
+- Resolve Track D collision and update Summary/P7 in README
+- Update stale skill cross-references to new structured paths
+- Add state file pattern and Track D to Decision Logic in scoped-reaudit
+- Correct A→D relationship to P10 and tighten P1 paraphrase
+- Align P9/P10 names and clean up P1 placeholder in final-report
+- Add context efficiency to Upheld roll-up in pass-report
+- Anchor efficiency-analyst spawn to concrete Phase 1 artifacts
+- Clarify output contract and align assertion schema in efficiency-analyst
+- Align track-d P7/P9/P10 definitions with canonical source
 
 ## [0.4.0] - 2026-02-21
 
@@ -85,33 +57,6 @@
 - Phase 5.5 budget-check extended to include regression guard status in autonomous mode
 - `commands/review.md` trigger description updated to mention `--autonomous` flag
 - Hard Rules updated: autonomous mode tier behavior, Phase 4.5 scope restriction, build-fix-agent spawn limit
-
-## [0.3.0] - 2026-02-20
-
-### Added
-- add Assertion Coverage section to final report template
-- add Confidence column to pass report convergence tables
-- refactor convergence loop — fully automated with assertion runner
-- add Assertions block to docs-analyst output format
-- add Assertions block to ux-analyst output format
-- add Assertions block to principles-analyst output format
-- add fix-agent — write-capable assertion-driven fixer
-- add run-assertions.sh assertion runner with smoke tests
-- enhance skills and commands for context efficiency review and markdown tightening
-- add documentation for PostToolUse Agent Frontmatter Validator in DESIGN.md
-- update version to 0.2.0 and enhance documentation with new hooks and validation features
-
-### Changed
-- bump to v0.3.0 — assertion-driven convergence loop
-
-### Fixed
-- address code review — Phase 5 duplication, loop safety, test coverage
-- integration test self-review fixes (v0.3.0)
-- clarify convergence loop conditions and fix-agent context in review.md
-- complete assertion type enum + guide in docs-analyst
-- complete assertion type enum in ux-analyst (add typescript_compile)
-- harden run-assertions.sh — JSON error handling, file handle fix, field validation
-
 
 ## [0.3.0] - 2026-02-20
 
@@ -180,8 +125,7 @@
 ## [0.1.1] - 2026-02-19
 
 ### Fixed
-- source root principles from README.md not CLAUDE.md
-
+- Source root principles from README.md not CLAUDE.md
 
 ## [0.1.0] - 2026-02-19 — Initial Release
 

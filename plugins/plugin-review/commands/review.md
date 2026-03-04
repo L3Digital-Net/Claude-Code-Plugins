@@ -4,6 +4,21 @@ description: Review a Claude Code plugin for principles alignment, terminal UX q
 
 # Command: review
 
+<!-- architectural-context
+  Role: orchestrator for the multi-pass plugin review loop. Manages state, spawns analyst
+    subagents, auto-implements fixes, and drives convergence. Never reads full plugin source
+    files directly — that is delegated to subagents.
+  Spawns: principles-analyst (Track A), ux-analyst (Track B), docs-analyst (Track C),
+    efficiency-analyst (Track D), fix-agent (Phase 5.5 assertion failures),
+    regression-guard (autonomous mode Pass 2+), build-fix-agent (autonomous Phase 4.5).
+  State: .claude/state/plugin-review-writes.json (pass counter, tier counts, fixed findings),
+    .claude/state/review-assertions.json (assertion suite, confidence score).
+  Cross-file contract: agents/fix-agent.md and agents/build-fix-agent.md expect the failing
+    assertion JSON schema from review-assertions.json; changing assertion fields here breaks
+    those agents. templates/ files are loaded by subagents — template paths must match
+    what is passed in the spawn calls below.
+-->
+
 Review a Claude Code plugin for principles alignment, terminal UX quality, and documentation freshness.
 
 ## Trigger
@@ -64,7 +79,7 @@ You will need this path when spawning subagents (see Phase 2).
 
 ### Phase 1 — Setup
 
-**1.1 Identify the plugin.** If the user didn't specify one, list available plugins and use `AskUserQuestion` with bounded options (up to 4). If there are more than 4 plugins, list the 3 most recently modified and add an "Other" option so the user can type the name. If you cannot enumerate plugins at all, prompt for the plugin path with a format hint: "Enter the plugin directory path (e.g. `plugins/my-plugin`)."
+**1.1 Identify the plugin.** If the user didn't specify one, list available plugins and use `AskUserQuestion` with bounded options (up to 4). If there are more than 4 plugins, list the 3 most recently modified and add an "Other" option. When the user selects "Other", present a second `AskUserQuestion` listing the remaining plugins (up to 4 at a time) until the target is found. If you cannot enumerate plugins at all, prompt for the plugin path with a format hint: "Enter the plugin directory path (e.g. `plugins/my-plugin`)."
 
 **1.2 Triage read.** Read only structural files — do NOT deep-read implementation source:
 - The plugin's directory listing (understand scope and file count)
@@ -89,6 +104,8 @@ Read `pass_number` from `.claude/state/plugin-review-writes.json` (the `pass_num
 - **Efficiency Analyst** (`agents/efficiency-analyst.md`): provide the directory listing of all plugin components (commands, agents, skills, hooks, scripts, templates, src), the list of implementation file paths to read, and the template path: `$CLAUDE_PLUGIN_ROOT/templates/track-d-criteria.md`.
 
 Do NOT load those templates yourself — the subagents handle it.
+
+After all subagents return, emit: `"Pass <N>: analyst subagents complete — building report..."` before proceeding to Phase 2.5.
 
 On **Pass 2+**, consult `skills/scoped-reaudit/SKILL.md` to determine which tracks are affected by files changed in the previous pass. Only spawn affected subagents. Carry forward unchanged findings.
 
@@ -280,7 +297,8 @@ fails = [a for a in d['assertions'] if a['status'] == 'fail']
 for a in fails:
     print(f'  ❌ {a[\"id\"]} ({a[\"track\"]}): {a[\"description\"]}')
     if a.get('failure_output'):
-        print(f'     {a[\"failure_output\"][:200]}')
+        print(f'     {a[\"failure_output\"][:400]}')
+        print(f'     (full output: .claude/state/review-assertions.json)')
 "
 ```
 
@@ -353,8 +371,8 @@ The loop terminates when any condition is met:
 1. **Zero open findings** — all clear.
 2. **User signals satisfaction** — "stop" or "looks good".
 3. **Pass budget reached** — user chose to accept remaining gaps.
-4. **Plateau** — two identical consecutive passes. Report and ask how to proceed.
-5. **Divergence** — more new findings than resolved. Report immediately, recommend reverting.
+4. **Plateau** — two identical consecutive passes. Use `AskUserQuestion`: **"Two consecutive passes produced identical findings. How would you like to proceed?"** with options: Continue anyway (one more pass) / Accept remaining gaps and produce final report / Revert last pass changes.
+5. **Divergence** — more new findings than resolved. Use `AskUserQuestion`: **"This pass introduced more findings than it resolved. Revert the last pass's changes and stop?"** with options: Yes, revert and stop / No, continue and accept the regression.
 
 Load `$CLAUDE_PLUGIN_ROOT/templates/final-report.md` and produce the final summary. Read the final confidence score and include it in the final report:
 

@@ -77,7 +77,7 @@ if state['impl_files'] and not state['doc_files']:
     count = len(state['impl_files'])
     recent = state['impl_files'][-3:]
     print(f'')
-    print(f'\u26a0\ufe0f [P6] Doc co-mutation: {count} implementation file(s) modified \u2014 no documentation updates yet.')
+    print(f'\u26a0\ufe0f [P6] Doc co-mutation: {count} implementation file(s) modified; no documentation updates yet.')
     # Print paths one-per-line to avoid wrapping at 80-120 column terminals.
     for path in recent:
         print(f'  {path}')
