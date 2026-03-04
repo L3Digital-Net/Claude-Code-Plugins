@@ -169,20 +169,12 @@ mkdir -p ~/.config/keepass-cred-mgr
 Then create `~/.config/keepass-cred-mgr/config.yaml` with the following content, updating paths to match your setup:
 
 ```yaml
-database_path: /path/to/your/primary.kdbx
+database_path: ~/keepass/keepass_yubi.kdbx
 yubikey_slot: 2
 grace_period_seconds: 10
 yubikey_poll_interval_seconds: 5
 write_lock_timeout_seconds: 10
 page_size: 50
-
-allowed_groups:
-  - Servers
-  - SSH Keys
-  - GPG Keys
-  - Git
-  - API Keys
-  - Services
 
 audit_log_path: ~/.local/share/keepass-cred-mgr/audit.jsonl
 ```

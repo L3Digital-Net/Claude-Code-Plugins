@@ -16,7 +16,7 @@ Unlocking the vault starts a persistent `keepassxc-cli open` REPL process; one Y
 
 **[P3] Soft Delete, No Destruction**: Claude can create entries and deactivate them (prefix with `[INACTIVE]`), but cannot overwrite or delete. Permanent deletion happens in the KeePassXC GUI, where the user has full visibility.
 
-**[P4] Group Allowlist Is the Perimeter**: Only groups listed in `allowed_groups` are visible to any tool. Unlisted groups are invisible regardless of what Claude requests.
+**[P4] Tags Define the Perimeter**: Entries tagged `AI RESTRICTED` are blocked from all AI access. Entries tagged `READ ONLY` block write operations but remain readable. All other vault entries are accessible — the user organizes groups freely without affecting agent discovery.
 
 **[P5] Audit Everything That Returns a Secret**: Every `get_entry` and `get_attachment` call writes a structured JSONL record with timestamp, tool, entry title, group, and whether secret material was returned.
 
@@ -40,7 +40,7 @@ Unlocking the vault starts a persistent `keepassxc-cli open` REPL process; one Y
 ## Installation
 
 ```
-/plugin marketplace add L3Digital-Net/Claude-Code-Plugins
+/plugin marketplace add L3DigitalNet/Claude-Code-Plugins
 /plugin install keepass-cred-mgr@l3digitalnet-plugins
 ```
 
@@ -117,11 +117,11 @@ For structured workflows, use the slash commands:
 | Tool | Parameters | Returns | Notes |
 |------|-----------|---------|-------|
 | `unlock_vault` | (none) | Confirmation | Must be called before any other vault tool; requires YubiKey touch; starts persistent REPL session |
-| `list_groups` | (none) | Group names | Filtered to `allowed_groups` |
-| `list_entries` | `group?`, `include_inactive?` | Title, username, URL per entry | REPL-dispatched; `ls` + `show` per entry; capped at `page_size` |
-| `search_entries` | `query`, `group?`, `include_inactive?` | Matching entry metadata | Filtered to allowed groups |
-| `get_entry` | `title`, `group?` | Full entry including password | Audit logged; blocked on `[INACTIVE]` entries |
-| `get_attachment` | `title`, `attachment_name`, `group?` | Attachment content (base64) | Audit logged; blocked on `[INACTIVE]` entries |
+| `list_groups` | (none) | Group names | All vault groups with no filtering |
+| `list_entries` | `group?`, `include_inactive?` | Title, username, URL per entry | `ls` + `show` per entry; skips `AI RESTRICTED` entries; capped at `page_size` |
+| `search_entries` | `query`, `group?`, `include_inactive?` | Matching entry metadata | Vault-wide search; handles multi-level paths; skips `AI RESTRICTED` entries |
+| `get_entry` | `title`, `group?` | Full entry including password | Audit logged; blocked on `[INACTIVE]` and `AI RESTRICTED` entries |
+| `get_attachment` | `title`, `attachment_name`, `group?` | Attachment content (base64) | Audit logged; blocked on `[INACTIVE]` and `AI RESTRICTED` entries |
 | `create_entry` | `title`, `group`, `username?`, `password?`, `url?`, `notes?` | Confirmation | Rejects duplicates and titles with `/` |
 | `deactivate_entry` | `title`, `group?` | Confirmation | Adds `[INACTIVE]` prefix and timestamp to notes |
 | `add_attachment` | `title`, `attachment_name`, `content`, `group?` | Confirmation | Secure temp file; shredded after import |
@@ -151,21 +151,13 @@ For structured workflows, use the slash commands:
 The server reads `~/.config/keepass-cred-mgr/config.yaml` (override via `KEEPASS_CRED_MGR_CONFIG` env var).
 
 ```yaml
-database_path: /path/to/your/primary.kdbx
+database_path: ~/keepass/keepass_yubi.kdbx
 yubikey_slot: 2
 grace_period_seconds: 10
 yubikey_poll_interval_seconds: 5
 write_lock_timeout_seconds: 10
 page_size: 50
 log_level: INFO
-
-allowed_groups:
-  - Servers
-  - SSH Keys
-  - GPG Keys
-  - Git
-  - API Keys
-  - Services
 
 audit_log_path: ~/.local/share/keepass-cred-mgr/audit.jsonl
 ```
@@ -179,10 +171,11 @@ audit_log_path: ~/.local/share/keepass-cred-mgr/audit.jsonl
 | `write_lock_timeout_seconds` | int | `10` | Max seconds to wait for the database file lock |
 | `page_size` | int | `50` | Max entries returned per `list_entries` or `search_entries` call |
 | `log_level` | str | `INFO` | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`) |
-| `allowed_groups` | list | required | Groups visible to all tools; unlisted groups are invisible |
 | `audit_log_path` | str | required | Path to the JSONL audit log; parent directory must exist |
 
 ## Design Decisions
+
+- **Tag-based access control over group allowlist**: Earlier versions required an `allowed_groups` allowlist. This was replaced with a denylist of two KeePassXC tags: `AI RESTRICTED` (blocks all AI access to an entry) and `READ ONLY` (blocks write operations). Tags are parsed from `keepassxc-cli show` output during each tool call — no config field required. The inversion from opt-in allowlist to opt-out denylist means the user can freely add, remove, or reorganize groups without reconfiguring the plugin.
 
 - **`keepassxc-cli` over `pykeepass`**: Using the CLI means the MCP server has no direct database access; KeePassXC owns the file format, locking, and YubiKey integration. `unlock_vault` opens a persistent `keepassxc-cli open` REPL process; all subsequent commands are dispatched through that process's stdin/stdout without re-authenticating. `list_entries` still issues one `ls` plus one `show` per entry (for metadata), but all within a single session rather than spawning a subprocess per call. Binary attachment exports use a separate subprocess since raw bytes cannot pass through the text REPL without corruption.
 
@@ -221,8 +214,8 @@ This plugin is designed for trusted local machines with full disk encryption. It
 
 ## Links
 
-- Repository: [L3Digital-Net/Claude-Code-Plugins](https://github.com/L3Digital-Net/Claude-Code-Plugins)
+- Repository: [L3DigitalNet/Claude-Code-Plugins](https://github.com/L3DigitalNet/Claude-Code-Plugins)
 - Changelog: [`CHANGELOG.md`](CHANGELOG.md)
 - Setup Guide: [`docs/keepass-cred-mgr-setup.md`](docs/keepass-cred-mgr-setup.md)
 - Design Document: [`docs/keepass-cred-mgr-design.md`](docs/keepass-cred-mgr-design.md)
-- Issues and feedback: [GitHub Issues](https://github.com/L3Digital-Net/Claude-Code-Plugins/issues)
+- Issues and feedback: [GitHub Issues](https://github.com/L3DigitalNet/Claude-Code-Plugins/issues)

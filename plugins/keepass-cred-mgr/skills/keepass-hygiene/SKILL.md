@@ -14,3 +14,6 @@ RULES: apply whenever interacting with KeePass via MCP tools.
 3. Never include returned secrets in conversation output, comments, code, logs, or any file other than the intended destination.
 4. On credential rotation: confirm create_entry succeeded before calling deactivate_entry. Never deactivate before confirming the new credential is stored.
 5. When generating new credentials, use cryptographically appropriate parameters: ed25519 for SSH keys, 32+ character random strings for passwords, correct key types per service.
+6. Search-first lookup: if get_entry or get_attachment fails to find an entry in the expected group, use search_entries with the entry name as the query. Entries may be in sub-groups or have moved.
+7. AI RESTRICTED tag: if a tool raises EntryRestricted, do not attempt to access the entry by any other means. Inform the user the entry is restricted and stop.
+8. READ ONLY tag: entries tagged READ ONLY can be read via get_entry and get_attachment but reject all writes (deactivate_entry, add_attachment). Do not attempt workarounds.

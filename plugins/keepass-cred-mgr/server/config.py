@@ -1,7 +1,7 @@
 """Configuration loader for keepass-cred-mgr.
 
 Reads YAML config from a file path or the KEEPASS_CRED_MGR_CONFIG env var.
-Required fields: database_path, allowed_groups, audit_log_path.
+Required fields: database_path, audit_log_path.
 Optional fields get defaults (see Config dataclass).
 """
 
@@ -18,7 +18,6 @@ import yaml
 @dataclass(frozen=True)
 class Config:
     database_path: str
-    allowed_groups: list[str]
     audit_log_path: str
     yubikey_slot: int
     grace_period_seconds: int
@@ -28,7 +27,7 @@ class Config:
     log_level: str
 
 
-_REQUIRED_FIELDS = ("database_path", "allowed_groups", "audit_log_path")
+_REQUIRED_FIELDS = ("database_path", "audit_log_path")
 
 # Defaults for optional fields — applied by load_config() before constructing Config.
 _DEFAULTS: dict[str, int | str] = {
@@ -49,10 +48,6 @@ def _validate_config(raw: dict[str, Any]) -> None:
         if not isinstance(raw[key], str):
             actual = type(raw[key]).__name__
             raise ValueError(f"Config field '{key}' must be a string, got {actual}")
-
-    groups = raw["allowed_groups"]
-    if not isinstance(groups, list) or not all(isinstance(g, str) for g in groups):
-        raise ValueError("Config field 'allowed_groups' must be a list of strings")
 
     for key in ("yubikey_slot", "grace_period_seconds", "yubikey_poll_interval_seconds",
                 "write_lock_timeout_seconds", "page_size"):
@@ -111,7 +106,6 @@ def load_config(path: str | None = None) -> Config:
 
     return Config(
         database_path=raw["database_path"],
-        allowed_groups=raw["allowed_groups"],
         audit_log_path=raw["audit_log_path"],
         yubikey_slot=raw["yubikey_slot"],
         grace_period_seconds=raw["grace_period_seconds"],

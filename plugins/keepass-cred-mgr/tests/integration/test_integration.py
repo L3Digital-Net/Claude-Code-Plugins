@@ -11,7 +11,7 @@ import pytest
 
 from server.audit import AuditLogger
 from server.config import load_config
-from server.vault import DuplicateEntry, GroupNotAllowed
+from server.vault import DuplicateEntry
 
 # Skip entire module if keepassxc-cli not available
 pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
@@ -50,7 +50,6 @@ async def integration_setup(tmp_path):
         "yubikey_poll_interval_seconds": 1,
         "write_lock_timeout_seconds": 5,
         "page_size": 50,
-        "allowed_groups": ["Servers", "SSH Keys", "API Keys"],
         "audit_log_path": str(audit_path),
     }
     config_file = tmp_path / "config.yaml"
@@ -133,11 +132,13 @@ class TestIntegrationInactiveFiltering:
         assert "[INACTIVE] Old Server" in all_titles
 
 
-class TestIntegrationGroupAllowlist:
-    async def test_disallowed_group_raises(self, integration_setup):
-        """Request for unlisted group raises GroupNotAllowed."""
+class TestIntegrationGroupAccess:
+    async def test_any_group_accessible(self, integration_setup):
+        """Any vault group is now accessible — no allowlist restriction."""
         from server.tools.read import list_entries
 
         vault, audit, config, db = integration_setup
-        with pytest.raises(GroupNotAllowed):
-            await list_entries(vault, audit, group="Banking")
+        # "Servers" group exists in test.kdbx — no GroupNotAllowed exception
+        result = await list_entries(vault, audit, group="Servers")
+        titles = [e["title"] for e in result]
+        assert any("Server" in t or "DB" in t for t in titles)

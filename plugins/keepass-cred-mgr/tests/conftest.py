@@ -22,7 +22,6 @@ def test_config(tmp_path):
         "yubikey_poll_interval_seconds": 1,
         "write_lock_timeout_seconds": 2,
         "page_size": 50,
-        "allowed_groups": ["Servers", "SSH Keys", "API Keys"],
         "audit_log_path": str(audit_path),
     }
     config_file = tmp_path / "config.yaml"

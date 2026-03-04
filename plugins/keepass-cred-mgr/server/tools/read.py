@@ -12,6 +12,7 @@ from server.audit import AuditLogger
 from server.vault import (
     INACTIVE_PREFIX,
     EntryInactive,
+    EntryRestricted,
     Vault,
 )
 
@@ -23,7 +24,7 @@ type SearchResult = dict[str, str | None]
 
 
 def _parse_show_output(stdout: str) -> EntryFields:
-    """Parse keepassxc-cli show output into a dict."""
+    """Parse keepassxc-cli show output into a string field dict."""
     fields: dict[str, str] = {}
     for line in stdout.strip().splitlines():
         if ": " in line:
@@ -42,15 +43,27 @@ def _parse_show_output(stdout: str) -> EntryFields:
     return fields
 
 
+def _parse_tags(stdout: str) -> set[str]:
+    """Extract the Tags field from keepassxc-cli show output as a lowercase set.
+
+    keepassxc-cli show outputs tags as: Tags: tag1;tag2
+    Returns an empty set when the Tags line is absent.
+    """
+    for line in stdout.strip().splitlines():
+        if line.lower().startswith("tags: "):
+            raw = line.partition(": ")[2].strip()
+            return {t.strip().lower() for t in raw.split(";") if t.strip()}
+    return set()
+
+
 async def list_groups(vault: Vault) -> list[str]:
     db = vault.config.database_path
     stdout = await vault.run_cli("ls", db)
-    all_groups = [
+    return [
         line.rstrip("/")
         for line in stdout.strip().splitlines()
         if line.endswith("/")
     ]
-    return [g for g in all_groups if g in vault.config.allowed_groups]
 
 
 async def list_entries(
@@ -60,11 +73,7 @@ async def list_entries(
     group: str | None = None,
     include_inactive: bool = False,
 ) -> list[EntrySummary]:
-    if group is not None:
-        vault.check_group_allowed(group)
-        groups = [group]
-    else:
-        groups = list(vault.config.allowed_groups)
+    groups = [group] if group is not None else await list_groups(vault)
 
     results: list[EntrySummary] = []
     for grp in groups:
@@ -85,6 +94,9 @@ async def list_entries(
 
             path = vault.entry_path(title, grp)
             show_out = await vault.run_cli("show", db, path)
+            tags = _parse_tags(show_out)
+            if "ai restricted" in tags:
+                continue
             fields = _parse_show_output(show_out)
             results.append({
                 "title": title,
@@ -104,23 +116,19 @@ async def search_entries(
     group: str | None = None,
     include_inactive: bool = False,
 ) -> list[SearchResult]:
-    if group is not None:
-        vault.check_group_allowed(group)
-
     db = vault.config.database_path
     stdout = await vault.run_cli("search", db, query)
     paths = [line.strip() for line in stdout.strip().splitlines() if line.strip()]
 
     results: list[SearchResult] = []
     for entry_path in paths:
+        # rsplit handles multi-level paths: "SSH Keys/Personal/SSH - laptop"
+        # → grp="SSH Keys/Personal", title="SSH - laptop"
         if "/" in entry_path:
-            grp, _, title = entry_path.partition("/")
+            grp, title = entry_path.rsplit("/", 1)
         else:
             grp, title = None, entry_path
 
-        # Filter to allowed groups
-        if grp and grp not in vault.config.allowed_groups:
-            continue
         if group and grp != group:
             continue
         if not include_inactive and title.startswith(INACTIVE_PREFIX):
@@ -130,6 +138,9 @@ async def search_entries(
             return results
 
         show_out = await vault.run_cli("show", db, entry_path)
+        tags = _parse_tags(show_out)
+        if "ai restricted" in tags:
+            continue
         fields = _parse_show_output(show_out)
         results.append({
             "title": title,
@@ -151,12 +162,14 @@ async def get_entry(
     if title.startswith(INACTIVE_PREFIX):
         raise EntryInactive(f"Entry '{title}' is deactivated")
 
-    if group is not None:
-        vault.check_group_allowed(group)
-
     db = vault.config.database_path
     path = vault.entry_path(title, group)
     stdout = await vault.run_cli("show", "--show-protected", db, path)
+
+    tags = _parse_tags(stdout)
+    if "ai restricted" in tags:
+        raise EntryRestricted(f"Entry '{title}' is tagged AI RESTRICTED; access denied")
+
     fields = _parse_show_output(stdout)
 
     audit.log(
@@ -186,11 +199,15 @@ async def get_attachment(
     if title.startswith(INACTIVE_PREFIX):
         raise EntryInactive(f"Entry '{title}' is deactivated")
 
-    if group is not None:
-        vault.check_group_allowed(group)
-
     db = vault.config.database_path
     path = vault.entry_path(title, group)
+
+    # Fetch entry metadata first to check the AI RESTRICTED tag before exporting.
+    show_out = await vault.run_cli("show", db, path)
+    tags = _parse_tags(show_out)
+    if "ai restricted" in tags:
+        raise EntryRestricted(f"Entry '{title}' is tagged AI RESTRICTED; access denied")
+
     # Use run_cli_binary to preserve raw bytes (avoids UTF-8 corruption)
     raw_bytes = await vault.run_cli_binary(
         "attachment-export", "--stdout", db, path, attachment_name

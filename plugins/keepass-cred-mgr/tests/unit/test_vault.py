@@ -56,7 +56,8 @@ class TestVaultExceptions:
             DuplicateEntry,
             EntryInactive,
             EntryNotFound,
-            GroupNotAllowed,
+            EntryReadOnly,
+            EntryRestricted,
             KeePassCLIError,
             VaultLocked,
             WriteLockTimeout,
@@ -64,8 +65,8 @@ class TestVaultExceptions:
         )
         for exc_cls in (
             VaultLocked, YubiKeyNotPresent, EntryNotFound,
-            GroupNotAllowed, DuplicateEntry, EntryInactive,
-            WriteLockTimeout, KeePassCLIError,
+            EntryRestricted, EntryReadOnly, DuplicateEntry,
+            EntryInactive, WriteLockTimeout, KeePassCLIError,
         ):
             assert issubclass(exc_cls, Exception)
 
@@ -136,24 +137,23 @@ class TestVaultState:
 
 
 # ---------------------------------------------------------------------------
-# Group allowlist
+# Tag-based access control
 # ---------------------------------------------------------------------------
 
-class TestVaultGroupAllowlist:
-    def test_check_group_allowed(self, test_config, mock_yubikey):
-        from server.vault import Vault
+class TestVaultTagEnforcement:
+    def test_entry_restricted_exception_is_exception(self):
+        from server.vault import EntryRestricted
 
-        vault = Vault(test_config, mock_yubikey)
-        vault._unlocked = True
-        vault.check_group_allowed("Servers")  # Should not raise
+        assert issubclass(EntryRestricted, Exception)
+        e = EntryRestricted("test")
+        assert str(e) == "test"
 
-    def test_check_group_not_allowed(self, test_config, mock_yubikey):
-        from server.vault import GroupNotAllowed, Vault
+    def test_entry_read_only_exception_is_exception(self):
+        from server.vault import EntryReadOnly
 
-        vault = Vault(test_config, mock_yubikey)
-        vault._unlocked = True
-        with pytest.raises(GroupNotAllowed):
-            vault.check_group_allowed("Banking")
+        assert issubclass(EntryReadOnly, Exception)
+        e = EntryReadOnly("test")
+        assert str(e) == "test"
 
 
 # ---------------------------------------------------------------------------

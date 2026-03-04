@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.0] - 2026-03-03
+
+### Added
+
+- Tag-based access control: entries tagged `AI RESTRICTED` are blocked from all AI access (read and write); entries tagged `READ ONLY` block write operations but remain fully readable
+- `_parse_tags()` helper in `server/tools/read.py` extracts semicolon-separated tags from `keepassxc-cli show` output
+- `EntryRestricted` exception raised when `AI RESTRICTED` tag is detected during `get_entry`, `get_attachment`, `list_entries`, or `search_entries`
+- `EntryReadOnly` exception raised when `READ ONLY` tag is detected during `deactivate_entry` or `add_attachment`
+- `search_entries` now handles multi-level group paths (`rsplit("/", 1)` instead of `partition("/")`) — entries in sub-groups like `SSH Keys/Personal/SSH - laptop` are correctly attributed
+- `list_entries(group=None)` now enumerates all vault groups via `list_groups()` instead of reading a config allowlist
+- Test database seeded with `AI RESTRICTED` and `READ ONLY` tagged entries, sub-group `SSH Keys/Personal`, and multi-level path test entries
+
+### Changed
+
+- `allowed_groups` removed from config entirely; old configs with this key still load (silently ignored for backward compatibility)
+- `list_groups` now returns all vault groups with no filtering
+- Credential skills updated: `GROUP:` replaced with `STORAGE DEFAULT:` with note that vault layout is user-organized; agents use `search_entries` if entry not found in default group
+- `keepass-hygiene` skill updated with search-first lookup rule, `AI RESTRICTED` handling, and `READ ONLY` handling
+
+### Removed
+
+- `GroupNotAllowed` exception and `check_group_allowed()` method — group-based access control replaced by tag-based enforcement
+
+
 ## [0.3.2] - 2026-03-02
 
 ### Changed

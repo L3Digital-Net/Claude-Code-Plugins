@@ -24,7 +24,7 @@ NOTE: KeePassXC SSH agent integration auto-loads vault keys into the agent on va
 
 ## Storage
 
-GROUP: SSH Keys
+STORAGE DEFAULT: SSH Keys (vault layout is user-organized; if not found there, use search_entries)
 TITLE FORMAT: SSH - <host or purpose>
 PASSWORD FIELD: key passphrase (if any)
 ATTACHMENTS: private key file (e.g. id_ed25519) AND public key file (e.g. id_ed25519.pub)

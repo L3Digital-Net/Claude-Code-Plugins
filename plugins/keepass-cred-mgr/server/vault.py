@@ -82,8 +82,12 @@ class EntryNotFound(Exception):
     """No entry matches the given title/path."""
 
 
-class GroupNotAllowed(Exception):
-    """The requested group is not in the configured allowlist."""
+class EntryRestricted(Exception):
+    """Entry is tagged AI RESTRICTED; access denied."""
+
+
+class EntryReadOnly(Exception):
+    """Entry is tagged READ ONLY; write operations are not permitted."""
 
 
 class DuplicateEntry(Exception):
@@ -206,12 +210,6 @@ class Vault:
                 await self._stderr_drain_task
             self._stderr_drain_task = None
         log.info("vault_locked", reason=reason)
-
-    def check_group_allowed(self, group: str) -> None:
-        if group not in self._config.allowed_groups:
-            raise GroupNotAllowed(
-                f"Group '{group}' is not in allowed_groups: {self._config.allowed_groups}"
-            )
 
     def entry_path(self, title: str, group: str | None) -> str:
         if group:

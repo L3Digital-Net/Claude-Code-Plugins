@@ -47,7 +47,6 @@ class TestConfigLoading:
         config = load_config(valid_config)
         assert config.database_path == str(tmp_path / "test.kdbx")
         assert config.yubikey_slot == 2
-        assert config.allowed_groups == ["Servers", "SSH Keys", "API Keys"]
 
     def test_defaults_applied_for_optional_fields(self, minimal_config):
         from server.config import load_config
@@ -88,17 +87,36 @@ class TestConfigLoading:
         with pytest.raises(ValueError, match="database_path"):
             load_config(str(config_file))
 
-    def test_raises_on_missing_allowed_groups(self, tmp_path):
+    def test_loads_without_allowed_groups(self, tmp_path):
+        """allowed_groups is no longer required — config loads without it."""
+        db_path = tmp_path / "test.kdbx"
+        db_path.touch()
         cfg = {
-            "database_path": str(tmp_path / "test.kdbx"),
+            "database_path": str(db_path),
             "audit_log_path": str(tmp_path / "audit.jsonl"),
         }
         config_file = tmp_path / "config.yaml"
         config_file.write_text(yaml.dump(cfg))
         from server.config import load_config
 
-        with pytest.raises(ValueError, match="allowed_groups"):
-            load_config(str(config_file))
+        config = load_config(str(config_file))
+        assert config.database_path == str(db_path)
+
+    def test_legacy_allowed_groups_key_ignored(self, tmp_path):
+        """Old configs with allowed_groups still load — the key is silently dropped."""
+        db_path = tmp_path / "test.kdbx"
+        db_path.touch()
+        cfg = {
+            "database_path": str(db_path),
+            "audit_log_path": str(tmp_path / "audit.jsonl"),
+            "allowed_groups": ["Servers", "SSH Keys"],
+        }
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(yaml.dump(cfg))
+        from server.config import load_config
+
+        config = load_config(str(config_file))
+        assert config.database_path == str(db_path)
 
     def test_raises_on_missing_audit_log_path(self, tmp_path):
         cfg = {
@@ -167,19 +185,21 @@ class TestConfigLoading:
         with pytest.raises(ValueError, match="database_path.*must be a string"):
             load_config(str(config_file))
 
-    def test_allowed_groups_must_be_list(self, tmp_path):
-        """A plain string instead of a list is rejected."""
-        from server.config import load_config
-
+    def test_allowed_groups_string_ignored(self, tmp_path):
+        """allowed_groups with a string value is silently ignored (not validated)."""
+        db_path = tmp_path / "test.kdbx"
+        db_path.touch()
         cfg = {
-            "database_path": str(tmp_path / "test.kdbx"),
+            "database_path": str(db_path),
             "allowed_groups": "Servers",
             "audit_log_path": str(tmp_path / "audit.jsonl"),
         }
         config_file = tmp_path / "config.yaml"
         config_file.write_text(yaml.dump(cfg))
-        with pytest.raises(ValueError, match="allowed_groups.*list of strings"):
-            load_config(str(config_file))
+        from server.config import load_config
+
+        config = load_config(str(config_file))
+        assert config.database_path == str(db_path)
 
     def test_yubikey_slot_must_be_positive(self, tmp_path):
         """Zero or negative yubikey_slot is rejected."""
