@@ -1,6 +1,10 @@
 # KeePassXC Credential Manager — Design & Dependency Reference
 
-> Living document — updated throughout the design process.
+> **HISTORICAL DOCUMENT** — Captures the design as of v0.4.0 (2026-03-03). Some details
+> are outdated: `allowed_groups` was replaced by tag-based access control, `GroupNotAllowed`
+> no longer exists, `yubikey_slot` is now `str` (accepts `"slot:serial"`), and a diagnostics
+> module was added in v0.5.0. For current behavior, see `README.md` and the source code.
+>
 > Last updated: 2026-02-28
 
 ---
