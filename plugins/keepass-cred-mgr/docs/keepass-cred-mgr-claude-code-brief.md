@@ -1,5 +1,10 @@
 # keepass-cred-mgr — Claude Code Implementation Brief
 
+> **HISTORICAL DOCUMENT** — Written for the v0.1.0 initial build (2026-02-27). Several details
+> are outdated: `allowed_groups` was replaced by tag-based access control in v0.4.0,
+> `yubikey_slot` changed from `int` to `str` in v0.4.2, and `GroupNotAllowed` no longer exists.
+> For current behavior, see `README.md` and the source code. Kept for architectural context only.
+
 > Audience: Claude Code (Opus 4.6), acting as sole implementer.
 > Goal: Produce a complete, tested, publishable Claude Code plugin.
 > All design decisions are final. Do not re-derive or propose alternatives — implement exactly as specified.

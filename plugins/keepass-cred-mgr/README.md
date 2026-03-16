@@ -28,6 +28,7 @@ Unlocking the vault starts a persistent `keepassxc-cli open` REPL process; one Y
 - **Guided rotation**: `/keepass-rotate` walks through create-then-deactivate with safety checks at each step
 - **Audit logging**: Structured JSONL log for all secret-returning operations
 - **Secure attachment handling**: Temp files are `chmod 600`, imported via CLI, then zero-filled and unlinked
+- **Unlock failure diagnostics**: When `unlock_vault` fails, checks pcscd status, YubiKey HID device presence, and slot:serial config; surfaces actionable fix commands
 
 ## Requirements
 
@@ -120,7 +121,7 @@ For structured workflows, use the slash commands:
 | `list_groups` | (none) | Group names | All vault groups with no filtering |
 | `list_entries` | `group?`, `include_inactive?` | Title, username, URL per entry | `ls` + `show` per entry; skips `AI RESTRICTED` entries; capped at `page_size` |
 | `search_entries` | `query`, `group?`, `include_inactive?` | Matching entry metadata | Vault-wide search; handles multi-level paths; skips `AI RESTRICTED` entries |
-| `get_entry` | `title`, `group?` | Full entry including password | Audit logged; blocked on `[INACTIVE]` and `AI RESTRICTED` entries |
+| `get_entry` | `title`, `group?`, `allow_inactive?` | Full entry including password | Audit logged; blocked on `[INACTIVE]` (unless `allow_inactive=true`) and `AI RESTRICTED` entries |
 | `get_attachment` | `title`, `attachment_name`, `group?` | Attachment content (base64) | Audit logged; blocked on `[INACTIVE]` and `AI RESTRICTED` entries |
 | `create_entry` | `title`, `group`, `username?`, `password?`, `url?`, `notes?` | Confirmation | Rejects duplicates and titles with `/` |
 | `deactivate_entry` | `title`, `group?` | Confirmation | Adds `[INACTIVE]` prefix and timestamp to notes |
