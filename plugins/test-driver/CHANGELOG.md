@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.2.0] - 2026-03-16
+
+### Added
+- add non-unit test design principles
+- add category-specific test generation guidance
+
+### Fixed
+- make gap analysis category-aware in Step 5
+
+
 ## [0.1.0] - 2026-03-16
 
 ### Added
