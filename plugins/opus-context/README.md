@@ -97,4 +97,3 @@ All hooks are registered declaratively via `hooks/hooks.json`.
 - Repository: [L3DigitalNet/Claude-Code-Plugins](https://github.com/L3DigitalNet/Claude-Code-Plugins)
 - Changelog: [`CHANGELOG.md`](CHANGELOG.md)
 - Issues and feedback: [GitHub Issues](https://github.com/L3DigitalNet/Claude-Code-Plugins/issues)
-- Design document: [`docs/plans/2026-03-15-opus-context-design.md`](../../docs/plans/2026-03-15-opus-context-design.md)
