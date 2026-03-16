@@ -249,6 +249,7 @@ Governs reading and writing `docs/testing/TEST_STATUS.json`. This path is a conv
 - **After gap analysis:** Update `last_analysis`, `categories`, `known_gaps`.
 - **After convergence loop:** Update `categories`, `coverage`, `source_bugs_fixed`, append to `history`.
 - **Create if missing:** First analysis on a new project creates the file and parent directory.
+- **Deferred gaps:** Gaps are marked as deferred (with `reason_deferred`) in two cases: (1) the user declines the convergence loop after gap analysis — all unfilled gaps are recorded with reason "User deferred"; (2) the convergence loop exits at max iterations with unfilled gaps remaining — those are deferred with reason "Max iterations reached".
 
 ### test-design (Universal Principles)
 
