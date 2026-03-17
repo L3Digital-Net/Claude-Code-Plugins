@@ -1,12 +1,22 @@
 ---
 name: strace
 description: >
-  strace traces system calls and signals made by a process or command. It is the
-  primary tool for diagnosing why a process fails to open files, connect to sockets,
-  or behave unexpectedly at the OS boundary. Triggers on: strace, system calls,
-  trace process, syscall, what is a process doing, debug process, file not found debug,
-  permission denied debug, why is my process hanging, trace open read write.
+  Traces system calls and signals made by a process or command. Primary tool for
+  diagnosing why a process fails to open files, connect to sockets, or behave
+  unexpectedly at the OS boundary.
+triggerPhrases:
+  - "strace"
+  - "system calls"
+  - "trace process"
+  - "syscall"
+  - "what is a process doing"
+  - "debug process"
+  - "file not found debug"
+  - "permission denied debug"
+  - "why is my process hanging"
+  - "trace open read write"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,6 +28,16 @@ globs: []
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool |
 | **Install** | `apt install strace` / `dnf install strace` |
+
+## Quick Start
+
+```bash
+sudo apt install strace
+strace ls /tmp                     # trace all syscalls of a simple command
+strace -e trace=file ls /tmp       # trace only file-related syscalls
+strace -c ls /tmp                  # summarize syscall counts and time
+strace -p $(pgrep -f myapp)        # attach to a running process
+```
 
 ## Key Operations
 
@@ -57,6 +77,12 @@ globs: []
 - **setuid and sandboxed processes are hard to trace**: setuid binaries (sudo, passwd) and processes inside systemd units with `NoNewPrivileges=true` or containers with restricted seccomp profiles block ptrace. Root is required, and even root may be blocked by the sandbox policy.
 - **`seccomp` sandbox interference**: Docker's default seccomp profile permits ptrace, but custom profiles and rootless containers often do not. Add `--security-opt seccomp=unconfined` for debugging, then restore afterward.
 - **Terminal output is slow for high-frequency syscalls**: for a process making thousands of syscalls per second, printing to a terminal throttles both strace and the target. Always use `-o /tmp/trace.txt` and inspect afterward when syscall rate is high.
+
+## See Also
+
+- **perf** — statistical CPU profiling when you need performance counters rather than per-syscall tracing
+- **lsof** — list open files and sockets for a process without the overhead of tracing
+- **dmesg** — kernel ring buffer messages for hardware and driver-level issues strace cannot see
 
 ## References
 

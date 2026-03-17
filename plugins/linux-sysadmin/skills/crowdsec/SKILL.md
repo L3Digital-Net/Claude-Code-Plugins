@@ -1,17 +1,27 @@
 ---
 name: crowdsec
 description: >
-  CrowdSec collaborative intrusion prevention system — installation, bouncers,
+  CrowdSec collaborative intrusion prevention system: installation, bouncers,
   collections, scenarios, hub management, decisions, alerts, and troubleshooting.
-  Triggers on: crowdsec, crowdsecurity, bouncer, LAPI, cscli, intrusion
-  prevention, collaborative security, community blocklist, hub upgrade,
-  crowdsec-firewall-bouncer, crowdsec-nginx-bouncer.
+triggerPhrases:
+  - "crowdsec"
+  - "crowdsecurity"
+  - "bouncer"
+  - "LAPI"
+  - "cscli"
+  - "intrusion prevention"
+  - "collaborative security"
+  - "community blocklist"
+  - "hub upgrade"
+  - "crowdsec-firewall-bouncer"
+  - "crowdsec-nginx-bouncer"
 globs:
   - "**/crowdsec/**"
   - "**/acquis.yaml"
   - "**/acquis.d/**"
   - "**/profiles.yaml"
   - "**/allowlists.yaml"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -20,6 +30,16 @@ globs:
 - **Decisions DB**: `/var/lib/crowdsec/data/crowdsec.db`
 - **Log**: `journalctl -u crowdsec`, `/var/log/crowdsec/crowdsec.log`
 - **Install**: Official script (`curl -s https://packagecloud.io/install/repositories/crowdsec/crowdsec/script.deb.sh | sudo bash`) or distro package repo
+
+## Quick Start
+
+```bash
+curl -s https://packagecloud.io/install/repositories/crowdsec/crowdsec/script.deb.sh | sudo bash
+sudo apt install crowdsec
+sudo apt install crowdsec-firewall-bouncer-iptables
+sudo cscli collections install crowdsecurity/sshd
+sudo cscli bouncers list              # confirm bouncer is registered
+```
 
 ## Architecture
 
@@ -48,7 +68,7 @@ Log files / journald
 
 ## Key Operations
 
-| Goal | Command |
+| Task | Command |
 |------|---------|
 | Check service status | `systemctl status crowdsec` |
 | Check agent version | `sudo cscli version` |
@@ -82,8 +102,8 @@ Log files / journald
 
 ## Common Failures
 
-| Symptom | Likely cause | Check / Fix |
-|---------|-------------|-------------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | Bouncer shows "LAPI not reachable" | LAPI not running or wrong API URL in bouncer config | `systemctl status crowdsec`; check `api_url` in bouncer config (`/etc/crowdsec/bouncers/*.yaml`) |
 | No alerts despite known attacks | Log source not in `acquis.yaml`, or parser not installed | `sudo cscli parsers list`; add log path to `acquis.yaml`; install matching collection |
 | Decisions exist but traffic not blocked | Bouncer not installed or not registered | `sudo cscli bouncers list`; install a bouncer (`apt install crowdsec-firewall-bouncer-iptables`) |
@@ -108,6 +128,12 @@ Log files / journald
 - **Community blocklist**: Instances enrolled in the CrowdSec console receive shared ban decisions from the community. Requires a free account at `app.crowdsec.net` and running `sudo cscli console enroll <token>`. Without enrollment, the instance is local-only.
 
 - **nftables vs iptables**: The firewall bouncer comes in `iptables` and `nftables` variants. On modern Fedora/RHEL/Debian 12+, nftables is the default backend. Installing the wrong variant causes silent failures — bans are registered but no firewall rules are created.
+
+## See Also
+
+- **fail2ban** — single-host intrusion prevention with regex-based log matching (simpler but no community sharing)
+- **ufw** — simple firewall frontend that crowdsec bouncers can inject rules into
+- **firewalld** — zone-based firewall; use the nftables bouncer variant on firewalld systems
 
 ## References
 See `references/` for:

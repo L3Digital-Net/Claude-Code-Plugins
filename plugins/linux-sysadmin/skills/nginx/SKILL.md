@@ -3,14 +3,26 @@ name: nginx
 description: >
   nginx web server and reverse proxy administration: config syntax, virtual
   hosts, reverse proxy, SSL/TLS, load balancing, upstream configuration,
-  rate limiting, and troubleshooting. Triggers on: nginx, reverse proxy,
-  vhost, upstream, web server config, proxy_pass, server_name, location block,
-  sites-enabled, sites-available, proxy_read_timeout, worker_processes.
+  rate limiting, and troubleshooting.
+triggerPhrases:
+  - "nginx"
+  - "reverse proxy"
+  - "vhost"
+  - "upstream"
+  - "web server config"
+  - "proxy_pass"
+  - "server_name"
+  - "location block"
+  - "sites-enabled"
+  - "sites-available"
+  - "proxy_read_timeout"
+  - "worker_processes"
 globs:
   - "**/nginx.conf"
   - "**/nginx/**/*.conf"
   - "**/sites-enabled/**"
   - "**/sites-available/**"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -19,6 +31,14 @@ globs:
 - **Logs**: `journalctl -u nginx`, `/var/log/nginx/access.log`, `/var/log/nginx/error.log`
 - **User**: `www-data` (Debian/Ubuntu), `nginx` (RHEL/Fedora)
 - **Distro install**: `apt install nginx` / `dnf install nginx`
+
+## Quick Start
+```bash
+sudo apt install nginx
+sudo systemctl enable --now nginx
+nginx -t                       # syntax is ok, test is successful
+curl -sI http://localhost      # HTTP 200 = running
+```
 
 ## Key Operations
 - **Validate config**: `nginx -t`
@@ -40,8 +60,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `bind() to 0.0.0.0:80 failed` | Port already in use | `ss -tlnp \| grep :80` — find conflicting process |
 | `502 Bad Gateway` | Upstream service down or wrong address | Check upstream (`systemctl status <app>`), verify `proxy_pass` URL |
 | `504 Gateway Timeout` | Upstream too slow | Increase `proxy_read_timeout`; check upstream performance |
@@ -54,11 +74,21 @@ globs:
 ## Pain Points
 - **Trailing slash in `proxy_pass`**: `proxy_pass http://backend/` strips the location prefix; `proxy_pass http://backend` does not. Deliberately different behavior.
 - **Sites-enabled symlinks**: Broken symlinks are silently ignored — nginx won't warn you.
-- **`worker_connections` × `worker_processes`**: This is the real max client limit, not either alone.
+- **`worker_connections` x `worker_processes`**: This is the real max client limit, not either alone.
 - **`default_server` matters**: Without it, the first defined vhost catches unmatched requests.
 - **`server_name` regex ordering**: `~` (regex) checked before literal matches.
 - **Upstream keepalive**: Set `keepalive` in the upstream block AND `proxy_http_version 1.1` + `proxy_set_header Connection ""` in the location block — both required.
 - **`try_files` final arg is a fallback URI, not a file**: `try_files $uri $uri/ =404` — the `=404` is a named response code fallback, not a file path.
+
+## See Also
+- **apache** — traditional web server with .htaccess support and extensive module ecosystem
+- **caddy** — modern web server with automatic HTTPS and zero-config TLS
+- **traefik** — container-native reverse proxy with Docker label auto-discovery
+- **haproxy** — dedicated TCP/HTTP load balancer for high-throughput multi-backend routing
+- **certbot** — free TLS certificates from Let's Encrypt for nginx and Apache
+- **keycloak** — identity provider; nginx proxies Keycloak and enforces its auth decisions
+- **kong** — API gateway built on nginx with plugin-based extensibility
+- **envoy** — advanced proxy with circuit breaking and service mesh integration
 
 ## References
 See `references/` for:

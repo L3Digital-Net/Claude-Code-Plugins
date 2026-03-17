@@ -3,13 +3,28 @@ name: postfix
 description: >
   Postfix MTA (mail transfer agent) administration: configuration, queue
   management, relay setup, TLS, SASL authentication, virtual domains, and
-  deliverability troubleshooting. Triggers on: postfix, MTA, mail server,
-  sendmail postfix, SMTP server, postfix relay, main.cf, postfix queue,
-  mailq, postqueue, smtpd, master.cf, mail relay, outbound mail, DKIM postfix.
+  deliverability troubleshooting.
+triggerPhrases:
+  - "postfix"
+  - "MTA"
+  - "mail server"
+  - "sendmail postfix"
+  - "SMTP server"
+  - "postfix relay"
+  - "main.cf"
+  - "postfix queue"
+  - "mailq"
+  - "postqueue"
+  - "smtpd"
+  - "master.cf"
+  - "mail relay"
+  - "outbound mail"
+  - "DKIM postfix"
 globs:
   - "**/postfix/main.cf"
   - "**/postfix/master.cf"
   - "**/postfix/*.cf"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -21,10 +36,20 @@ globs:
 - **Distro install**: `apt install postfix` / `dnf install postfix`
 - **Lookup table rebuild**: `postmap /etc/postfix/<table>` — required after editing hash-type maps
 
+## Quick Start
+
+```bash
+sudo apt install postfix            # install (select "Internet Site" when prompted)
+sudo systemctl enable postfix       # enable on boot
+sudo systemctl start postfix        # start the service
+sudo postfix check                  # validate config syntax
+postconf myhostname mydomain        # verify key parameters
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Service status | `systemctl status postfix` |
 | Start / stop / restart | `systemctl start\|stop\|restart postfix` |
 | Reload config (no restart) | `sudo postfix reload` |
@@ -70,8 +95,8 @@ Firewall (firewalld): `sudo firewall-cmd --add-service=smtp --permanent && sudo 
 
 ## Common Failures
 
-| Symptom | Likely cause | Check / Fix |
-|---------|-------------|-------------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `Connection refused` on port 25 from outside | Cloud/ISP blocks outbound port 25 | `nc -zv smtp.gmail.com 25`; use SMTP relay (SendGrid, SES, Mailjet) on port 587 instead |
 | `Relay access denied` | `inet_interfaces` or `mynetworks` too restrictive | `postconf inet_interfaces mynetworks`; add sending host to `mynetworks` or use SASL auth |
 | `Unknown user in local recipient table` | Missing alias or `local_recipient_maps` too strict | Add to `/etc/aliases` then `newaliases`; or set `local_recipient_maps =` (empty) to disable check |
@@ -91,6 +116,12 @@ Firewall (firewalld): `sudo firewall-cmd --add-service=smtp --permanent && sudo 
 - **`main.cf` changes need `postfix reload`** — editing the file is not enough. `postfix reload` applies changes without dropping connections; `postfix check` validates before reloading.
 - **Reverse DNS (PTR record) should match `myhostname`** — many receiving servers check that the connecting IP's PTR record matches the EHLO hostname. Mismatch triggers spam scoring or outright rejection. Set your PTR at the hosting provider level.
 - **Greylisting at receiving servers delays first-time deliveries** — a new server sending to a well-protected domain may wait 5–30 minutes for the first message to be accepted. This is normal behavior, not a Postfix problem. Subsequent messages go through immediately.
+
+## See Also
+
+- **dovecot** — IMAP/POP3 server for receiving and storing mail delivered by Postfix
+- **opendkim** — DKIM signing daemon integrated with Postfix via milter
+- **certbot** — Automated TLS certificate management for Postfix SMTP encryption
 
 ## References
 See `references/` for:

@@ -3,13 +3,25 @@ name: journald
 description: >
   systemd journal (journald) administration: log querying, filtering, storage
   configuration, disk usage management, log forwarding, and troubleshooting.
-  Triggers on: journald, journalctl, systemd journal, system logs,
-  journalctl -f, log query, log filter, persistent journal, journal storage,
-  journal vacuum, journal disk usage, systemd-cat, journald.conf.
+triggerPhrases:
+  - "journald"
+  - "journalctl"
+  - "systemd journal"
+  - "system logs"
+  - "journalctl -f"
+  - "log query"
+  - "log filter"
+  - "persistent journal"
+  - "journal storage"
+  - "journal vacuum"
+  - "journal disk usage"
+  - "systemd-cat"
+  - "journald.conf"
 globs:
   - "**/journald.conf"
   - "**/journald.conf.d/**"
   - "**/systemd/journald.conf"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -21,9 +33,20 @@ globs:
 - **Format**: binary (.journal files) — not directly grep-able
 - **Namespace support**: `/run/log/journal/<machine-id>/` per-namespace subdirectories
 
+## Quick Start
+
+```bash
+# journald is pre-installed on all systemd-based systems
+sudo mkdir -p /var/log/journal
+sudo systemd-tmpfiles --create --prefix /var/log/journal
+sudo systemctl restart systemd-journald
+journalctl -b -n 10 --no-pager
+journalctl --disk-usage
+```
+
 ## Key Operations
 
-| Goal | Command |
+| Task | Command |
 |------|---------|
 | Follow live logs | `journalctl -f` |
 | All logs since current boot | `journalctl -b` |
@@ -69,8 +92,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | Logs lost after reboot | Volatile storage only; `/var/log/journal/` absent | `mkdir -p /var/log/journal && systemd-tmpfiles --create --prefix /var/log/journal && systemctl restart systemd-journald` |
 | `No journal files were found` | Storage dir missing or wrong permissions | Check `/run/log/journal/` and `/var/log/journal/` exist; `chown root:systemd-journal` on the dir |
 | Journal growing without bound | `SystemMaxUse` not set; disk filling up | Set `SystemMaxUse=` in journald.conf; run `journalctl --vacuum-size=500M` to reclaim immediately |
@@ -89,6 +112,12 @@ globs:
 - **Forwarding to syslog is opt-in**: `rsyslog` and `syslog-ng` do not automatically receive journal messages. Set `ForwardToSyslog=yes` in journald.conf, or configure rsyslog with `imjournal` to read the journal directly.
 - **`-b -1` requires persistent storage**: `journalctl -b -1` (previous boot) only works if `/var/log/journal/` is present. With volatile storage, only the current boot is available.
 - **Catalog entries are ID-based**: `journalctl -x` annotates entries that have a catalog entry (a `MESSAGE_ID` field). Not all entries have one — the annotation appears only when a matching catalog record exists.
+
+## See Also
+
+- **systemd** — Init system that owns journald; use for managing units, targets, and service lifecycle that generate journal entries
+- **logrotate** — Traditional log rotation for text-based log files; use alongside journald when services also write to `/var/log/` files
+- **loki** — Centralized log aggregation; forward journal entries to Loki via Promtail for cross-host log querying and long-term retention
 
 ## References
 See `references/` for:

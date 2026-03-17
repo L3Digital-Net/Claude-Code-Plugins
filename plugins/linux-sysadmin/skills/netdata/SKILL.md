@@ -3,12 +3,22 @@ name: netdata
 description: >
   Netdata real-time monitoring agent: installation, configuration, plugin
   management, health alarms, Netdata Cloud integration, and troubleshooting.
-  Triggers on: netdata, Netdata, netdata monitoring, real-time metrics,
-  netdata dashboard, netdata agent, netdata cloud, netdata plugins,
-  netdata alarms, netdata health, 19999.
+triggerPhrases:
+  - "netdata"
+  - "Netdata"
+  - "netdata monitoring"
+  - "real-time metrics"
+  - "netdata dashboard"
+  - "netdata agent"
+  - "netdata cloud"
+  - "netdata plugins"
+  - "netdata alarms"
+  - "netdata health"
+  - "19999"
 globs:
   - "**/netdata.conf"
   - "**/netdata/**/*.conf"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -21,10 +31,19 @@ globs:
 - **Install (one-liner)**: `wget -O /tmp/netdata-kickstart.sh https://get.netdata.cloud/kickstart.sh && sh /tmp/netdata-kickstart.sh`
 - **Distro install**: `apt install netdata` / `dnf install netdata` (older package versions — prefer kickstart for current release)
 
+## Quick Start
+
+```bash
+wget -O /tmp/netdata-kickstart.sh https://get.netdata.cloud/kickstart.sh
+sudo sh /tmp/netdata-kickstart.sh
+sudo systemctl enable --now netdata
+curl -sf http://localhost:19999/api/v1/info | python3 -m json.tool | head -5
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Status | `sudo systemctl status netdata` |
 | Check dashboard | `curl -s http://localhost:19999/api/v1/info \| python3 -m json.tool` |
 | Simple dashboard ping | `curl -sI http://localhost:19999` |
@@ -53,8 +72,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | Port 19999 unreachable from outside | Firewall blocking or Netdata bound to `localhost` only | Check `bind to = 0.0.0.0` in `[web]` section; check `ufw status` |
 | Plugin not auto-detecting a service | Plugin runs as `netdata` user without permissions to read stats | Check plugin logs in `/var/log/netdata/error.log`; add `netdata` user to the relevant group (e.g., `sudo usermod -aG docker netdata`) |
 | Netdata Cloud agent connection failing | Wrong claim token, proxy blocking outbound, or clock skew | Verify token via `netdata-claim.sh -status`; check `/var/log/netdata/error.log` for TLS errors; confirm `chronyc tracking` shows <1s offset |
@@ -69,6 +88,13 @@ globs:
 - **Cloud sync is optional**: The agent works entirely standalone — local dashboard, alarms, and data retention all function without a Netdata Cloud account. Claiming to Cloud adds centralized visibility and alert routing but is not required.
 - **Plugin detection depends on the target process running at Netdata startup**: If you start a service after Netdata, the auto-detected chart may not appear until Netdata restarts. Force detection without restart by running `sudo netdatacli reload-health` or restarting the specific plugin module.
 - **Health check thresholds may need tuning for your workload**: Default alarms (CPU >75%, RAM >80%) will fire on workloads that are perfectly normal for your server. Review `/etc/netdata/health.d/` after install and adjust expressions before relying on alerting.
+
+## See Also
+
+- **prometheus** — Pull-based metrics collection with long-term storage and PromQL; use when you need centralized multi-host monitoring with custom alerting rules
+- **grafana** — Dashboard platform that can visualize Netdata metrics exported via Prometheus remote_write
+- **btop** — Interactive terminal process/resource viewer; use for quick ad-hoc system inspection without a web UI
+- **glances** — Cross-platform terminal monitoring tool; lightweight alternative for real-time system stats
 
 ## References
 See `references/` for:

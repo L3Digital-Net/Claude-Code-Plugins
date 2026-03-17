@@ -2,12 +2,22 @@
 name: ncdu
 description: >
   ncdu (NCurses Disk Usage) provides an interactive terminal UI for exploring disk
-  usage by directory and file. Invoked when the user asks what is consuming space,
-  wants to browse and clean up large directories interactively, or needs a visual
-  alternative to du. Triggers on: ncdu, disk usage, what is taking space, find large
-  files, disk cleanup, directory size, du interactive, large directory, storage cleanup,
-  ncurses disk usage.
+  usage by directory and file. Use when investigating what is consuming space,
+  browsing and cleaning up large directories interactively, or as a visual
+  alternative to du.
+triggerPhrases:
+  - "ncdu"
+  - "disk usage"
+  - "what is taking space"
+  - "find large files"
+  - "disk cleanup"
+  - "directory size"
+  - "du interactive"
+  - "large directory"
+  - "storage cleanup"
+  - "ncurses disk usage"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -19,6 +29,16 @@ globs: []
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool (interactive TUI) |
 | **Install** | `apt install ncdu` / `dnf install ncdu` |
+
+## Quick Start
+
+```bash
+sudo apt install ncdu
+ncdu /var                # scan /var interactively
+ncdu -x /               # scan root, stay on one filesystem
+ncdu -o /tmp/scan.json / # export scan to JSON for later review
+ncdu -f /tmp/scan.json   # load a previous scan
+```
 
 ## Key Operations
 
@@ -68,6 +88,11 @@ globs: []
 - **`d` deletes for real**: ncdu can delete files and directories directly from the UI. There is no recycle bin or undo. The `d` key requires a confirmation prompt but the deletion is permanent.
 - **Hardlink double-counting**: directories that share inodes via hardlinks (e.g., Btrfs snapshots, some backup tools) are counted once per reference. The reported total can exceed `df` usage. Use `du --count-links` for comparison or accept the discrepancy as a known artifact.
 - **ncdu2 (Rust rewrite) is faster but less widely packaged**: `ncdu2` can scan large trees 3-5x faster than the C version but is not available in most distro repositories as of 2025. Check if it is available before installing from source.
+
+## See Also
+
+- **df** — filesystem-level disk usage summary (complements ncdu's per-directory view)
+- **lsblk** — list block devices and mount points to identify which disks to scan
 
 ## References
 

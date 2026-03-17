@@ -3,12 +3,25 @@ name: step-ca
 description: >
   Smallstep step-ca private certificate authority: initialization, provisioner
   configuration, certificate issuance and renewal, client bootstrapping, ACME
-  integration, SSH CA, and mTLS. Triggers on: step-ca, smallstep, internal CA,
-  private CA, step certificate, ACME internal, homelab HTTPS, mTLS, step ca init,
-  step ca certificate, step ca bootstrap, JWK provisioner, OIDC provisioner.
+  integration, SSH CA, and mTLS.
+triggerPhrases:
+  - "step-ca"
+  - "smallstep"
+  - "internal CA"
+  - "private CA"
+  - "step certificate"
+  - "ACME internal"
+  - "homelab HTTPS"
+  - "mTLS"
+  - "step ca init"
+  - "step ca certificate"
+  - "step ca bootstrap"
+  - "JWK provisioner"
+  - "OIDC provisioner"
 globs:
   - "**/ca.json"
   - "**/config/ca.json"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -20,10 +33,20 @@ globs:
 - **Default port**: 9000 (configurable in `ca.json` → `address`)
 - **Logs**: `journalctl -u step-ca` (systemd) or container stdout
 
+## Quick Start
+
+```bash
+wget https://dl.smallstep.com/gh-release/certificates/docs-cli-install/v0.27.5/step-ca_0.27.5_amd64.deb
+sudo dpkg -i step-ca_*.deb
+step ca init                           # interactive CA setup
+step-ca $(step path)/config/ca.json    # start CA (foreground test)
+sudo systemctl enable --now step-ca
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Initialize new CA | `step ca init` |
 | Start CA (foreground) | `step-ca $(step path)/config/ca.json` |
 | Start CA (systemd) | `sudo systemctl start step-ca` |
@@ -58,8 +81,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `x509: certificate signed by unknown authority` | Root CA not trusted on the client | Run `step certificate install $(step path)/certs/root_ca.crt` on the client, or distribute and trust the root cert manually |
 | ACME order fails with `provisioner not found` | No ACME provisioner configured | `step ca provisioner list`; add one with `step ca provisioner add acme --type ACME` then restart step-ca |
 | Certificate expired unexpectedly | Default ACME lifetime is 24h — much shorter than Let's Encrypt's 90 days | Use `step ca renew --daemon` or a cron job; configure longer lifetimes in `ca.json` policy |
@@ -75,6 +98,11 @@ globs:
 - **Bootstrap is a per-host operation**: Every host that issues or validates certs must run `step ca bootstrap` to configure the step CLI's CA URL and root fingerprint. There is no network-discoverable default.
 - **ACME provisioner requires a password**: Unlike public ACME (Let's Encrypt), step-ca's ACME provisioner still requires a provisioner password stored on the CA server. Clients do not see or need this password, but it must be present on the CA.
 - **Caddy integration is zero-config once bootstrapped**: Caddy's built-in ACME client talks directly to step-ca using the ACME provisioner URL. After `step ca bootstrap` on the Caddy host and setting `acme_ca` in the Caddyfile, Caddy handles all issuance and renewal with no manual cert management.
+
+## See Also
+
+- **certbot** — public ACME client for Let's Encrypt certificates (internet-facing domains)
+- **openssl-cli** — inspect, verify, and convert certificates issued by step-ca
 
 ## References
 See `references/` for:

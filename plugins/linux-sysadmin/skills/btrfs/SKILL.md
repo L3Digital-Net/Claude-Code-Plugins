@@ -3,26 +3,50 @@ name: btrfs
 description: >
   Btrfs filesystem administration: subvolumes, snapshots, rollback, balance,
   scrub, RAID profiles, compression, quotas, send/receive backups, and
-  troubleshooting. Triggers on: btrfs, Btrfs, btrfs snapshot, btrfs subvolume,
-  btrfs balance, btrfs scrub, copy-on-write filesystem, CoW filesystem,
-  btrfs-progs, mkfs.btrfs, snapper, btrbk.
+  troubleshooting.
+triggerPhrases:
+  - "btrfs"
+  - "Btrfs"
+  - "btrfs snapshot"
+  - "btrfs subvolume"
+  - "btrfs balance"
+  - "btrfs scrub"
+  - "copy-on-write filesystem"
+  - "CoW filesystem"
+  - "btrfs-progs"
+  - "mkfs.btrfs"
+  - "snapper"
+  - "btrbk"
 globs:
   - "**/fstab"
   - "**/etc/fstab"
+last_verified: "unverified"
 ---
 
 ## Identity
 
-- **Type**: Kernel built-in filesystem (no loadable module needed on most distros)
-- **CLI tool**: `btrfs` (subcommands: `filesystem`, `subvolume`, `balance`, `scrub`, `device`, `quota`, `qgroup`, `check`, `defragment`, `rescue`)
-- **Distro install**: `apt install btrfs-progs` / `dnf install btrfs-progs`
-- **Filesystem created at**: `mkfs.btrfs` time (not mounted separately)
-- **Kernel version matters**: Significant stability improvements landed between 4.x and 6.x. Older kernels have known bugs — especially with RAID-5/6 and balance operations.
+| Property | Value |
+|----------|-------|
+| **Type** | Kernel built-in filesystem (no loadable module needed on most distros) |
+| **CLI tool** | `btrfs` (subcommands: `filesystem`, `subvolume`, `balance`, `scrub`, `device`, `quota`, `qgroup`, `check`, `defragment`, `rescue`) |
+| **Distro install** | `apt install btrfs-progs` / `dnf install btrfs-progs` |
+| **Create** | `mkfs.btrfs` |
+| **Kernel version matters** | Significant stability improvements landed between 4.x and 6.x; older kernels have known bugs with RAID-5/6 and balance |
+
+## Quick Start
+
+```bash
+sudo apt install btrfs-progs
+sudo mkfs.btrfs -L mydata /dev/sdX1
+sudo mount /dev/sdX1 /mnt/mydata
+btrfs filesystem show /mnt/mydata
+btrfs device stats /mnt/mydata
+```
 
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Show filesystems | `btrfs filesystem show` |
 | Filesystem usage (detailed) | `btrfs filesystem usage /mount` |
 | List subvolumes | `btrfs subvolume list /mount` |
@@ -65,8 +89,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `no space left on device` but `df` shows free space | Metadata chunks exhausted while data chunks exist | `btrfs filesystem usage /mount` — run `btrfs balance start -dusage=50 /mount` to rebalance underused chunks |
 | RAID-1 on data but single on metadata | Dangerous default when adding a second disk; metadata is not redundant | `btrfs filesystem usage /mount` — check metadata profile; run `btrfs balance start -mconvert=raid1 /mount` |
 | Filesystem mounts read-only | Encountered an error it cannot self-correct | Check `dmesg | grep -i btrfs`; run `btrfs check /dev/sdX` on unmounted device to assess damage |
@@ -85,6 +109,13 @@ globs:
 - **Btrfs RAID-5/6 has known parity issues**: As of kernels through 6.x, Btrfs RAID-5 and RAID-6 have unresolved write-hole bugs. Do not use RAID-5/6 for data you care about. Use RAID-1 or RAID-10 instead.
 - **Send/receive for backups**: `btrfs send` / `btrfs receive` is efficient for incremental backups using read-only snapshots as base references. Tools like `snapper` and `btrbk` automate the snapshot lifecycle and send/receive workflow — prefer them over manual scripting.
 - **CoW fragmentation on databases and VMs**: Copy-on-write writes new data to new locations, which fragments sequential files over time. Use `nodatacow` mount option (or `chattr +C`) for VM disk images, database files, and other large randomly-written files. `nodatacow` also disables checksums for those files.
+
+## See Also
+
+- **ext4** — Traditional Linux filesystem without CoW overhead; use when you need maximum compatibility and don't need snapshots
+- **xfs** — High-performance filesystem for large sequential I/O; use for databases and media workloads where CoW fragmentation is a concern
+- **zfs** — Full storage stack with pooling and replication; use when you need enterprise-grade checksums and send/receive without kernel version sensitivity
+- **lvm** — Logical volume manager; provides snapshot and resize capabilities at the block layer beneath btrfs
 
 ## References
 

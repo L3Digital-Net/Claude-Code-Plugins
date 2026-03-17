@@ -4,9 +4,18 @@ description: >
   htop is the classic interactive process viewer for Linux, providing real-time CPU, memory,
   and swap usage alongside a sortable, filterable process list with built-in kill and renice.
   It ships on most distros and serves as the go-to process manager when btop isn't available.
-  Triggers on: "htop", "top", "process viewer", "kill process", "cpu load",
-  "process management", "renice", "strace process", "interactive top".
+triggerPhrases:
+  - "htop"
+  - "top"
+  - "process viewer"
+  - "kill process"
+  - "cpu load"
+  - "process management"
+  - "renice"
+  - "strace process"
+  - "interactive top"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,6 +27,15 @@ globs: []
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | Interactive terminal UI |
 | **Install** | `apt install htop` (Debian/Ubuntu) / `dnf install htop` (RHEL/Fedora) |
+
+## Quick Start
+
+```bash
+sudo apt install htop       # install htop
+htop                         # launch the process viewer
+htop -u www-data             # show only processes for a specific user
+# Press F9 to kill, F5 for tree view, q to quit
+```
 
 ## Key Operations
 
@@ -59,6 +77,11 @@ globs: []
 - **F9 defaults to SIGTERM**: killing a frozen process requires navigating to SIGKILL (9) in the signal menu. SIGTERM won't stop an unresponsive process.
 - **Process tree mixes threads and processes**: by default, htop shows kernel threads and userland threads alongside processes. Press `H` to hide userland threads and `K` to hide kernel threads for a cleaner view.
 - **`-u` flag shows only one user's processes**: useful for multi-tenant systems, but easy to forget you're filtered — the header shows no indication of the active user filter.
+
+## See Also
+
+- **btop** — Feature-rich TUI monitor with graphs, mouse support, and disk/network views
+- **glances** — All-in-one system monitor with web server and remote client modes
 
 ## References
 

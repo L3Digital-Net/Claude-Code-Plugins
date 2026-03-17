@@ -1,12 +1,22 @@
 ---
 name: ripgrep
 description: >
-  ripgrep (rg) fast recursive search: invoked when the user asks about ripgrep,
-  rg, grep, search files, find text, regex search, search codebase, fast grep,
-  or recursive search. Covers basic and case-insensitive search, fixed strings,
-  file type filtering, glob patterns, context lines, match counting, multiline
-  mode, replace output, JSON output, hidden file search, and .gitignore behavior.
+  ripgrep (rg) fast recursive search: basic and case-insensitive search,
+  fixed strings, file type filtering, glob patterns, context lines, match
+  counting, multiline mode, replace output, JSON output, hidden file search,
+  and .gitignore behavior.
+triggerPhrases:
+  - "ripgrep"
+  - "rg"
+  - "grep"
+  - "search files"
+  - "find text"
+  - "regex search"
+  - "search codebase"
+  - "fast grep"
+  - "recursive search"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,6 +28,16 @@ globs: []
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool |
 | **Install** | `apt install ripgrep` / `dnf install ripgrep` |
+
+## Quick Start
+
+```bash
+sudo apt install ripgrep
+rg 'pattern' /path/to/search
+rg -i 'error' /var/log/                 # case-insensitive
+rg -t py 'def main' ~/projects/         # filter by file type
+rg -l 'TODO' .                          # list filenames only
+```
 
 ## Key Operations
 
@@ -62,3 +82,13 @@ globs: []
 - **Colorized output breaks pipes**: Piped output still contains ANSI escape codes by default. Add `--color never` (or `--color always` if color is needed downstream and the consumer supports it).
 - **`rg`, not `ripgrep`**: The binary is `rg`. The package is `ripgrep`. Muscle memory from typing the full name will produce a "command not found" error.
 - **Rust regex engine has no lookaheads**: The default engine is fast but limited. Add `-P` to switch to PCRE2 when you need lookaheads, lookbehinds, or backreferences. PCRE2 may not be compiled in on all distros — check with `rg --pcre2-version`.
+
+## See Also
+
+- **awk-sed** — Stream editors for text transformation and column extraction
+- **jq** — JSON-specific processor; pair with rg to search then parse structured output
+
+## References
+See `references/` for:
+- `cheatsheet.md` — task-organized command reference
+- `docs.md` — official documentation links

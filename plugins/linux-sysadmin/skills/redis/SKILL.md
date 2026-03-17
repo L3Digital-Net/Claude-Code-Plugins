@@ -2,12 +2,20 @@
 name: redis
 description: >
   Redis in-memory data store administration: configuration, key operations,
-  memory management, persistence, replication, and troubleshooting. Triggers
-  on: redis, Redis cache, redis-cli, redis sentinel, redis cluster,
-  key-value store, redis queue, session store redis.
+  memory management, persistence, replication, and troubleshooting.
+triggerPhrases:
+  - "redis"
+  - "Redis cache"
+  - "redis-cli"
+  - "redis sentinel"
+  - "redis cluster"
+  - "key-value store"
+  - "redis queue"
+  - "session store redis"
 globs:
   - "**/redis.conf"
   - "**/redis/**/*.conf"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,34 +26,44 @@ globs:
 - **Socket**: `/run/redis/redis-server.sock` (if unixsocket enabled)
 - **Distro install**: `apt install redis-server` / `dnf install redis`
 
+## Quick Start
+
+```bash
+sudo apt install redis-server          # install Redis
+sudo systemctl enable redis-server     # enable on boot
+sudo systemctl start redis-server      # start the service
+redis-cli PING                         # should return PONG
+redis-cli INFO server | grep redis_version  # verify version
+```
+
 ## Key Operations
 
-| Operation | Command | Notes |
-|-----------|---------|-------|
-| Service status | `systemctl status redis-server` | Unit name is `redis` on RHEL |
-| Connect (TCP) | `redis-cli -h 127.0.0.1 -p 6379` | Add `-a <password>` or use `AUTH` after connecting |
-| Connect (socket) | `redis-cli -s /run/redis/redis-server.sock` | Faster; requires local access |
-| Ping server | `redis-cli PING` | Returns `PONG`; use to verify connectivity |
-| Set a key | `redis-cli SET mykey "value"` | Add `EX 60` for 60-second TTL |
-| Get a key | `redis-cli GET mykey` | Returns `(nil)` if key doesn't exist |
-| Delete a key | `redis-cli DEL mykey` | Accepts multiple keys; returns count deleted |
-| List all keys (dev only) | `redis-cli KEYS '*'` | O(N) — blocks server; never use on prod |
-| Safe key scan (prod) | `redis-cli --scan --pattern 'prefix:*'` | Uses SCAN internally; non-blocking |
-| Check memory usage | `redis-cli INFO memory` | Look at `used_memory_human` and `maxmemory` |
-| Memory per key | `redis-cli MEMORY USAGE mykey` | Returns bytes including overhead |
-| Flush current database | `redis-cli FLUSHDB` | **DESTRUCTIVE** — deletes all keys in DB 0 |
-| Flush all databases | `redis-cli FLUSHALL` | **DESTRUCTIVE** — deletes every key in every DB |
-| Full server info | `redis-cli INFO all` | Stats, replication, clients, memory, keyspace |
-| Monitor live commands | `redis-cli MONITOR` | **High overhead** — only for short debugging sessions |
-| Check slow log | `redis-cli SLOWLOG GET 10` | Last 10 slow commands; threshold set by `slowlog-log-slower-than` |
-| Config get (runtime) | `redis-cli CONFIG GET maxmemory` | Read any directive without restarting |
-| Config set (runtime) | `redis-cli CONFIG SET maxmemory 512mb` | Applies immediately; not persisted unless `CONFIG REWRITE` follows |
-| Persist runtime config | `redis-cli CONFIG REWRITE` | Writes current runtime values back to redis.conf |
-| Background save (RDB) | `redis-cli BGSAVE` | Fork-based; non-blocking for clients |
-| Foreground save | `redis-cli SAVE` | Blocks all clients until complete — avoid in production |
-| Replication info | `redis-cli INFO replication` | Role, replica count, replication offset, lag |
-| Keyspace stats | `redis-cli INFO keyspace` | Per-database key counts, expires, avg TTL |
-| Real-time stats | `redis-cli --stat` | One-line rolling stats every second |
+| Task | Command |
+|------|---------|
+| Service status | `systemctl status redis-server` |
+| Connect (TCP) | `redis-cli -h 127.0.0.1 -p 6379` |
+| Connect (socket) | `redis-cli -s /run/redis/redis-server.sock` |
+| Ping server | `redis-cli PING` |
+| Set a key | `redis-cli SET mykey "value"` |
+| Get a key | `redis-cli GET mykey` |
+| Delete a key | `redis-cli DEL mykey` |
+| List all keys (dev only) | `redis-cli KEYS '*'` |
+| Safe key scan (prod) | `redis-cli --scan --pattern 'prefix:*'` |
+| Check memory usage | `redis-cli INFO memory` |
+| Memory per key | `redis-cli MEMORY USAGE mykey` |
+| Flush current database | `redis-cli FLUSHDB` |
+| Flush all databases | `redis-cli FLUSHALL` |
+| Full server info | `redis-cli INFO all` |
+| Monitor live commands | `redis-cli MONITOR` |
+| Check slow log | `redis-cli SLOWLOG GET 10` |
+| Config get (runtime) | `redis-cli CONFIG GET maxmemory` |
+| Config set (runtime) | `redis-cli CONFIG SET maxmemory 512mb` |
+| Persist runtime config | `redis-cli CONFIG REWRITE` |
+| Background save (RDB) | `redis-cli BGSAVE` |
+| Foreground save | `redis-cli SAVE` |
+| Replication info | `redis-cli INFO replication` |
+| Keyspace stats | `redis-cli INFO keyspace` |
+| Real-time stats | `redis-cli --stat` |
 
 ## Expected Ports
 - **6379/tcp** — default Redis port
@@ -61,8 +79,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `NOAUTH Authentication required` | Client not sending password | Pass `-a <password>` to redis-cli, or run `AUTH <password>` after connecting |
 | `OOM command not allowed` | `maxmemory` reached with non-evicting policy | Set `maxmemory` and `maxmemory-policy` in redis.conf; `CONFIG SET` for immediate effect |
 | `MISCONF Redis is configured to save RDB snapshots but it is currently not able to persist` | RDB write failed (usually disk full or permissions) | Check `df -h` on data dir; check `ls -la /var/lib/redis/`; verify redis user owns the dir |
@@ -80,6 +98,11 @@ globs:
 - **No authentication by default**: Fresh installs have `requirepass` commented out. Anyone with network access to port 6379 has full access. Always set a password or bind exclusively to `127.0.0.1` before exposing any service on the same host.
 - **`vm.overcommit_memory` must be 1 for BGSAVE**: Linux's default overcommit behavior can cause BGSAVE (and AOF rewrites) to fail with "Cannot allocate memory" even when physical + swap is sufficient. Set `sysctl -w vm.overcommit_memory=1` and persist in `/etc/sysctl.conf`.
 - **ACL system replaces requirepass in Redis 6+**: The `ACL` system (Redis 6+) allows per-user permissions and command restrictions. `requirepass` still works but sets the default user's password. For multi-tenant or security-sensitive deployments, use an `aclfile` with explicit user rules instead.
+
+## See Also
+
+- **mariadb** — Relational database that Redis commonly fronts as a caching layer
+- **postgresql** — Relational database frequently paired with Redis for session and cache storage
 
 ## References
 See `references/` for:

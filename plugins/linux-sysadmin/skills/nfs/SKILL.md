@@ -2,13 +2,25 @@
 name: nfs
 description: >
   NFS server and client administration: exports configuration, client mounts,
-  NFSv4 pseudo-root, UID/GID mapping, idmapd, and troubleshooting. Triggers on:
-  NFS, nfs-server, nfs mount, NFS share, exports, network file system, nfsd,
-  exportfs, showmount, nfs-kernel-server, nfs-utils, /etc/exports.
+  NFSv4 pseudo-root, UID/GID mapping, idmapd, and troubleshooting.
+triggerPhrases:
+  - "NFS"
+  - "nfs-server"
+  - "nfs mount"
+  - "NFS share"
+  - "exports"
+  - "network file system"
+  - "nfsd"
+  - "exportfs"
+  - "showmount"
+  - "nfs-kernel-server"
+  - "nfs-utils"
+  - "/etc/exports"
 globs:
   - "**/exports"
   - "**/exports.d/**"
   - "**/fstab"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,10 +30,20 @@ globs:
 - **Install**: server: `dnf install nfs-utils` / `apt install nfs-kernel-server`; client: `dnf install nfs-utils` / `apt install nfs-common`
 - **Ports**: 2049 TCP/UDP (NFS), 111 TCP/UDP (portmapper, NFSv3 only), 20048 TCP/UDP (mountd, NFSv3 only)
 
+## Quick Start
+
+```bash
+sudo apt install nfs-kernel-server
+echo '/srv/share 192.168.1.0/24(rw,sync,no_subtree_check)' | sudo tee -a /etc/exports
+sudo exportfs -ra
+sudo systemctl enable --now nfs-server
+showmount -e localhost              # verify export is visible
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Server status | `systemctl status nfs-server` |
 | List configured exports | `cat /etc/exports` |
 | Reload exports after edit | `sudo exportfs -ra` |
@@ -56,8 +78,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `access denied by server while mounting` | Client IP not in exports ACL | Check `/etc/exports` — add client IP or subnet; run `exportfs -ra` |
 | `stale file handle` | Server restarted or export removed/moved | `umount -l /mnt/point` then remount; verify export still exists with `showmount -e server` |
 | Files owned by `nobody`/`nogroup` | UID/GID mismatch or idmapd domain mismatch (NFSv4) | Verify UID matches on client and server; check `Domain =` in `/etc/idmapd.conf` on both sides |
@@ -73,6 +95,12 @@ globs:
 - **`async` risks data loss**: The `async` export option tells the server to acknowledge writes before flushing to disk. If the server crashes between the acknowledgment and the flush, data is lost. `sync` is safe but slower; profile before switching.
 - **NFSv3 firewall complexity**: NFSv3 uses dynamically assigned ports for mountd and statd, making firewall rules error-prone. Prefer NFSv4 (port 2049 only) for any setup where you control firewall rules.
 - **idmapd domain must match exactly**: NFSv4 maps user identities as `user@domain` strings. If the `Domain =` setting in `/etc/idmapd.conf` differs by even one character between client and server, all file ownership resolves to `nobody`. This is a silent misconfiguration — NFS mounts and reads succeed, ownership is just wrong.
+
+## See Also
+
+- **samba** — SMB/CIFS file sharing for Windows and macOS interoperability
+- **rclone** — mount and sync cloud storage or remote filesystems as alternatives to NFS
+- **avahi** — auto-discover NFS servers on the local network via mDNS
 
 ## References
 See `references/` for:

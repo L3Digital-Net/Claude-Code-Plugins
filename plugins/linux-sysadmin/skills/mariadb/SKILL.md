@@ -3,15 +3,30 @@ name: mariadb
 description: >
   MariaDB and MySQL database administration: installation, configuration, user
   and privilege management, backup and restore, replication, performance tuning,
-  and troubleshooting. Triggers on: mariadb, mysql, mysqldump, MariaDB, MySQL,
-  WordPress database, mariadb database, my.cnf, innodb, mariadb service,
-  mysql service, mysql -u root, CREATE DATABASE, GRANT privileges, slow query log.
+  and troubleshooting.
+triggerPhrases:
+  - "mariadb"
+  - "mysql"
+  - "mysqldump"
+  - "MariaDB"
+  - "MySQL"
+  - "WordPress database"
+  - "mariadb database"
+  - "my.cnf"
+  - "innodb"
+  - "mariadb service"
+  - "mysql service"
+  - "mysql -u root"
+  - "CREATE DATABASE"
+  - "GRANT privileges"
+  - "slow query log"
 globs:
   - "**/my.cnf"
   - "**/mysql/*.cnf"
   - "**/mysql/**/*.cnf"
   - "/etc/mysql/**"
   - "**/mariadb.conf.d/**"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -24,10 +39,20 @@ globs:
 - **Distro install**: `apt install mariadb-server` / `dnf install mariadb-server`
 - **Post-install security**: `sudo mysql_secure_installation`
 
+## Quick Start
+
+```bash
+sudo apt install mariadb-server        # install MariaDB
+sudo systemctl enable mariadb          # enable on boot
+sudo systemctl start mariadb           # start the service
+sudo mysql_secure_installation         # secure root, remove test DB
+sudo mariadb -e "SELECT VERSION();"    # verify connectivity
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Service status | `sudo systemctl status mariadb` |
 | Connect as root (socket auth) | `sudo mariadb` |
 | Connect with password | `mysql -u root -p` or `mysql -u myuser -p mydb` |
@@ -72,8 +97,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `ERROR 1045 (28000): Access denied for user 'root'@'localhost'` | Password wrong or socket auth bypassed | Use `sudo mariadb` for root socket auth; on RHEL reset with `--skip-grant-tables` |
 | `Can't connect to MySQL server on 'x.x.x.x'` | `bind-address = 127.0.0.1` blocking remote | Change `bind-address` in `my.cnf` to `0.0.0.0` or specific IP, restart service |
 | `ERROR 1040 (HY000): Too many connections` | `max_connections` too low or connection leak | `SHOW STATUS LIKE 'Threads_connected'; SET GLOBAL max_connections = 300;` |
@@ -94,6 +119,12 @@ globs:
 - **Binary log retention**: Binary logs accumulate indefinitely if `expire_logs_days` (or `binlog_expire_logs_seconds` in newer versions) is not set. Disk fills silently.
 - **Character set footgun**: Default character set was `latin1` in older installs. Always explicitly set `utf8mb4` when creating databases and users, and in `my.cnf`. `utf8` in MySQL/MariaDB is actually `utf8mb3` (3-byte only) — emoji requires `utf8mb4`.
 - **Socket vs TCP localhost**: `mysql -h 127.0.0.1` uses TCP (subject to `bind-address`); `mysql -h localhost` uses the Unix socket. They resolve differently and use different auth paths.
+
+## See Also
+
+- **postgresql** — Alternative relational database with native JSON, advanced indexing, and stricter SQL compliance
+- **redis** — In-memory key-value store often paired with MariaDB for caching
+- **sqlite** — Embedded single-file database for lightweight or local-only use cases
 
 ## References
 See `references/` for:

@@ -3,12 +3,21 @@ name: dnsmasq
 description: >
   dnsmasq DNS forwarder and DHCP server administration: config syntax,
   interface binding, static leases, upstream resolvers, local domain resolution,
-  sinkhole/blocking, logging, and troubleshooting. Triggers on: dnsmasq,
-  dnsmasq DHCP, dnsmasq DNS, local DNS resolver, DHCP server dnsmasq,
-  DNS DHCP combo, dhcp-range, dhcp-host, dnsmasq.conf.
+  sinkhole/blocking, logging, and troubleshooting.
+triggerPhrases:
+  - "dnsmasq"
+  - "dnsmasq DHCP"
+  - "dnsmasq DNS"
+  - "local DNS resolver"
+  - "DHCP server dnsmasq"
+  - "DNS DHCP combo"
+  - "dhcp-range"
+  - "dhcp-host"
+  - "dnsmasq.conf"
 globs:
   - "**/dnsmasq.conf"
   - "**/dnsmasq.d/**"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,10 +27,18 @@ globs:
 - **Leases**: `/var/lib/misc/dnsmasq.leases`
 - **Distro install**: `apt install dnsmasq` / `dnf install dnsmasq`
 
+## Quick Start
+```bash
+sudo apt install dnsmasq
+sudo systemctl enable --now dnsmasq
+dnsmasq --test                     # syntax check OK
+dig @127.0.0.1 google.com +short   # returns IP = forwarding works
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Status | `systemctl status dnsmasq` |
 | Reload (re-reads config, leases) | `sudo systemctl reload dnsmasq` |
 | Restart | `sudo systemctl restart dnsmasq` |
@@ -52,8 +69,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `failed to create listening socket for port 53: Address already in use` | systemd-resolved stub listener is on 53 | `ss -ulnp \| grep :53` — disable resolved stub: `DNSStubListener=no` in `/etc/systemd/resolved.conf`, then `systemctl restart systemd-resolved` |
 | DHCP not handing out addresses | No `interface=` or `listen-address=` set | Add `interface=eth0` (or the LAN interface name) to config and reload |
 | DNS queries return `SERVFAIL` | Upstream servers unreachable or no `server=` set | Check `/etc/resolv.conf`; add `server=8.8.8.8` explicitly; verify connectivity with `dig @8.8.8.8 google.com` |
@@ -70,6 +87,13 @@ globs:
 - **NetworkManager integration**: NM has a built-in dnsmasq plugin (`dns=dnsmasq` in `NetworkManager.conf`) that runs its own dnsmasq instance per-connection. This conflicts with a standalone dnsmasq. Pick one approach — do not run both.
 - **DNSSEC validation gotchas**: Enabling `dnssec` requires correct system time (within a few minutes) and an upstream resolver that passes DNSSEC records. Validating behind a corporate proxy that intercepts DNS will break. Use `dnssec-check-unsigned` carefully — it flags unsigned zones as `BOGUS`, which breaks many CDNs and older domains.
 - **`bind-interfaces` vs default any-interface behavior**: By default dnsmasq listens on all interfaces but filters by the `interface=` list. With `bind-interfaces` it actually binds only to the listed interfaces — necessary in multi-homed hosts to avoid port conflicts with other DNS services on other interfaces.
+
+## See Also
+- **pihole** — DNS sinkhole for network-wide ad blocking, uses dnsmasq (or FTL fork) under the hood
+- **unbound** — recursive DNS resolver with DNSSEC validation, often paired with dnsmasq or Pi-hole
+- **bind9** — full authoritative DNS server for hosting zones, heavier than dnsmasq
+- **dhcp** — ISC DHCP / Kea DHCP server for more advanced DHCP-only deployments
+- **avahi** — mDNS/zeroconf for .local hostname resolution alongside DNS
 
 ## References
 See `references/` for:

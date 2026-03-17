@@ -1,13 +1,21 @@
 ---
 name: jq
 description: >
-  jq JSON processor: invoked when the user asks about jq, JSON, parse JSON,
-  JSON query, JSON filter, JSON transform, JSON from command line, or process JSON.
-  Covers pretty-printing, field extraction, array iteration, filtering with select,
-  map transforms, string interpolation, raw output, compact output, reading from
-  files, constructing new JSON, slurping multiple inputs, null-safe defaults,
-  and built-in encoders.
+  jq JSON processor: pretty-printing, field extraction, array iteration,
+  filtering with select, map transforms, string interpolation, raw output,
+  compact output, reading from files, constructing new JSON, slurping
+  multiple inputs, null-safe defaults, and built-in encoders.
+triggerPhrases:
+  - "jq"
+  - "JSON"
+  - "parse JSON"
+  - "JSON query"
+  - "JSON filter"
+  - "JSON transform"
+  - "JSON from command line"
+  - "process JSON"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -19,6 +27,15 @@ globs: []
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool |
 | **Install** | `apt install jq` / `dnf install jq` |
+
+## Quick Start
+
+```bash
+sudo apt install jq
+echo '{"name":"test","value":42}' | jq '.'
+echo '{"name":"test","value":42}' | jq -r '.name'
+curl -s https://api.example.com/data | jq '.items[] | {id, name}'
+```
 
 ## Key Operations
 
@@ -64,3 +81,13 @@ globs: []
 - **`-r` is almost always required when piping**: Without it, string values are wrapped in JSON quotes, which breaks downstream commands expecting plain text. Treat `-r` as the default for pipelines.
 - **Streaming mode for large inputs**: Loading a 500 MB JSON file into memory for `.[]` iteration is slow and may OOM. `--stream` emits path/value pairs incrementally, but requires a different filter style.
 - **Hidden encoder builtins**: `@base64`, `@uri`, `@sh`, `@csv`, `@tsv`, `@html` are format strings, not functions — they go after `|` and require `-r` to produce usable output: `jq -r '.value | @uri'`.
+
+## See Also
+
+- **awk-sed** — Text stream processing for line-oriented and column-oriented data
+- **ripgrep** — Fast recursive text search across files; pair with jq for structured output
+
+## References
+See `references/` for:
+- `cheatsheet.md` — task-organized command reference
+- `docs.md` — official documentation links

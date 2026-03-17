@@ -4,11 +4,24 @@ description: >
   smartctl queries SMART (Self-Monitoring, Analysis and Reporting Technology) data
   from hard drives and SSDs to assess health, run self-tests, and detect early signs
   of failure. Invoked when the user asks about disk health, drive failure risk, bad
-  sectors, reallocated sectors, or wants to run diagnostic tests on a drive. Triggers on:
-  smartctl, SMART, disk health, drive health, disk failure, bad sectors, reallocated
-  sectors, drive test, smartmontools, SMART attributes, NVMe health, pending sectors,
-  uncorrectable sectors, SMART warning.
+  sectors, reallocated sectors, or wants to run diagnostic tests on a drive.
+triggerPhrases:
+  - "smartctl"
+  - "SMART"
+  - "disk health"
+  - "drive health"
+  - "disk failure"
+  - "bad sectors"
+  - "reallocated sectors"
+  - "drive test"
+  - "smartmontools"
+  - "SMART attributes"
+  - "NVMe health"
+  - "pending sectors"
+  - "uncorrectable sectors"
+  - "SMART warning"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -20,6 +33,16 @@ globs: []
 | **Logs** | Syslog / journald via `smartd`; self-test results stored on device |
 | **Type** | CLI tool (part of smartmontools) |
 | **Install** | `apt install smartmontools` / `dnf install smartmontools` |
+
+## Quick Start
+
+```bash
+sudo apt install smartmontools         # install smartctl and smartd
+sudo smartctl -H /dev/sda             # quick pass/fail health check
+sudo smartctl -a /dev/sda             # full SMART attributes and device info
+sudo smartctl -t short /dev/sda       # start a short self-test (~2 min)
+sudo smartctl -l selftest /dev/sda    # check self-test results
+```
 
 ## Key Operations
 
@@ -81,6 +104,12 @@ globs: []
 - **"PASSED" does not mean healthy**: the overall health check passes unless a SMART threshold has been crossed by the manufacturer's definition. A drive with dozens of reallocated sectors can still return PASSED. Always read the attribute table, specifically attributes 5, 187, 196, 197, and 198.
 - **NVMe attribute names differ**: NVMe uses a different log page structure than ATA SMART. Attribute names like "Available Spare" and "Percentage Used" replace the ATA numbering. Always include `--device=nvme` for NVMe drives.
 - **`smartd` for ongoing monitoring**: `smartctl` is a one-shot query tool. For continuous monitoring, configure `smartd` in `/etc/smartd.conf` to run scheduled self-tests and email alerts on threshold crossings.
+
+## See Also
+
+- **dmesg** — Kernel messages that surface drive errors, I/O failures, and hardware events
+- **zfs** — ZFS filesystem with built-in scrubbing and checksum verification for data integrity
+- **mdadm** — Linux software RAID management for drive redundancy alongside SMART monitoring
 
 ## References
 

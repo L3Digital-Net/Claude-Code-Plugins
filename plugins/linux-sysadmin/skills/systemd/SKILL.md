@@ -4,10 +4,26 @@ description: >
   systemd init system and service manager: unit files, service lifecycle,
   timers (cron replacement), socket activation, targets, dependency ordering,
   security sandboxing, journald log integration, and troubleshooting.
-  Triggers on: systemd, systemctl, service unit, systemd service, systemd timer,
-  .service file, unit file, systemd target, daemon-reload, journalctl, systemd-analyze,
-  ExecStart, WantedBy, After=, Requires=, EnvironmentFile, drop-in, oneshot service,
-  socket activation.
+triggerPhrases:
+  - "systemd"
+  - "systemctl"
+  - "service unit"
+  - "systemd service"
+  - "systemd timer"
+  - ".service file"
+  - "unit file"
+  - "systemd target"
+  - "daemon-reload"
+  - "journalctl"
+  - "systemd-analyze"
+  - "ExecStart"
+  - "WantedBy"
+  - "After="
+  - "Requires="
+  - "EnvironmentFile"
+  - "drop-in"
+  - "oneshot service"
+  - "socket activation"
 globs:
   - "/etc/systemd/system/*.service"
   - "/etc/systemd/system/*.timer"
@@ -16,6 +32,7 @@ globs:
   - "/etc/systemd/system/*.path"
   - "/etc/systemd/system/**/*.service"
   - "/etc/systemd/system/**/*.timer"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -26,10 +43,29 @@ globs:
 - **Drop-in dir**: `/etc/systemd/system/<unit>.d/*.conf` — fragments merged on top of the base unit
 - **Logs**: `journalctl -u <unit>` (system), `journalctl --user -u <unit>` (user instance)
 
+## Quick Start
+
+```bash
+# Create a simple service unit
+sudo tee /etc/systemd/system/myapp.service <<'EOF'
+[Unit]
+Description=My Application
+After=network.target
+[Service]
+ExecStart=/usr/local/bin/myapp
+Restart=on-failure
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl daemon-reload
+sudo systemctl enable --now myapp
+systemctl status myapp
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Show status + recent log | `systemctl status <unit>` |
 | Start | `sudo systemctl start <unit>` |
 | Stop | `sudo systemctl stop <unit>` |
@@ -75,8 +111,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `Unit <name>.service not found` | Unit file missing or wrong name | `systemctl list-unit-files \| grep <name>`; check `/etc/systemd/system/` |
 | `Failed to connect to bus: No such file or directory` | Running as non-root without `--user` | Add `sudo` for system units; use `systemctl --user` for user instance |
 | Service fails, won't restart | `Restart=` not set or set to `no` | Set `Restart=on-failure` in `[Service]`; then `daemon-reload` |
@@ -98,6 +134,13 @@ globs:
 - **`WantedBy=multi-user.target`** is what `systemctl enable` acts on — it creates a symlink in `multi-user.target.wants/`. Without `[Install]` section, `enable` is a no-op.
 - **User instance vs system instance**: `systemctl --user` manages per-user services; they start at login (not boot unless `loginctl enable-linger <user>` is set). Environment, paths, and journal are separate.
 - **`systemctl reload`** sends SIGHUP — only works if the service handles it. For services that don't, use `restart`. Check with `ExecReload=` presence in the unit.
+
+## See Also
+
+- **cron** — Traditional job scheduling; systemd timers are the modern replacement
+- **journald** — systemd's structured logging subsystem accessed via journalctl
+- **logrotate** — Log file rotation, often triggered by systemd timers
+- **supervisor** — lightweight process manager; alternative when systemd unit files are overkill
 
 ## References
 

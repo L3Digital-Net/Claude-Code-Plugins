@@ -3,11 +3,24 @@ name: dmesg
 description: >
   dmesg reads the kernel ring buffer and prints kernel messages including hardware
   errors, driver events, OOM kills, and boot messages. It is the first place to
-  check for hardware faults, kernel panics, and device-level problems. Triggers on:
-  dmesg, kernel messages, hardware error, kernel log, OOM killer, drive error,
-  USB device, driver error, boot messages, kernel ring buffer, out of memory,
-  NIC error, disk error, segfault in kernel.
+  check for hardware faults, kernel panics, and device-level problems.
+triggerPhrases:
+  - "dmesg"
+  - "kernel messages"
+  - "hardware error"
+  - "kernel log"
+  - "OOM killer"
+  - "drive error"
+  - "USB device"
+  - "driver error"
+  - "boot messages"
+  - "kernel ring buffer"
+  - "out of memory"
+  - "NIC error"
+  - "disk error"
+  - "segfault in kernel"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -19,6 +32,15 @@ globs: []
 | **Logs** | Kernel ring buffer (volatile, lost on reboot); persistent history in `/var/log/kern.log` or via `journalctl -k` |
 | **Type** | CLI tool (part of util-linux) |
 | **Install** | `apt install util-linux` / `dnf install util-linux` (installed by default on all distributions) |
+
+## Quick Start
+
+```bash
+# dmesg is pre-installed on all Linux systems (part of util-linux)
+sudo dmesg -T                          # show kernel messages with human-readable timestamps
+sudo dmesg --level err,warn            # filter to errors and warnings only
+sudo dmesg -TLW --level err,warn       # follow new errors/warnings with color and timestamps
+```
 
 ## Key Operations
 
@@ -58,6 +80,12 @@ globs: []
 - **`dmesg -W` requires util-linux 2.21+**: the `--follow` / `-W` flag was added in util-linux 2.21. On older systems (CentOS 7, Ubuntu 16.04), use `watch dmesg | tail -20` as a substitute.
 - **`kernel.dmesg_restrict` limits access**: hardened distros (Ubuntu 20.04+, RHEL 8+) set `kernel.dmesg_restrict=1` by default, blocking dmesg output for non-root users. This is a security feature. For debugging, either use `sudo`, temporarily set it to 0, or add the user to the `adm` group (Ubuntu grants dmesg access to `adm` members).
 - **Facility filtering narrows signal-to-noise**: the kernel sends messages from many facilities (kern, daemon, user, auth). For hardware diagnostics, `--facility kern` isolates kernel-originated messages. For USB events, `grep -i usb`; for drive errors, `grep -i 'sd\|nvme\|ata'`.
+
+## See Also
+
+- **journald** — Persistent structured logging that captures kernel messages across reboots via `journalctl -k`
+- **smartctl** — Disk health diagnostics for investigating drive errors surfaced by dmesg
+- **strace** — Process-level syscall tracing for debugging issues identified in kernel messages
 
 ## References
 

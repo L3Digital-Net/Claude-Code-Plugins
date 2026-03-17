@@ -1,13 +1,22 @@
 ---
 name: vaultwarden
 description: >
-  Vaultwarden self-hosted password manager administration: Docker deployment,
+  Vaultwarden self-hosted credential manager administration: Docker deployment,
   environment variable configuration, reverse proxy setup, admin panel, user
-  management, backup and restore, email/SMTP, and troubleshooting. Triggers on:
-  vaultwarden, Vaultwarden, bitwarden, self-hosted password manager,
-  vaultwarden docker, password manager self-hosted, vaultwarden admin,
-  vaultwarden backup, vaultwarden SMTP, vaultwarden nginx.
+  management, backup and restore, email/SMTP, and troubleshooting.
+triggerPhrases:
+  - "vaultwarden"
+  - "Vaultwarden"
+  - "bitwarden"
+  - "self-hosted password manager"
+  - "vaultwarden docker"
+  - "password manager self-hosted"
+  - "vaultwarden admin"
+  - "vaultwarden backup"
+  - "vaultwarden SMTP"
+  - "vaultwarden nginx"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -20,10 +29,21 @@ globs: []
 - **Admin panel**: `/admin` path (disabled by default; requires `ADMIN_TOKEN` env var)
 - **Websocket port**: 3012/tcp (live sync; must be proxied alongside port 80)
 
+## Quick Start
+
+```bash
+docker pull vaultwarden/server
+docker run -d --name vaultwarden -v /opt/vaultwarden/data:/data -p 8080:80 vaultwarden/server
+# Generate an argon2 admin token
+docker run --rm -it vaultwarden/server /vaultwarden hash --preset owasp
+# Set ADMIN_TOKEN env var and recreate to enable admin panel
+curl -sf http://localhost:8080/alive
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Check container status | `docker ps \| grep vaultwarden` |
 | View live logs | `docker logs -f vaultwarden` |
 | View last 100 log lines | `docker logs --tail 100 vaultwarden` |
@@ -56,8 +76,8 @@ globs: []
 
 ## Common Failures
 
-| Symptom | Likely cause | Check / Fix |
-|---------|-------------|-------------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | Clients show "Invalid server URL" or refuse to connect | HTTP instead of HTTPS — clients enforce TLS | Set up a reverse proxy with a valid cert; `DOMAIN` env var must be the HTTPS URL |
 | Admin panel returns 404 | `ADMIN_TOKEN` not set or container not recreated after adding it | Set `ADMIN_TOKEN`, then `docker compose up -d` to recreate (not restart) |
 | Email invites / 2FA emails not delivered | SMTP not configured or wrong credentials | Check `SMTP_*` env vars; use admin panel Diagnostics → Send test email |
@@ -75,6 +95,10 @@ globs: []
 - **Regular `/data` backups are non-negotiable**: The entire Vaultwarden state (vault DB, attachments, config, RSA keys) lives in `/data`. A missing or stale backup means unrecoverable vault loss. Automate backups with a cron job or a sidecar container.
 - **Disable signups after initial user creation**: `SIGNUPS_ALLOWED=true` (the default) lets anyone register. Set `SIGNUPS_ALLOWED=false` immediately after creating your accounts, or use `SIGNUPS_DOMAINS_WHITELIST` to restrict by email domain.
 - **`DOMAIN` must match the actual HTTPS URL**: Vaultwarden uses this for generating invitation links, TOTP URIs, and push notification callbacks. A mismatch causes broken invite emails and client errors even when login works.
+
+## See Also
+
+- **nextcloud** — self-hosted cloud storage and collaboration, often deployed alongside Vaultwarden for a complete self-hosted stack
 
 ## References
 

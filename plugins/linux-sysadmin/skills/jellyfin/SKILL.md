@@ -3,13 +3,23 @@ name: jellyfin
 description: >
   Jellyfin media server administration: installation, Docker deployment,
   library management, hardware transcoding, user management, networking,
-  and troubleshooting. Triggers on: jellyfin, Jellyfin, media server,
-  media streaming, Plex alternative, jellyfin docker, media transcoding,
-  jellyfin library, jellyfin hardware acceleration, jellyfin DLNA.
+  and troubleshooting.
+triggerPhrases:
+  - "jellyfin"
+  - "Jellyfin"
+  - "media server"
+  - "media streaming"
+  - "Plex alternative"
+  - "jellyfin docker"
+  - "media transcoding"
+  - "jellyfin library"
+  - "jellyfin hardware acceleration"
+  - "jellyfin DLNA"
 globs:
   - "**/system.xml"
   - "**/network.xml"
   - "**/encoding.xml"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -24,10 +34,23 @@ globs:
 - **User (native)**: `jellyfin` — media files must be readable by this user
 - **Distro install**: `apt install jellyfin` / `dnf install jellyfin` (after adding Jellyfin repo)
 
+## Quick Start
+
+```bash
+# Docker (recommended)
+docker compose pull
+docker compose up -d
+curl -s http://localhost:8096/health
+# Bare-metal (after adding Jellyfin repo)
+sudo apt install jellyfin
+sudo systemctl enable --now jellyfin
+curl -s http://localhost:8096/health
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Service status | `systemctl status jellyfin` |
 | Start / stop / restart | `sudo systemctl start\|stop\|restart jellyfin` |
 | Check logs (live) | `journalctl -u jellyfin -f` |
@@ -63,8 +86,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check / Fix |
-|---------|-------------|-------------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | Transcoding fails, stream stops | FFmpeg path wrong or missing codec | UI: Dashboard → Playback → Transcoding — verify FFmpeg path; `jellyfin-ffmpeg` package vs system FFmpeg |
 | "Permission denied" on media files | Media files not readable by `jellyfin` user | `ls -la /media` — add jellyfin to media group or `chmod o+r` on files; `id jellyfin` to check groups |
 | Hardware transcoding not working | Device not passed through (Docker) | Add `--device /dev/dri:/dev/dri` to Docker run, or `devices:` in Compose; verify with `vainfo` / `nvidia-smi` |
@@ -82,6 +105,10 @@ globs:
 - **Subtitles need libass**: The system FFmpeg package often omits libass. Use `jellyfin-ffmpeg` (from the Jellyfin repo) to ensure subtitle rendering works; set its path explicitly in Dashboard → Playback → Transcoding.
 - **Config and media must be separate volumes**: Do not combine config and media in one mount. Config is read/write (DB, metadata cache, plugins); media should be read-only. Mixing them makes backups, permissions, and upgrades harder.
 - **Transcoding is CPU-intensive without hardware acceleration**: 4K HEVC software transcoding can saturate a modern CPU at 1–2 simultaneous streams. Enable hardware acceleration (Intel Quick Sync, AMD VA-API, NVIDIA NVENC) before putting the server into production use.
+
+## See Also
+
+- **immich** — self-hosted photo and video management for personal media libraries alongside Jellyfin's movie/TV focus
 
 ## References
 

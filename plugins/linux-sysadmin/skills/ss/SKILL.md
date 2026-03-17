@@ -3,9 +3,18 @@ name: ss
 description: >
   Socket statistics utility that replaces the deprecated netstat, displaying
   TCP/UDP listening ports, established connections, Unix sockets, and socket
-  memory. Triggers on: ss, netstat, socket statistics, open ports, listening
-  ports, network connections, established connections, ss -tulpn.
+  memory.
+triggerPhrases:
+  - "ss"
+  - "netstat"
+  - "socket statistics"
+  - "open ports"
+  - "listening ports"
+  - "network connections"
+  - "established connections"
+  - "ss -tulpn"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -13,10 +22,20 @@ globs: []
 | Property | Value |
 |----------|-------|
 | **Binary** | `ss` |
-| **Config** | `No persistent config — invoked directly` |
-| **Logs** | `No persistent logs — output to terminal` |
+| **Config** | No persistent config — invoked directly |
+| **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool (part of iproute2) |
 | **Install** | `apt install iproute2` / `dnf install iproute` (usually pre-installed) |
+
+## Quick Start
+
+```bash
+sudo apt install iproute2
+ss -tulpn                          # all listening TCP/UDP with PIDs (most common)
+ss -t state established            # all established TCP connections
+ss -s                              # summary of connection counts per state
+sudo ss -tlnp sport = :443        # filter by local port (requires root for PIDs)
+```
 
 ## Key Operations
 
@@ -55,3 +74,14 @@ globs: []
 - **Output format breaks netstat-based scripts**: Column order, state names, and address formatting all differ from `netstat`. Scripts that parse `netstat` output with `awk '{print $4}'` will produce wrong results against `ss` output without modification.
 - **Dual-stack `::` confuses IPv4 expectations**: When a service binds to `0.0.0.0` (IPv4 wildcard) on a system with IPv6 enabled, Linux may promote it to `::` (dual-stack wildcard). The service is still reachable on IPv4 — the display is just different.
 - **Filter syntax is not grep**: ss has a built-in filter language (`sport`, `dport`, `src`, `dst`, `state`). Piping to grep works but misses rows when addresses are in different formats. Learn the native filter syntax for reliable scripting.
+
+## See Also
+
+- **lsof** — list open files and sockets by process, useful when you need to map a file descriptor to a connection
+- **nmap** — actively scan remote hosts for open ports rather than inspecting local sockets
+- **tcpdump** — capture actual packet contents on a connection identified via ss
+
+## References
+See `references/` for:
+- `cheatsheet.md` — task-organized command reference
+- `docs.md` — official documentation links

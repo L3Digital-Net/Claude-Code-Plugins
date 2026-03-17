@@ -3,10 +3,21 @@ name: prometheus
 description: >
   Prometheus monitoring system administration: scrape configuration, PromQL
   queries, alerting rules, recording rules, Alertmanager routing, target health,
-  TSDB management, and exporter integration. Triggers on: prometheus, Prometheus,
-  PromQL, alertmanager, prometheus scrape, prometheus metrics, prometheus exporter,
-  prometheus.yml, alerting_rules, recording_rules, promtool, remote_write,
-  node_exporter.
+  TSDB management, and exporter integration.
+triggerPhrases:
+  - "prometheus"
+  - "Prometheus"
+  - "PromQL"
+  - "alertmanager"
+  - "prometheus scrape"
+  - "prometheus metrics"
+  - "prometheus exporter"
+  - "prometheus.yml"
+  - "alerting_rules"
+  - "recording_rules"
+  - "promtool"
+  - "remote_write"
+  - "node_exporter"
 globs:
   - "**/prometheus.yml"
   - "**/prometheus.yaml"
@@ -16,9 +27,11 @@ globs:
   - "**/recording_rules.yaml"
   - "**/rules/**/*.yml"
   - "**/rules/**/*.yaml"
+last_verified: "unverified"
 ---
 
 ## Identity
+
 - **Binary**: `prometheus`
 - **Unit**: `prometheus.service`
 - **Config**: `/etc/prometheus/prometheus.yml`
@@ -29,10 +42,19 @@ globs:
 - **Alertmanager**: port 9093
 - **Distro install**: `apt install prometheus` / `dnf install prometheus` (or binary from prometheus.io)
 
+## Quick Start
+
+```bash
+sudo apt install prometheus
+sudo systemctl enable --now prometheus
+promtool check config /etc/prometheus/prometheus.yml
+curl -sf http://localhost:9090/-/healthy
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Status | `systemctl status prometheus` |
 | Check config syntax | `promtool check config /etc/prometheus/prometheus.yml` |
 | Check alerting/recording rules | `promtool check rules /etc/prometheus/rules/*.yml` |
@@ -68,8 +90,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | Target shows `DOWN` in web UI | Exporter not running or wrong port | `curl http://<target>:<port>/metrics`; `systemctl status <exporter>` |
 | Target shows `DOWN`: connection refused | Firewall blocking scrape or wrong IP | `ss -tlnp` on target host; check `static_configs` target address |
 | Scrape timeout | Exporter too slow or metrics endpoint overloaded | Increase `scrape_timeout` for that job; profile exporter |
@@ -89,6 +111,14 @@ globs:
 - **PromQL range vectors vs instant vectors.** `http_requests_total` is an instant vector (current value). `http_requests_total[5m]` is a range vector (a set of samples over 5 minutes). Functions like `rate()` and `increase()` require a range vector; arithmetic and comparisons require an instant vector. Mixing them is the most common PromQL beginner error.
 - **Recording rules for expensive queries.** Dashboard queries that aggregate across thousands of series run on every panel refresh. Pre-compute them with recording rules so dashboards query a single pre-aggregated series instead of triggering a full scan at render time.
 - **Alertmanager config is separate from Prometheus config.** Alerting rules live in Prometheus (which decides when to fire); routing, receivers, and silences live in Alertmanager (`/etc/alertmanager/alertmanager.yml`). `promtool check rules` validates the rule expressions but does not validate Alertmanager routing. Use `amtool config check` for Alertmanager's config.
+
+## See Also
+
+- **grafana** — Visualization platform for Prometheus metrics; the standard way to build dashboards on top of PromQL queries
+- **loki** — Log aggregation system from the Grafana stack; pairs with Prometheus for correlated metrics and logs
+- **node-exporter** — Prometheus exporter for host-level hardware and OS metrics; the most common scrape target
+- **netdata** — Real-time monitoring agent with auto-detection; alternative to Prometheus for single-host monitoring with minimal setup
+- **influxdb** — alternative time series database with SQL query interface
 
 ## References
 

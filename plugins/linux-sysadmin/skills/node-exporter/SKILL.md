@@ -2,11 +2,21 @@
 name: node-exporter
 description: >
   Prometheus Node Exporter administration: installation, collector management,
-  textfile collector, TLS/auth configuration, and troubleshooting. Triggers on:
-  node exporter, node_exporter, prometheus node, system metrics, hardware metrics
-  prometheus, host metrics, node_cpu_seconds_total, node_memory, hwmon collector,
-  textfile collector, 9100.
+  textfile collector, TLS/auth configuration, and troubleshooting.
+triggerPhrases:
+  - "node exporter"
+  - "node_exporter"
+  - "prometheus node"
+  - "system metrics"
+  - "hardware metrics prometheus"
+  - "host metrics"
+  - "node_cpu_seconds_total"
+  - "node_memory"
+  - "hwmon collector"
+  - "textfile collector"
+  - "9100"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -17,10 +27,19 @@ globs: []
 - **Metrics endpoint**: `http://localhost:9100/metrics`
 - **Distro install**: `apt install prometheus-node-exporter` / `dnf install golang-github-prometheus-node-exporter`
 
+## Quick Start
+
+```bash
+sudo apt install prometheus-node-exporter
+sudo systemctl enable --now prometheus-node-exporter
+curl -sf localhost:9100/metrics | head -20
+curl -s localhost:9100/metrics | grep -c '^node_'
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Service status | `systemctl status prometheus-node-exporter` |
 | Check metrics endpoint | `curl -s localhost:9100/metrics \| head -50` |
 | Count exposed metrics | `curl -s localhost:9100/metrics \| grep -c '^node_'` |
@@ -48,8 +67,8 @@ globs: []
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `connection refused` on port 9100 | Service not running | `systemctl start prometheus-node-exporter` |
 | No `node_filesystem_*` metrics | Mount point excluded or wrong filesystem type | Check `--collector.filesystem.mount-points-exclude` flag; tmpfs excluded by default |
 | No `node_hwmon_*` metrics | hwmon collector disabled or no sensors detected | Verify `lm_sensors` installed: `sensors`; collector may need `--collector.hwmon` explicitly |
@@ -65,6 +84,11 @@ globs: []
 - **Metric naming changed in v1.0**: `node_cpu` became `node_cpu_seconds_total`, `node_filesystem_free` became `node_filesystem_free_bytes`, etc. Any dashboards or alerts from before v1.0 will silently show no data after an upgrade.
 - **Loop devices inflate filesystem metrics**: By default, loop devices (`/dev/loop*`) appear in `node_filesystem_*` metrics. Exclude with `--collector.filesystem.mount-points-exclude='^/(dev|proc|run/credentials/.+|sys|var/lib/docker/.+)($|/)' --collector.diskstats.device-exclude='^(loop|ram)\d+$'`.
 - **High cardinality on busy systems**: On servers with many CPUs, disks, or network interfaces, the default collectors produce thousands of time series. Disable unused collectors (e.g., `--no-collector.arp`, `--no-collector.bcache`) to reduce overhead on resource-constrained systems.
+
+## See Also
+
+- **prometheus** — Scrapes node-exporter metrics and stores them as time series; required counterpart for collecting and querying the exposed metrics
+- **grafana** — Dashboard platform for visualizing node-exporter metrics; community dashboard ID 1860 is the standard Node Exporter Full dashboard
 
 ## References
 See `references/` for:

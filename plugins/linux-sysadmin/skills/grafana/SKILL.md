@@ -3,15 +3,26 @@ name: grafana
 description: >
   Grafana observability platform administration: installation, configuration,
   data sources, dashboards, panels, alerting, provisioning, plugins, and
-  troubleshooting. Triggers on: grafana, Grafana, grafana dashboard,
-  grafana datasource, grafana alert, grafana panel, visualization,
-  grafana-cli, grafana.ini, grafana provisioning, grafana plugin.
+  troubleshooting.
+triggerPhrases:
+  - "grafana"
+  - "Grafana"
+  - "grafana dashboard"
+  - "grafana datasource"
+  - "grafana alert"
+  - "grafana panel"
+  - "visualization"
+  - "grafana-cli"
+  - "grafana.ini"
+  - "grafana provisioning"
+  - "grafana plugin"
 globs:
   - "**/grafana.ini"
   - "**/grafana/provisioning/**"
   - "**/grafana/**/*.yaml"
   - "**/grafana/**/*.yml"
   - "**/grafana/**/*.json"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -25,10 +36,20 @@ globs:
 - **CLI tool**: `grafana-cli` (plugin management, admin resets)
 - **Distro install**: `apt install grafana` / `dnf install grafana` (after adding Grafana APT/RPM repo)
 
+## Quick Start
+
+```bash
+# Add Grafana APT repo (see grafana.com/docs for current key URL)
+sudo apt update && sudo apt install grafana
+sudo systemctl enable --now grafana-server
+curl -s http://localhost:3000/api/health
+# Default login: admin / admin (change on first login)
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Service status | `systemctl status grafana-server` |
 | Start / stop / restart | `sudo systemctl start\|stop\|restart grafana-server` |
 | Reload (provisioning only) | `curl -s -u admin:password http://localhost:3000/api/admin/provisioning/dashboards/reload` |
@@ -61,8 +82,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check / Fix |
-|---------|-------------|-------------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | "invalid username or password" on first login | Default creds are `admin` / `admin`; change forced on first login | Log in with `admin`/`admin`, set new password when prompted |
 | "invalid username or password" after migration | Admin password hash mismatch (e.g., DB restored without ini) | `sudo grafana-cli admin reset-admin-password <newpassword>` |
 | Datasource "Data source connected but no labels found" | Prometheus not scraped yet, wrong URL, or wrong time range | Verify URL in datasource settings; check `http://prometheus:9090/targets` |
@@ -80,6 +101,13 @@ globs:
 - **Provisioning requires restart awareness**: Datasource and dashboard provisioning files are read at startup. Dashboard JSON changes in provisioned files are picked up on restart or via the API reload endpoint — but adding a new provisioning YAML file always requires a restart, not just a reload.
 - **Dashboard UIDs must be unique**: When importing dashboards by ID from grafana.com or from JSON, the embedded `uid` field must be unique across your Grafana instance. Duplicate UIDs on import silently overwrite the existing dashboard. Explicitly set or clear the `uid` field before importing if you want independent copies.
 - **Plugin management is out-of-band from the package manager**: Grafana plugins are managed via `grafana-cli` or the UI, not `apt`/`dnf`. They are stored under `/var/lib/grafana/plugins/` and persist across Grafana upgrades, but they are not tracked by the system package manager. Audit installed plugins after OS-level Grafana upgrades to check compatibility.
+
+## See Also
+
+- **prometheus** — Time-series database and metrics collector; the primary data source for most Grafana deployments
+- **loki** — Log aggregation from the Grafana stack; query logs in Grafana alongside metrics using LogQL
+- **netdata** — Real-time monitoring with its own dashboard; can also export metrics to Grafana via Prometheus remote_write
+- **influxdb** — time series data source for Grafana alongside Prometheus
 
 ## References
 

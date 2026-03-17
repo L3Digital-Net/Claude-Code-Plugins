@@ -3,11 +3,20 @@ name: avahi
 description: >
   Avahi mDNS/zeroconf daemon administration: .local hostname resolution, service
   discovery, service registration, nsswitch.conf configuration, and
-  troubleshooting. Triggers on: avahi, mDNS, zeroconf, .local hostname,
-  avahi-daemon, service discovery, mdns4_minimal, avahi-browse.
+  troubleshooting.
+triggerPhrases:
+  - "avahi"
+  - "mDNS"
+  - "zeroconf"
+  - ".local hostname"
+  - "avahi-daemon"
+  - "service discovery"
+  - "mdns4_minimal"
+  - "avahi-browse"
 globs:
   - "**/avahi-daemon.conf"
   - "**/avahi/services/*.service"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -19,10 +28,18 @@ globs:
 - **Distro install**: `apt install avahi-daemon avahi-utils` / `dnf install avahi avahi-tools`
 - **NSS plugin**: `libnss-mdns` (Debian/Ubuntu) / `nss-mdns` (Fedora) — required for `.local` resolution
 
+## Quick Start
+```bash
+sudo apt install avahi-daemon avahi-utils libnss-mdns
+sudo systemctl enable --now avahi-daemon
+avahi-resolve --name $(hostname).local   # should return an IP
+avahi-browse --all --terminate            # list visible services
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Check daemon status | `systemctl status avahi-daemon` |
 | Browse all advertised services | `avahi-browse --all --resolve --terminate` |
 | Browse a specific service type | `avahi-browse --resolve --terminate _http._tcp` |
@@ -50,8 +67,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `.local` names not resolving | `mdns4_minimal` not in `nsswitch.conf` | Check `/etc/nsswitch.conf` hosts line; add `mdns4_minimal [NOTFOUND=return]` before `dns` |
 | `.local` resolves on some hosts, not others | `libnss-mdns` not installed on that host | `apt install libnss-mdns` or `dnf install nss-mdns` |
 | Hostname not visible to other devices | `avahi-daemon` not running or firewall blocking 5353 | `systemctl start avahi-daemon`; open 5353/UDP and multicast in firewall |
@@ -67,6 +84,11 @@ globs:
 - **Firewall multicast rules**: Allowing 5353/UDP alone is not always enough — mDNS uses the `224.0.0.251` multicast group. Some firewall configurations block multicast by default. With firewalld, the `mdns` service rule handles both; with raw iptables, you may need explicit `--destination 224.0.0.251` rules.
 - **`.service` XML files are strict**: avahi-daemon rejects files with any XML error (missing closing tag, invalid characters, wrong encoding) silently — the service simply does not appear. Always validate with `xmllint` after editing; check `journalctl -u avahi-daemon` for the parse error line.
 - **`publish-hinfo` and hostname leakage**: By default avahi publishes the OS name and CPU type as HINFO records. Set `publish-hinfo=no` and `publish-workstation=no` in `avahi-daemon.conf` if this is a concern on shared networks.
+
+## See Also
+- **dnsmasq** — lightweight DNS forwarder and DHCP server for local networks
+- **unbound** — recursive DNS resolver with DNSSEC validation
+- **pihole** — network-wide DNS sinkhole for ad blocking, often paired with local DNS
 
 ## References
 See `references/` for:

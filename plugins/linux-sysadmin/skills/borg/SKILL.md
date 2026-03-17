@@ -4,9 +4,17 @@ description: >
   Borg Backup administration: creating and managing deduplicated, encrypted
   backup repositories, archive creation and extraction, pruning schedules,
   repository integrity checks, remote SSH backups, and borgmatic wrapper
-  configuration. Triggers on: borg, borgbackup, borg backup, borg repository,
-  borg prune, deduplicated backup, encrypted backup borg.
+  configuration.
+triggerPhrases:
+  - "borg"
+  - "borgbackup"
+  - "borg backup"
+  - "borg repository"
+  - "borg prune"
+  - "deduplicated backup"
+  - "encrypted backup borg"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -21,10 +29,20 @@ globs: []
   - `BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes` — required to access unencrypted repos without interactive prompt
 - **Install**: `apt install borgbackup` / `dnf install borgbackup` / `pip install borgbackup`
 
+## Quick Start
+
+```bash
+sudo apt install borgbackup
+borg init --encryption=repokey /path/to/repo
+borg create --compression lz4 /path/to/repo::first-backup /home
+borg list /path/to/repo
+borg check /path/to/repo
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Initialize repo (repokey, passphrase in env) | `borg init --encryption=repokey /path/to/repo` |
 | Initialize repo (keyfile, key stored locally) | `borg init --encryption=keyfile /path/to/repo` |
 | Initialize unencrypted repo | `borg init --encryption=none /path/to/repo` |
@@ -67,8 +85,8 @@ globs: []
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `Repository has been manually modified` | `.borg` internal files were edited or corrupted | Never touch files inside the repo dir; restore from a known-good copy |
 | `passphrase supplied in BORG_PASSPHRASE is incorrect` | Wrong passphrase or env var not set | Verify `echo $BORG_PASSPHRASE`; passphrase cannot be recovered if lost |
 | `Failed to create/acquire the lock` | Stale lock from a crashed/killed borg process | Confirm no other borg is running, then `borg break-lock /repo` |
@@ -87,6 +105,12 @@ globs: []
 - **`borg check` is slow on large repositories**: Checking data integrity reads all chunks. Use `--last N` to verify only recent archives, or `--archives-only` to skip the segment-level check during routine runs.
 - **borgmatic simplifies all of this**: A single `borgmatic.yml` replaces manual borg invocations for init, create, prune, compact, and check. Prefer borgmatic for any recurring backup job.
 - **Unencrypted repo requires opt-in**: Accessing an unencrypted repo interactively prompts a warning. In scripts, set `BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes` to suppress the prompt.
+
+## See Also
+
+- **restic** — Content-addressed deduplicating backup with S3/B2/SFTP backends
+- **rsync** — File-level synchronization for simple backup and mirroring
+- **rclone** — Cloud storage sync and mount supporting 70+ providers
 
 ## References
 

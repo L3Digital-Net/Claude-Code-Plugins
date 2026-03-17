@@ -3,11 +3,25 @@ name: lxc-lxd
 description: >
   LXC/LXD system container administration: launching and managing containers,
   resource limits, profiles, snapshots, networking, storage pools, and
-  troubleshooting. Also covers Incus (community fork of LXD). Triggers on:
-  LXC, LXD, lxc container, lxd container, system container, lxc-ls, incus,
-  lxc launch, lxc exec, lxc snapshot, lxc profile, lxc storage, lxc network,
-  lxc config, lxd init.
+  troubleshooting. Also covers Incus (community fork of LXD).
+triggerPhrases:
+  - "LXC"
+  - "LXD"
+  - "lxc container"
+  - "lxd container"
+  - "system container"
+  - "lxc-ls"
+  - "incus"
+  - "lxc launch"
+  - "lxc exec"
+  - "lxc snapshot"
+  - "lxc profile"
+  - "lxc storage"
+  - "lxc network"
+  - "lxc config"
+  - "lxd init"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -22,10 +36,20 @@ globs: []
 - **Config**: runtime config via `lxc config set`; profiles in daemon database; no flat config files to edit
 - **Install**: `snap install lxd` (Ubuntu recommended), `apt install lxd` (deb), or `apt install incus` for Incus
 
+## Quick Start
+
+```bash
+sudo snap install lxd
+sudo lxd init --auto
+lxc launch ubuntu:24.04 mycontainer
+lxc exec mycontainer -- bash
+lxc list
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Initialize LXD (first-time wizard) | `lxd init` |
 | Launch container from image | `lxc launch ubuntu:24.04 mycontainer` |
 | Launch with specific profile | `lxc launch ubuntu:24.04 mycontainer --profile default --profile custom` |
@@ -85,8 +109,8 @@ globs: []
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `Error: not found` on container ops | Container name typo or wrong remote | `lxc list` to verify name; check `lxc remote get-default` |
 | `Error: Failed to connect to LXD` | Daemon not running or wrong socket | `systemctl status snap.lxd.daemon` or `snap start lxd`; check user is in `lxd` group |
 | Container starts but no network | No network profile or bridge not up | `lxc profile show default` — verify `eth0` device; `ip link show lxdbr0` |
@@ -107,6 +131,12 @@ globs: []
 - **UID/GID mapping for file permissions**: Unprivileged containers remap UIDs (container root = host UID 100000). Files pushed from the host appear with wrong ownership inside. Use `lxc file push --uid 0 --gid 0` or fix inside the container after push.
 - **Limits not enforced without cgroups v2**: `limits.cpu` and `limits.memory` require the host kernel to have cgroups v2 unified hierarchy enabled. Check `mount | grep cgroup2`. On older distros with cgroups v1 hybrid, some limits silently have no effect.
 - **Privileged vs unprivileged containers**: Unprivileged (default) maps UIDs and cannot access some kernel features. Privileged (`security.privileged=true`) runs as real root — necessary for Docker-in-LXC or some legacy workloads, but host kernel vulnerabilities directly affect the container. Prefer unprivileged; escalate only when required and document why.
+
+## See Also
+
+- **proxmox** — Full virtualization platform with built-in LXC container support; use when you need a management UI or mixed VM/container clusters
+- **docker** — Application-level containers for microservices; use alongside LXC/LXD when you need OCI image workflows rather than full OS containers
+- **podman** — Rootless OCI container runtime; lighter alternative to Docker for single-application containers
 
 ## References
 

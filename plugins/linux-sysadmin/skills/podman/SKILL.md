@@ -1,12 +1,24 @@
 ---
 name: podman
 description: >
-  Podman container runtime — rootless containers, daemonless architecture, Quadlet
+  Podman container runtime: rootless containers, daemonless architecture, Quadlet
   systemd integration, pod management, image building, networking, volumes, and
   Docker compatibility.
-  Triggers on: podman, Podman, rootless container, podman-compose, podman pod,
-  podman systemd, quadlet, podman vs docker, Containerfile, podman generate systemd,
-  podman play kube, slirp4netns, pasta networking, podman auto-update.
+triggerPhrases:
+  - "podman"
+  - "Podman"
+  - "rootless container"
+  - "podman-compose"
+  - "podman pod"
+  - "podman systemd"
+  - "quadlet"
+  - "podman vs docker"
+  - "Containerfile"
+  - "podman generate systemd"
+  - "podman play kube"
+  - "slirp4netns"
+  - "pasta networking"
+  - "podman auto-update"
 globs:
   - "*.containerfile"
   - "**/Containerfile"
@@ -16,20 +28,30 @@ globs:
   - "**/quadlet/**/*.network"
   - "**/quadlet/**/*.pod"
   - "**/.containerignore"
+last_verified: "unverified"
 ---
 
 ## Identity
 
-- **Binary**: `podman` (no daemon — each invocation is a standalone process)
-- **Storage (rootless)**: `~/.local/share/containers/storage/`
-- **Storage (root)**: `/var/lib/containers/storage/`
-- **Config**: `/etc/containers/` (system), `~/.config/containers/` (user overrides)
-- **Registries config**: `/etc/containers/registries.conf`
-- **Policy config**: `/etc/containers/policy.json`
-- **Quadlet units (rootless)**: `~/.config/containers/systemd/`
-- **Quadlet units (root)**: `/etc/containers/systemd/`
-- **No socket required**: no `/var/run/docker.sock` equivalent by default
-- **Install**: `dnf install podman` (Fedora/RHEL), `apt install podman` (Debian/Ubuntu 20.10+)
+| Property | Value |
+|----------|-------|
+| **Binary** | `podman` (no daemon — each invocation is a standalone process) |
+| **Storage (rootless)** | `~/.local/share/containers/storage/` |
+| **Storage (root)** | `/var/lib/containers/storage/` |
+| **Config** | `/etc/containers/` (system), `~/.config/containers/` (user overrides) |
+| **Registries config** | `/etc/containers/registries.conf` |
+| **Policy config** | `/etc/containers/policy.json` |
+| **Quadlet units (rootless)** | `~/.config/containers/systemd/` |
+| **Quadlet units (root)** | `/etc/containers/systemd/` |
+| **Install** | `dnf install podman` (Fedora/RHEL), `apt install podman` (Debian/Ubuntu 20.10+) |
+
+## Quick Start
+```bash
+sudo apt install podman
+podman info                                       # verify storage and network backend
+podman run --rm docker.io/library/hello-world      # pulls and runs successfully
+podman ps                                          # list running containers
+```
 
 ## Key Operations
 
@@ -78,8 +100,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `permission denied` on `/dev/net/tun` | Rootless networking kernel module not loaded or device not available | `modprobe tun`; check `ls -la /dev/net/tun` |
 | Volume mount fails with SELinux AVC denial | SELinux label mismatch — container cannot read host path | Add `:z` (shared) or `:Z` (private) to the volume flag: `-v /host/path:/container/path:z` |
 | `cannot connect to Docker daemon` | Wrong client — using `docker` CLI against a Podman socket, or no socket exposed | Use `podman` CLI; or start `podman.socket` for Docker-compatible socket |
@@ -99,6 +121,11 @@ globs:
 - **Docker Compose compatibility via `podman compose`**: Podman 4.7+ ships `podman compose` as a built-in subcommand backed by `podman-compose`. Older versions require `pip install podman-compose` separately. Not all Docker Compose v3 features are supported.
 - **UID mapping in rootless requires `/etc/subuid` and `/etc/subgid`**: If these files don't have an entry for the user, rootless containers fail at startup. Entries are added automatically on most distros when a new user is created, but may be missing on older systems or custom installs.
 - **Quadlets vs `generate systemd`**: Quadlets are declarative `.container`/`.volume`/`.network`/`.pod` files processed by `systemd-generator` at boot; `generate systemd` produces imperative unit files that call `podman run` in `ExecStart`. Quadlets are easier to maintain, version-control, and update — prefer them for any new setup.
+
+## See Also
+- **docker** — container runtime with a central daemon, wider ecosystem and tooling support
+- **docker-compose** — multi-container orchestration; Podman supports Compose files via `podman compose`
+- **buildah** — daemonless image building; pairs naturally with Podman's rootless workflow
 
 ## References
 

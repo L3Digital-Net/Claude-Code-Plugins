@@ -3,10 +3,24 @@ name: ansible
 description: >
   Ansible agentless automation and configuration management: playbooks,
   inventory, ad-hoc commands, roles, collections, vault, and ansible-galaxy.
-  Triggers on: "ansible", "ansible-playbook", "ansible-vault", "ansible-galaxy",
-  "ansible-inventory", "ansible-lint", "ansible.cfg", "playbook", "inventory",
-  "roles", "become", "tasks", "handlers", "group_vars", "host_vars".
+triggerPhrases:
+  - "ansible"
+  - "ansible-playbook"
+  - "ansible-vault"
+  - "ansible-galaxy"
+  - "ansible-inventory"
+  - "ansible-lint"
+  - "ansible.cfg"
+  - "playbook"
+  - "inventory"
+  - "roles"
+  - "become"
+  - "tasks"
+  - "handlers"
+  - "group_vars"
+  - "host_vars"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -22,10 +36,19 @@ globs: []
 | **Type** | Agentless push-based automation (SSH for Linux, WinRM for Windows) |
 | **Install** | `pip install ansible` / `apt install ansible` / `dnf install ansible` |
 
+## Quick Start
+
+```bash
+sudo apt install ansible
+ansible --version
+ansible all -i "localhost," -m ping -c local
+ansible-playbook playbook.yml --check --diff
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Ping all hosts | `ansible all -m ping` |
 | Run playbook | `ansible-playbook playbook.yml` |
 | Dry run (check + diff) | `ansible-playbook playbook.yml --check --diff` |
@@ -47,8 +70,8 @@ globs: []
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `UNREACHABLE! => {"msg": "Failed to connect to the host via ssh"}` | SSH key rejected, wrong user, or host unreachable | Verify `ansible_user` and `ansible_ssh_private_key_file`; test: `ssh -i key user@host` |
 | `MODULE FAILURE\nrc=127\nmsg=The module failed...python` | `/usr/bin/python` missing on target (RHEL 8+, Ubuntu 22.04+) | Set `interpreter_python = auto_silent` in `[defaults]` or `ansible_python_interpreter=/usr/bin/python3` in inventory |
 | `Missing sudo password` | `become: yes` but no `NOPASSWD` sudoers rule and no `-K` flag | Add `--ask-become-pass` (`-K`) or configure `NOPASSWD: ALL` for the ansible user in sudoers |
@@ -70,6 +93,13 @@ globs: []
 **SSH pipelining vs `requiretty`.** Enabling `pipelining = True` in `[ssh_connection]` reduces SSH round-trips substantially (5-10x faster for playbooks with many tasks), but it requires that `requiretty` is disabled in `/etc/sudoers` on target hosts. The fix: add `Defaults !requiretty` or a per-user `Defaults:ansible !requiretty` line.
 
 **Collections vs roles.** Old-style `ansible-galaxy install` pulls roles into `~/.ansible/roles/`; new-style `ansible-galaxy collection install` pulls collections into `~/.ansible/collections/` and uses FQCNs (`community.general.ufw`, `ansible.posix.firewalld`). A `requirements.yml` can declare both `roles:` and `collections:` in separate sections. When a module "isn't found," the cause is almost always a missing collection rather than a missing role.
+
+## See Also
+
+- **systemd** — Service management and unit files; ansible's `systemd` module controls these
+- **packer** — build VM images with Ansible provisioners before deployment
+- **cloud-cli** — cloud platform CLIs for operations Ansible doesn't cover
+- **vault** — secrets management; Ansible has a hashi_vault lookup plugin
 
 ## References
 

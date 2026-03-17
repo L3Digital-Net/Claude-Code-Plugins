@@ -4,14 +4,26 @@ description: >
   ISC DHCP server (isc-dhcp-server / dhcpd) and Kea DHCP administration:
   configuration, lease management, static reservations, subnet declarations,
   relay configuration, and troubleshooting. ISC DHCP reached end-of-life in
-  December 2022; Kea DHCP is the supported successor. Triggers on: DHCP server,
-  isc-dhcp, dhcpd, dhcp lease, DHCP Linux, IP address assignment, dhcpd.conf,
-  Kea DHCP, dhcp pool, dhcp reservation, dhcp relay, dhcpd.leases.
+  December 2022; Kea DHCP is the supported successor.
+triggerPhrases:
+  - "DHCP server"
+  - "isc-dhcp"
+  - "dhcpd"
+  - "dhcp lease"
+  - "DHCP Linux"
+  - "IP address assignment"
+  - "dhcpd.conf"
+  - "Kea DHCP"
+  - "dhcp pool"
+  - "dhcp reservation"
+  - "dhcp relay"
+  - "dhcpd.leases"
 globs:
   - "**/dhcpd.conf"
   - "**/dhcp/dhcpd.conf"
   - "**/kea-dhcp4.conf"
   - "**/kea/kea-dhcp4.conf"
+last_verified: "unverified"
 ---
 
 > **EOL Notice**: ISC DHCP (isc-dhcp-server) reached end-of-life on 31 December
@@ -41,10 +53,20 @@ globs:
 **Protocol**
 - **Port**: 67/UDP (server), 68/UDP (client)
 
+## Quick Start
+
+```bash
+sudo apt install isc-dhcp-server                    # install ISC DHCP (or kea-dhcp4-server for Kea)
+sudo systemctl enable isc-dhcp-server               # enable on boot
+sudo systemctl start isc-dhcp-server                # start the service
+dhcpd -t -cf /etc/dhcp/dhcpd.conf                   # validate config syntax
+ss -ulnp | grep :67                                  # verify listening on DHCP port
+```
+
 ## Key Operations
 
-| Operation | ISC DHCP | Kea DHCP |
-|-----------|----------|----------|
+| Task | ISC DHCP | Kea DHCP |
+|------|----------|----------|
 | Service status | `systemctl status isc-dhcp-server` | `systemctl status kea-dhcp4-server` |
 | Show active leases | `cat /var/lib/dhcpd/dhcpd.leases` | `cat /var/lib/kea/kea-leases4.csv` |
 | Leases with expiry | `dhcp-lease-list` (isc-dhcp-utils) | `kea-admin lease-dump v4 -o -` |
@@ -74,8 +96,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `No subnet declaration for <IP>` | Interface not declared in config or not listed in INTERFACES var | Debian: check `/etc/default/isc-dhcp-server` `INTERFACESv4=`; RHEL: `/etc/sysconfig/dhcpd`. Add a `subnet` block covering that interface's network |
 | Service starts but no leases issued | Subnet declared but no `range` statement | Add `range <start-ip> <end-ip>;` inside the subnet block |
 | `no free leases` | Pool exhausted | Check `dhcpd-pools` output; expand range or reduce lease times |
@@ -93,6 +115,11 @@ globs:
 - **Dynamic DNS updates require Kerberos or shared secret**: `ddns-update-style interim` with a TSIG key to BIND works but the key management is fiddly. Most deployments set `ddns-update-style none;` and handle DNS separately.
 - **omshell for runtime changes**: ISC DHCP supports online management via `omshell` — adding leases or reservations without a restart. The syntax is arcane; see the man page. Kea's REST API is significantly more approachable.
 - **Kea hot reload**: Unlike isc-dhcp-server, Kea supports `systemctl reload` for config changes without dropping active leases. This is a meaningful operational advantage when managing busy networks.
+
+## See Also
+
+- **dnsmasq** — Lightweight combined DNS/DHCP server, simpler alternative for small networks
+- **pihole** — DNS sinkhole that can also serve as a DHCP server on the local network
 
 ## References
 

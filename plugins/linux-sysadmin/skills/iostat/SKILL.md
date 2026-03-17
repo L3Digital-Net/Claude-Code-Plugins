@@ -3,10 +3,22 @@ name: iostat
 description: >
   iostat reports CPU statistics and per-device disk throughput, IOPS, and latency
   metrics. It is part of the sysstat package and is the standard tool for diagnosing
-  disk performance bottlenecks. Triggers on: iostat, disk throughput, disk latency,
-  await, disk utilization, iops, disk performance, sysstat, read write MB/s, %util,
-  nvme performance, block device stats.
+  disk performance bottlenecks.
+triggerPhrases:
+  - "iostat"
+  - "disk throughput"
+  - "disk latency"
+  - "await"
+  - "disk utilization"
+  - "iops"
+  - "disk performance"
+  - "sysstat"
+  - "read write MB/s"
+  - "%util"
+  - "nvme performance"
+  - "block device stats"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,6 +30,15 @@ globs: []
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool (part of sysstat) |
 | **Install** | `apt install sysstat` / `dnf install sysstat` |
+
+## Quick Start
+
+```bash
+sudo apt install sysstat          # install iostat (part of sysstat)
+iostat -x 1                       # extended stats every 1 second (ignore first line)
+iostat -xht 1                     # extended + human-readable + timestamps
+iostat -x nvme0n1 1               # monitor a specific NVMe device
+```
 
 ## Key Operations
 
@@ -68,6 +89,12 @@ globs: []
 - **`%util` is misleading for NVMe and RAID**: `%util` measures the fraction of time the device had at least one I/O in flight. For devices with native command queuing (NVMe) or multiple spindles (RAID), 100% util does not mean saturated — they can still process more I/Os in parallel. Use `await` and `aqu-sz` instead.
 - **sysstat must be installed separately**: unlike procps, sysstat is not part of most default installs. If `iostat` is missing, install `sysstat` explicitly.
 - **NVMe device naming**: NVMe drives appear as `nvme0n1` (device), `nvme0n1p1` (partition), not as `sdX`. Pass the correct name to `-x` or `-p`; specifying `sda` on an NVMe-only system returns no output.
+
+## See Also
+
+- **iotop** — Per-process disk I/O monitoring to identify which processes are generating load
+- **vmstat** — System-wide memory, swap, and I/O wait overview complementing per-device iostat data
+- **perf** — Linux profiling tool for tracing I/O paths and scheduling at the kernel level
 
 ## References
 

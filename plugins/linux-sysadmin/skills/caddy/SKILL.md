@@ -3,13 +3,26 @@ name: caddy
 description: >
   Caddy web server administration: Caddyfile syntax, automatic HTTPS via ACME,
   reverse proxy, TLS certificate management, JSON config API, xcaddy plugins,
-  and troubleshooting. Triggers on: caddy, Caddyfile, auto HTTPS, automatic TLS,
-  caddy reverse proxy, caddy server, acme_ca, caddy reload, caddy validate,
-  caddy fmt, caddy adapt, caddy environ, xcaddy.
+  and troubleshooting.
+triggerPhrases:
+  - "caddy"
+  - "Caddyfile"
+  - "auto HTTPS"
+  - "automatic TLS"
+  - "caddy reverse proxy"
+  - "caddy server"
+  - "acme_ca"
+  - "caddy reload"
+  - "caddy validate"
+  - "caddy fmt"
+  - "caddy adapt"
+  - "caddy environ"
+  - "xcaddy"
 globs:
   - "**/Caddyfile"
   - "**/caddy.json"
   - "**/caddy/**"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -20,10 +33,19 @@ globs:
 - **User**: `caddy` (system service user created by official package)
 - **Install**: official repo — https://caddyserver.com/docs/install
 
+## Quick Start
+```bash
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+sudo apt install caddy
+sudo systemctl enable --now caddy
+curl -sI http://localhost   # HTTP response = running
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Status | `systemctl status caddy` |
 | Start | `sudo systemctl start caddy` |
 | Stop | `sudo systemctl stop caddy` |
@@ -57,8 +79,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `listen tcp :80: bind: permission denied` | Port <1024 requires root or `CAP_NET_BIND_SERVICE` | System service runs as `caddy` user — grant capability: `sudo setcap cap_net_bind_service=+ep $(which caddy)` or use `AmbientCapabilities` in systemd unit |
 | ACME challenge fails — cert not issued | Port 80 unreachable from the internet | Firewall or NAT not forwarding port 80; check `ufw`, router rules, and `curl http://<your-domain>/.well-known/acme-challenge/test` from external |
 | `too many certificates already issued` | ACME rate limit hit (Let's Encrypt: 5 certs/domain/week) | Switch to staging CA in global options: `acme_ca https://acme-staging-v02.api.letsencrypt.org/directory` |
@@ -76,6 +98,13 @@ globs:
 - **Data directory permissions**: Caddy stores ACME account keys and certificates in `/var/lib/caddy`. If the service user cannot write there (e.g., after a manual copy or ownership change), cert issuance silently fails. The directory must be owned by the `caddy` user.
 - **xcaddy for third-party modules**: The standard `caddy` binary includes only first-party modules. Directives like `rate_limit`, `crowdsec`, `coraza` (WAF), or `cache` require a custom binary built with `xcaddy build`. The package-manager `caddy` binary cannot be extended at runtime.
 - **`caddy reload` vs `caddy stop && caddy start`**: `caddy reload` sends the new config to the running process via the admin API — zero downtime, TLS session state preserved. `restart` via systemd is a full process replacement — brief downtime, session state lost. Prefer `reload` for all config changes in production.
+
+## See Also
+- **nginx** — high-performance web server and reverse proxy, more manual TLS configuration
+- **apache** — traditional web server with extensive module ecosystem and .htaccess support
+- **traefik** — container-native reverse proxy with Docker label-based auto-discovery
+- **certbot** — standalone ACME client for obtaining Let's Encrypt certificates (Caddy has this built in)
+- **keycloak** — identity provider commonly reverse-proxied by Caddy
 
 ## References
 See `references/` for:

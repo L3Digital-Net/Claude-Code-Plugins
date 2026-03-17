@@ -3,13 +3,20 @@ name: loki
 description: >
   Grafana Loki log aggregation system: installation, configuration, LogQL queries,
   Promtail agent setup, storage backends, retention, alerting, and troubleshooting.
-  Triggers on: loki, Grafana Loki, Loki log aggregation, Promtail, LogQL,
-  log aggregation, centralized logs.
+triggerPhrases:
+  - "loki"
+  - "Grafana Loki"
+  - "Loki log aggregation"
+  - "Promtail"
+  - "LogQL"
+  - "log aggregation"
+  - "centralized logs"
 globs:
   - "**/loki-config.yaml"
   - "**/promtail-config.yaml"
   - "**/loki.yaml"
   - "**/promtail.yaml"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -22,10 +29,19 @@ globs:
 - **Logs**: `journalctl -u loki`, `journalctl -u promtail`
 - **Install options**: pre-built binary from GitHub releases, `docker run grafana/loki`, Grafana APT/RPM package (`apt install loki`), Helm chart
 
+## Quick Start
+
+```bash
+sudo apt install loki promtail
+sudo systemctl enable --now loki
+sudo systemctl enable --now promtail
+curl -s http://localhost:3100/ready
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Loki status | `systemctl status loki` |
 | Promtail status | `systemctl status promtail` |
 | Loki readiness | `curl -s http://localhost:3100/ready` → `ready` |
@@ -57,8 +73,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `entry out of order` in Loki logs | Log lines arriving with timestamps older than the current chunk window; out-of-order ingestion is disabled by default | Enable `allow_structured_metadata: true` and `unordered_writes: true` in `limits_config`, or fix the timestamp source in the Promtail pipeline |
 | Promtail not scraping a file | Wrong path glob, file owned by root and Promtail running as unprivileged user | Check `curl localhost:9080/targets` for `"health":"down"` entries; verify file path and `chmod`/`chown` or run Promtail as root |
 | Label cardinality too high | Using high-cardinality values (IP addresses, UUIDs, user IDs) as stream labels | Replace with a static label (e.g., `env`, `app`) and move dynamic values into the log line for LogQL filtering via `|=` or `| json` |
@@ -74,6 +90,12 @@ globs:
 - **Out-of-order logs require explicit opt-in**: Loki rejects log lines with timestamps earlier than the most recent entry in a chunk. Systemd journal replay, batch log shippers, and multi-threaded apps all hit this. Enable `unordered_writes: true` under `limits_config` (Loki 2.8+) or ensure Promtail uses `__timestamp__` from the log line rather than the tail time.
 - **Promtail scrape_configs mirror Prometheus syntax**: `static_configs`, `relabel_configs`, `pipeline_stages` — if you know Prometheus, the structure is familiar but `pipeline_stages` is Loki-specific (parse, extract, label, timestamp, output transforms).
 - **Retention requires the compactor component**: Setting `retention_period` in `limits_config` has no effect without `compactor.retention_enabled: true` and a running compactor. In single-binary mode the compactor runs automatically; in microservices mode it must be deployed separately.
+
+## See Also
+
+- **grafana** — Visualization platform for querying and displaying Loki logs alongside metrics dashboards
+- **prometheus** — Metrics collection counterpart to Loki; correlate logs and metrics in Grafana using shared labels
+- **journald** — Systemd journal that Promtail can scrape as a log source; use when you need to forward journal entries to Loki
 
 ## References
 See `references/` for:

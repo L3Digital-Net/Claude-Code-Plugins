@@ -1,12 +1,25 @@
 ---
 name: bind-utils
 description: >
-  DNS query and debugging tools — dig, nslookup, and host — for looking up
-  DNS records, tracing delegation chains, diagnosing resolver behavior, and
-  validating mail authentication records (SPF, DKIM, DMARC). Triggers on: dig,
-  nslookup, host, dns query, dns lookup, dns record, dns debugging, resolve
-  hostname, MX record, TXT record, SPF, DMARC, DKIM.
+  DNS query and debugging tools (dig, nslookup, host) for looking up DNS records,
+  tracing delegation chains, diagnosing resolver behavior, and validating mail
+  authentication records (SPF, DKIM, DMARC).
+triggerPhrases:
+  - "dig"
+  - "nslookup"
+  - "host"
+  - "dns query"
+  - "dns lookup"
+  - "dns record"
+  - "dns debugging"
+  - "resolve hostname"
+  - "MX record"
+  - "TXT record"
+  - "SPF"
+  - "DMARC"
+  - "DKIM"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -14,10 +27,18 @@ globs: []
 | Property | Value |
 |----------|-------|
 | **Binary** | `dig`, `nslookup`, `host` |
-| **Config** | `No persistent config — invoked directly` |
-| **Logs** | `No persistent logs — output to terminal` |
+| **Config** | No persistent config — invoked directly |
+| **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tools (from bind-utils / dnsutils package) |
 | **Install** | `apt install bind9-dnsutils` / `dnf install bind-utils` |
+
+## Quick Start
+```bash
+sudo apt install bind9-dnsutils
+dig example.com                    # full A record lookup
+dig +short example.com             # just the IP
+dig @8.8.8.8 example.com MX       # query specific server for MX
+```
 
 ## Key Operations
 
@@ -59,3 +80,14 @@ globs: []
 - **DNSSEC errors differ from NXDOMAIN**: `SERVFAIL` with DNSSEC validation failure looks identical to a broken zone from the client's perspective. Use `dig +cd example.com` to disable DNSSEC checking and see if the record resolves — if it does, DNSSEC is the issue.
 - **Split-horizon DNS misleads external diagnostics**: If your network runs internal DNS that returns RFC 1918 addresses for public names, querying from inside with your default resolver gives the internal view. Always query `@8.8.8.8` or `@1.1.1.1` explicitly when diagnosing external-facing DNS.
 - **PTR records require ISP cooperation**: Reverse DNS (PTR records) lives in the `in-addr.arpa.` zone, which is delegated by IANA to the IP address owner — typically the ISP or hosting provider, not you. You cannot set your own PTR record without either controlling the reverse zone yourself or asking your provider to set it.
+
+## See Also
+- **bind9** — full authoritative DNS server and recursive resolver for hosting your own zones
+- **unbound** — recursive-only DNS resolver with DNSSEC validation, lighter than BIND
+- **coredns** — plugin-based DNS server used as Kubernetes cluster DNS
+- **dnsmasq** — lightweight DNS forwarder and DHCP combo for local networks
+
+## References
+See `references/` for:
+- `cheatsheet.md` — dig, nslookup, and host command reference
+- `docs.md` — official documentation links

@@ -1,16 +1,31 @@
 ---
 name: docker
 description: >
-  Docker container runtime — installation, daemon config, container lifecycle,
+  Docker container runtime: installation, daemon config, container lifecycle,
   networking, volumes, image management, troubleshooting, and security.
-  Triggers on: docker, container, dockerfile, docker run, docker ps, container
-  runtime, docker daemon, dockerd, docker-compose, OCI, container image,
-  registry, docker pull, docker build, docker exec, docker logs.
+triggerPhrases:
+  - "docker"
+  - "container"
+  - "dockerfile"
+  - "docker run"
+  - "docker ps"
+  - "container runtime"
+  - "docker daemon"
+  - "dockerd"
+  - "docker-compose"
+  - "OCI"
+  - "container image"
+  - "registry"
+  - "docker pull"
+  - "docker build"
+  - "docker exec"
+  - "docker logs"
 globs:
   - "**/Dockerfile"
   - "**/Dockerfile.*"
   - "**/.dockerignore"
   - "**/daemon.json"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -20,6 +35,14 @@ globs:
 - **Data root**: `/var/lib/docker/` (images, containers, volumes)
 - **Socket**: `/var/run/docker.sock` (root access — treat as root equivalent)
 - **Install**: `apt install docker.io` (distro pkg) or official: `curl -fsSL https://get.docker.com | sh`
+
+## Quick Start
+```bash
+sudo apt install docker.io
+sudo systemctl enable --now docker
+sudo usermod -aG docker $USER && newgrp docker
+docker run --rm hello-world   # pulls and runs successfully
+```
 
 ## Key Operations
 - **List containers**: `docker ps` (running), `docker ps -a` (all)
@@ -44,8 +67,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `permission denied on /var/run/docker.sock` | User not in docker group | `sudo usermod -aG docker $USER` then log out/in |
 | Container exits immediately | Process exits (not a daemon issue) | `docker logs <name>` to see exit reason |
 | `port is already allocated` | Host port bound by another process | `ss -tlnp \| grep <port>` to find conflict |
@@ -62,6 +85,15 @@ globs:
 - **`docker exec` runs in the container's namespace**: Network, filesystem, processes — but NOT the container's entrypoint environment.
 - **Signals**: Docker sends SIGTERM to PID 1. If PID 1 doesn't handle it, container won't stop gracefully. Use `exec` form in Dockerfile CMD/ENTRYPOINT (not shell form).
 - **`--rm` flag**: Automatically removes container on exit. Use for one-off tasks; don't use for long-running containers you need to inspect after failure.
+
+## See Also
+- **docker-compose** — multi-container orchestration using declarative YAML compose files
+- **podman** — daemonless container runtime with rootless support and Docker CLI compatibility
+- **traefik** — container-native reverse proxy that auto-discovers Docker containers via labels
+- **buildah** — daemonless OCI image building; scriptable, rootless alternative to docker build
+- **trivy** — scan Docker images for vulnerabilities before deployment
+- **packer** — build Docker images alongside VM images from a single HCL template
+- **supervisor** — lightweight process manager; alternative to Docker for running multiple processes
 
 ## References
 See `references/` for:

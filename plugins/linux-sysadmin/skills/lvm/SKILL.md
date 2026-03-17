@@ -3,10 +3,27 @@ name: lvm
 description: >
   LVM (Logical Volume Manager) administration: physical volumes, volume groups,
   logical volumes, thin provisioning, snapshots, resizing, pvmove, and disaster
-  recovery. Triggers on: LVM, logical volume, pvcreate, vgcreate, lvcreate,
-  volume group, LVM snapshot, LVM thin, pvmove, vgextend, lvextend, lvreduce,
-  thin pool, physical volume, VG, LV, PV.
+  recovery.
+triggerPhrases:
+  - "LVM"
+  - "logical volume"
+  - "pvcreate"
+  - "vgcreate"
+  - "lvcreate"
+  - "volume group"
+  - "LVM snapshot"
+  - "LVM thin"
+  - "pvmove"
+  - "vgextend"
+  - "lvextend"
+  - "lvreduce"
+  - "thin pool"
+  - "physical volume"
+  - "VG"
+  - "LV"
+  - "PV"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -17,10 +34,20 @@ globs: []
 - **Distro install**: `apt install lvm2` / `dnf install lvm2`
 - **Module load**: `modprobe dm-mod` (usually auto-loaded on first use)
 
+## Quick Start
+
+```bash
+sudo apt install lvm2
+sudo pvcreate /dev/sdX
+sudo vgcreate myvg /dev/sdX
+sudo lvcreate -L 20G -n mylv myvg
+sudo mkfs.ext4 /dev/myvg/mylv
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | List physical volumes (brief) | `pvs` |
 | List physical volumes (verbose) | `pvdisplay` |
 | List volume groups (brief) | `vgs` |
@@ -62,8 +89,8 @@ globs: []
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|--------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | LV not activating on boot | Missing fstab entry or not in initrd | Add to `/etc/fstab`; on Debian/Ubuntu run `update-initramfs -u` |
 | `No space left on device` inside VG | VG is full | `vgs` to confirm; `vgextend myvg /dev/sdY` to add disk, or `lvreduce` another LV |
 | Thin pool showing 100% data usage | Over-provisioned thin volumes wrote more than pool holds | `lvextend -L +20G myvg/mypool`; enable `thin_pool_autoextend` in `lvm.conf` |
@@ -81,6 +108,15 @@ globs: []
 - **LV extension requires two commands**: `lvextend` grows the block device; the filesystem (ext4: `resize2fs`, XFS: `xfs_growfs`, Btrfs: `btrfs filesystem resize`) must be grown separately. Forgetting the second command leaves the filesystem at the old size with no error.
 - **VG metadata area limits on large PV counts**: the default metadata area (1 MiB) caps the number of PEs the VG can describe. With many small PVs or very large disks with a small PE size, the metadata area fills. Increase with `pvresize` and `pvchange --metadatacopies`.
 - **LVM cache (dm-cache, dm-writecache) is unrelated to ZFS ARC/L2ARC**: LVM cache is a block-level cache layer sitting below the filesystem. Combining it with ZFS ARC/L2ARC on the same volume creates redundant caching layers and can cause cache coherency surprises. Use one caching layer per storage stack.
+
+## See Also
+
+- **mdadm** — Linux software RAID; provides block-level redundancy beneath LVM for disk failure protection
+- **ext4** — Most common filesystem layered on top of LVM logical volumes
+- **btrfs** — Filesystem with built-in volume management and snapshots; alternative to LVM+ext4 when CoW features are needed
+- **xfs** — High-performance filesystem paired with LVM for online growth via `lvextend` + `xfs_growfs`
+- **zfs** — Integrated volume manager and filesystem; replaces both LVM and the filesystem layer
+- **fdisk-parted** — Partition tools used to prepare disks before `pvcreate`
 
 ## References
 See `references/` for:

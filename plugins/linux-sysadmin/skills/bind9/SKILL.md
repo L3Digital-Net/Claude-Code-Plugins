@@ -3,15 +3,30 @@ name: bind9
 description: >
   BIND9 (named) authoritative DNS server and recursive resolver administration:
   zone file syntax, named.conf configuration, rndc management, DNSSEC, split-horizon
-  views, zone transfers, and troubleshooting. Triggers on: bind9, named, BIND DNS,
-  authoritative DNS, DNS zone, zone file, named.conf, DNS server setup, rndc,
-  zone transfer, PTR record, SOA record, DNS resolver, forwarders, DNSSEC signing.
+  views, zone transfers, and troubleshooting.
+triggerPhrases:
+  - "bind9"
+  - "named"
+  - "BIND DNS"
+  - "authoritative DNS"
+  - "DNS zone"
+  - "zone file"
+  - "named.conf"
+  - "DNS server setup"
+  - "rndc"
+  - "zone transfer"
+  - "PTR record"
+  - "SOA record"
+  - "DNS resolver"
+  - "forwarders"
+  - "DNSSEC signing"
 globs:
   - "**/named.conf*"
   - "**/*.zone"
   - "**/db.*"
   - "**/bind/**"
   - "**/named/**"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -24,10 +39,18 @@ globs:
 - **Runtime control socket**: `rndc` communicates with `named` via port 953 (loopback only by default)
 - **Distro install**: `apt install bind9 bind9utils` / `dnf install bind bind-utils`
 
+## Quick Start
+```bash
+sudo apt install bind9 bind9utils
+sudo systemctl enable --now bind9
+named-checkconf /etc/bind/named.conf   # silent = valid config
+dig @localhost . SOA +short             # root SOA = named is answering
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Service status | `systemctl status named` (RHEL) or `systemctl status bind9` (Debian) |
 | Reload all zones (no restart) | `rndc reload` |
 | Reload a specific zone | `rndc reload example.com` |
@@ -63,8 +86,8 @@ Firewall (firewalld): `sudo firewall-cmd --permanent --add-service=dns && sudo f
 
 ## Common Failures
 
-| Symptom | Likely cause | Check / Fix |
-|---------|-------------|-------------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | Zone not loading; `SERVFAIL` for zone records | Syntax error in zone file | `named-checkzone example.com /path/to/db.example.com` — shows exact line and error |
 | `SERVFAIL` for delegated subdomains | Missing or wrong NS delegation in parent zone | Verify NS and glue records at parent; check with `dig NS sub.example.com @parent-ns` |
 | `REFUSED` on queries from clients | `allow-query` ACL too restrictive | Add client subnet to `allow-query` in `named.conf.options`; reload |
@@ -84,6 +107,13 @@ Firewall (firewalld): `sudo firewall-cmd --permanent --add-service=dns && sudo f
 - **`rndc reload` vs `rndc reconfig` vs full restart**: `rndc reload` re-reads zone files for all currently configured zones. `rndc reconfig` only picks up zone additions and removals from named.conf — it does not re-read zone file data. A full `systemctl restart named` is rarely needed and causes a brief outage; prefer `rndc reload`.
 - **DNSSEC complexity**: Key management (ZSK/KSK rotation), signing, NSEC vs NSEC3 choice, DS record submission to parent zone, and key rollover timing are all manual steps unless using automated DNSSEC (`dnssec-policy` in BIND 9.16+). A zone with stale DNSSEC signatures causes SERVFAIL for all DNSSEC-validating resolvers.
 - **Forwarders vs recursive resolution**: `forwarders` in the options block makes named forward all recursive queries to the listed servers instead of resolving from root. This is appropriate for internal resolvers that should use corporate DNS. For a public authoritative server, `forwarders` is usually wrong and `recursion no` is the right choice.
+
+## See Also
+- **unbound** — recursive-only DNS resolver with built-in DNSSEC validation, simpler than BIND for pure caching/resolving
+- **coredns** — plugin-based DNS server, commonly used as Kubernetes cluster DNS
+- **dnsmasq** — lightweight DNS forwarder and DHCP combo for small networks
+- **bind-utils** — DNS query tools (dig, nslookup, host) for testing and debugging BIND zones
+- **pihole** — DNS sinkhole for network-wide ad blocking, can forward to BIND
 
 ## References
 See `references/` for:

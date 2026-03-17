@@ -2,10 +2,17 @@
 name: iperf3
 description: >
   Network throughput and bandwidth measurement tool requiring an iperf3 server
-  on one end and a client on the other. Triggers on: iperf3, iperf, network
-  bandwidth, throughput test, network speed test, latency test, network
-  performance.
+  on one end and a client on the other.
+triggerPhrases:
+  - "iperf3"
+  - "iperf"
+  - "network bandwidth"
+  - "throughput test"
+  - "network speed test"
+  - "latency test"
+  - "network performance"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -13,10 +20,20 @@ globs: []
 | Property | Value |
 |----------|-------|
 | **Binary** | `iperf3` |
-| **Config** | `No persistent config — invoked directly` |
-| **Logs** | `No persistent logs — output to terminal` |
+| **Config** | No persistent config — invoked directly |
+| **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool |
 | **Install** | `apt install iperf3` / `dnf install iperf3` |
+
+## Quick Start
+
+```bash
+sudo apt install iperf3
+iperf3 -s                          # start server (on remote end)
+iperf3 -c <server-ip>             # run TCP throughput test (on client end)
+iperf3 -c <server-ip> -R          # reverse mode (test download speed)
+iperf3 -c <server-ip> -u -b 100M # UDP test with 100 Mbit/s target
+```
 
 ## Key Operations
 
@@ -56,3 +73,13 @@ globs: []
 - **Reverse mode tests download, not upload**: `-R` flips who sends data — the server sends to the client. This matters when the uplink and downlink speeds differ (e.g., asymmetric ISP links, one-way congestion).
 - **Server exits after one test**: The default iperf3 server mode exits after serving one client. Use `-D` to run as a background daemon, or wrap it in a `while true; do iperf3 -s; done` loop for repeated testing.
 - **Port 5201 must be open in both directions**: TCP tests need 5201 open; UDP tests need 5201 UDP open. Stateful firewalls sometimes allow the TCP control channel but block the UDP data channel — always test the specific protocol you care about.
+
+## See Also
+
+- **mtr** — diagnose per-hop latency and packet loss on the path before running throughput tests
+- **tcpdump** — capture packets during an iperf3 test to diagnose unexpected throughput results
+
+## References
+See `references/` for:
+- `cheatsheet.md` — task-organized command reference
+- `docs.md` — official documentation links

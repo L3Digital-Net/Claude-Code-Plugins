@@ -3,14 +3,29 @@ name: postgresql
 description: >
   PostgreSQL database server administration: installation, configuration,
   user and database management, backup and restore, replication, query
-  performance, connection management, and troubleshooting. Triggers on:
-  postgresql, postgres, psql, pg_dump, pg_restore, pg_dumpall, pg_hba.conf,
-  postgresql.conf, pg_stat_activity, pg_upgrade, PostgreSQL, database postgres,
-  vacuumdb, pgbouncer, pg_basebackup, replication slot.
+  performance, connection management, and troubleshooting.
+triggerPhrases:
+  - "postgresql"
+  - "postgres"
+  - "psql"
+  - "pg_dump"
+  - "pg_restore"
+  - "pg_dumpall"
+  - "pg_hba.conf"
+  - "postgresql.conf"
+  - "pg_stat_activity"
+  - "pg_upgrade"
+  - "PostgreSQL"
+  - "database postgres"
+  - "vacuumdb"
+  - "pgbouncer"
+  - "pg_basebackup"
+  - "replication slot"
 globs:
   - "**/postgresql.conf"
   - "**/pg_hba.conf"
   - "**/pg_ident.conf"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -25,10 +40,20 @@ globs:
 - **Install (Debian)**: `apt install postgresql-16`
 - **Install (RHEL)**: `dnf install postgresql16-server && postgresql-16-setup initdb`
 
+## Quick Start
+
+```bash
+sudo apt install postgresql-16                      # install PostgreSQL 16
+sudo systemctl enable postgresql@16-main            # enable on boot
+sudo systemctl start postgresql@16-main             # start the service
+sudo -u postgres pg_isready                         # verify accepting connections
+sudo -u postgres psql -c "SELECT version();"        # confirm version
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Service status | `systemctl status postgresql@16-main` (Debian) / `systemctl status postgresql-16` (RHEL) |
 | Reload config | `sudo systemctl reload postgresql@16-main` or `SELECT pg_reload_conf();` in psql |
 | Connect as postgres | `sudo -u postgres psql` |
@@ -65,8 +90,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check / Fix |
-|---------|-------------|-------------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `password authentication failed for user "foo"` | Wrong password, or pg_hba.conf requires a different method | Check pg_hba.conf auth method for the source host; reset password with `ALTER USER foo PASSWORD 'newpass';` |
 | `no pg_hba.conf entry for host "x.x.x.x"` | Client IP not listed in pg_hba.conf | Add a `host` line for the IP range; reload with `SELECT pg_reload_conf();` |
 | `connection refused` on 5432 | PostgreSQL not listening on that interface | Check `listen_addresses` in postgresql.conf; default is `localhost` — change to `'*'` for all interfaces |
@@ -85,6 +110,15 @@ globs:
 - **Major version upgrades require explicit migration** — `pg_upgrade` must be used (not a package upgrade). Data directory format changes between major versions (e.g., 15 → 16). Plan and test upgrades; logical replication is an alternative for low-downtime upgrades.
 - **`work_mem` is per sort/hash operation, not per query** — a single complex query can allocate `work_mem` many times in parallel. Setting it too high with many concurrent queries causes OOM. Start at 4–16MB globally and override per-session for known heavy queries.
 - **Replica promotion is permanent** — once a standby is promoted with `pg_ctl promote` or `SELECT pg_promote()`, it becomes a primary and cannot rejoin the old primary without a full re-sync (`pg_basebackup`).
+
+## See Also
+
+- **mariadb** — Alternative relational database with MySQL compatibility and simpler replication setup
+- **redis** — In-memory data store frequently used alongside PostgreSQL for caching and session storage
+- **sqlite** — Embedded single-file database for applications that don't need a server
+- **cassandra** — distributed NoSQL alternative when relational constraints aren't needed
+- **patroni** — automatic PostgreSQL failover and HA clustering
+- **influxdb** — time series database for metrics alongside PostgreSQL for relational data
 
 ## References
 See `references/` for:

@@ -3,12 +3,22 @@ name: rsync
 description: >
   rsync file synchronization and backup: local and remote sync, incremental
   backups with --link-dest, exclude patterns, daemon mode, and troubleshooting.
-  Triggers on: rsync, rsync backup, rsync remote, rsync SSH, rsync exclude,
-  incremental backup rsync, rsync daemon, rsyncd.conf, rsync --delete,
-  rsync --link-dest, rsync dry run.
+triggerPhrases:
+  - "rsync"
+  - "rsync backup"
+  - "rsync remote"
+  - "rsync SSH"
+  - "rsync exclude"
+  - "incremental backup rsync"
+  - "rsync daemon"
+  - "rsyncd.conf"
+  - "rsync --delete"
+  - "rsync --link-dest"
+  - "rsync dry run"
 globs:
   - "**/rsyncd.conf"
   - "**/rsyncd.secrets"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,6 +28,15 @@ globs:
 - **Daemon config**: `/etc/rsyncd.conf`, `/etc/rsyncd.secrets`
 - **Daemon logs**: `journalctl -u rsync` (if using systemd unit), or `syslog` / `--log-file`
 - **Distro install**: `apt install rsync` / `dnf install rsync`
+
+## Quick Start
+
+```bash
+sudo apt install rsync
+rsync -avn /src/ /dst/                          # dry run first
+rsync -av /src/ /dst/                           # local sync
+rsync -av -e ssh /src/ user@host:/dst/          # remote push over SSH
+```
 
 ## Key Operations
 
@@ -60,8 +79,8 @@ rsync is a one-shot command in most uses — there is no persistent process to c
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | Remote files deleted unexpectedly | `--delete` ran without a prior dry-run | Always run `rsync -avn --delete /src/ /dst/` first; restore from backup |
 | SSH prompts for password in a cron job | No SSH key auth configured | Set up key-based auth: `ssh-keygen` + `ssh-copy-id user@host`; test with `ssh -i /path/key user@host` |
 | "No space left on device" at destination | Destination disk full | `df -h /dst/`; free space or reduce scope |
@@ -81,6 +100,12 @@ rsync is a one-shot command in most uses — there is no persistent process to c
 - **`--link-dest` for Time Machine-style backups**: Each run creates a new snapshot directory; unchanged files are hardlinked from the previous snapshot, not duplicated. The result is full-backup semantics at incremental-backup storage cost.
 - **rsync daemon has no encryption**: The `rsync://` protocol (port 873) is plaintext. For encrypted remote sync, use rsync over SSH (`-e ssh`), not daemon mode. If daemon mode is required, tunnel it through SSH or a VPN.
 - **`-z` compression over SSH is usually wasteful**: SSH already compresses the stream if `Compression yes` is set. Double-compressing adds CPU overhead for little gain on fast links. Useful on slow WAN links where CPU is cheaper than bandwidth.
+
+## See Also
+
+- **rclone** — Cloud storage sync and mount supporting 70+ providers
+- **borg** — Deduplicated encrypted backup with borgmatic automation wrapper
+- **restic** — Content-addressed deduplicating backup with S3/B2/SFTP backends
 
 ## References
 

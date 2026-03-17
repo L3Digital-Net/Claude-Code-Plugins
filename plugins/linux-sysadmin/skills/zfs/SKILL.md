@@ -3,11 +3,30 @@ name: zfs
 description: >
   ZFS (OpenZFS) storage administration: pool creation and management, datasets,
   snapshots, send/receive replication, scrubbing, disk replacement, encryption,
-  and performance tuning. Triggers on: ZFS, zpool, zfs snapshot, ZFS dataset,
-  zfs send receive, ZFS scrub, RAID-Z, ZFS pool, OpenZFS, zpool status,
-  zpool create, zfs list, zfs destroy, zfs rollback, resilver, ARC cache,
-  zpool import, zpool export, zfs compression, zfs quota.
+  and performance tuning.
+triggerPhrases:
+  - "ZFS"
+  - "zpool"
+  - "zfs snapshot"
+  - "ZFS dataset"
+  - "zfs send receive"
+  - "ZFS scrub"
+  - "RAID-Z"
+  - "ZFS pool"
+  - "OpenZFS"
+  - "zpool status"
+  - "zpool create"
+  - "zfs list"
+  - "zfs destroy"
+  - "zfs rollback"
+  - "resilver"
+  - "ARC cache"
+  - "zpool import"
+  - "zpool export"
+  - "zfs compression"
+  - "zfs quota"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -20,10 +39,20 @@ globs: []
 - **Distro install**: `apt install zfsutils-linux` (Debian/Ubuntu) / `dnf install zfs` after adding OpenZFS repo (RHEL/Fedora)
 - **Version check**: `zpool version` / `zfs version`
 
+## Quick Start
+
+```bash
+sudo apt install zfsutils-linux
+sudo modprobe zfs
+sudo zpool create mypool mirror /dev/sdX /dev/sdY
+zpool status mypool
+zfs list
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Pool status (all pools) | `zpool status` |
 | Pool status (one pool) | `zpool status <pool>` |
 | Pool list (size/free/health) | `zpool list` |
@@ -76,8 +105,8 @@ globs: []
 
 ## Common Failures
 
-| Symptom | Likely cause | Check / Fix |
-|---------|-------------|-------------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | Pool status shows `DEGRADED` | One or more disks failed | `zpool status -v <pool>` to identify failed device; replace with `zpool replace` |
 | Pool status shows `FAULTED` | Too many disk failures for redundancy level | Restore from backup; RAIDZ1 cannot survive 2 simultaneous disk failures |
 | Checksum errors without disk failure | Bit rot, bad cables, flaky controller | `zpool scrub` to assess scope; check cables and HBA; replace suspect disk |
@@ -100,6 +129,14 @@ globs: []
 - **L2ARC and SLOG devices**: L2ARC (SSD read cache) rarely helps unless your working set is larger than RAM. SLOG (separate ZFS Intent Log) only speeds up synchronous writes — databases, NFS with sync enabled. Cheap SSDs as SLOG devices are dangerous: a failed SLOG can cause a pool to need recovery. Use enterprise or power-loss-protected SSDs for SLOG.
 - **`recordsize` matters for databases**: Default `recordsize=128K` is good for large sequential files. PostgreSQL and MySQL benefit from `recordsize=16K` or `recordsize=8K` to match their page sizes. Set before writing data — changing `recordsize` applies to new writes only.
 - **Snapshot space accounting**: `zfs list -t snapshot` shows `USED` for each snapshot, but this only reflects blocks that are unique to that snapshot. Deleting a snapshot transfers its blocks to the next newer snapshot until the last one is destroyed. Space is not freed until the last snapshot holding unique blocks is destroyed.
+
+## See Also
+
+- **btrfs** — Copy-on-write filesystem with snapshots and send/receive; lighter weight than ZFS but less mature RAID implementation
+- **ext4** — Traditional Linux filesystem; use when you don't need pooling, checksums, or snapshots
+- **lvm** — Block-level volume management; provides snapshots and resizing but without ZFS-level checksums or self-healing
+- **smartctl** — Disk health monitoring via SMART data; use to proactively identify failing drives before ZFS marks them as faulted
+- **mdadm** — Linux software RAID; simpler block-level redundancy without ZFS's integrated filesystem and checksums
 
 ## References
 

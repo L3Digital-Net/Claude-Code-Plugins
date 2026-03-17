@@ -1,12 +1,20 @@
 ---
 name: openssl-cli
 description: >
-  openssl CLI certificate and TLS operations: invoked when the user asks about
-  openssl, certificate inspect, TLS check, ssl certificate, generate key, CSR,
-  self-signed certificate, verify certificate, certificate chain, or certificate
-  expiry. Covers PEM inspection, live server checks, key generation, CSR creation,
-  self-signed certs, chain verification, expiry checking, key/cert matching,
-  format conversion, and OCSP.
+  openssl CLI certificate and TLS operations: PEM inspection, live server checks,
+  key generation, CSR creation, self-signed certs, chain verification, expiry
+  checking, key/cert matching, format conversion, and OCSP.
+triggerPhrases:
+  - "openssl"
+  - "certificate inspect"
+  - "TLS check"
+  - "ssl certificate"
+  - "generate key"
+  - "CSR"
+  - "self-signed certificate"
+  - "verify certificate"
+  - "certificate chain"
+  - "certificate expiry"
 globs:
   - "**/*.pem"
   - "**/*.crt"
@@ -14,6 +22,7 @@ globs:
   - "**/*.csr"
   - "**/*.p12"
   - "**/*.pfx"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -25,6 +34,16 @@ globs:
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool |
 | **Install** | `apt install openssl` / `dnf install openssl` (pre-installed on most distros) |
+
+## Quick Start
+
+```bash
+sudo apt install openssl
+openssl version                        # verify installation
+openssl x509 -in cert.pem -text -noout # inspect a certificate
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 90 -nodes  # self-signed cert
+echo Q | openssl s_client -connect example.com:443 -servername example.com 2>/dev/null | openssl x509 -noout -enddate  # check remote cert expiry
+```
 
 ## Key Operations
 
@@ -66,3 +85,16 @@ globs:
 - **SNI is not automatic**: When a server hosts multiple domains on one IP, `s_client` without `-servername` may return the default (wrong) certificate. Always pass `-servername domain.com` to match what browsers send.
 - **Certificate chain order matters for servers**: Servers should present the leaf certificate first, intermediates next, and omit the root CA (clients already have it). A chain in the wrong order causes TLS handshake failures on some clients even though every certificate is valid.
 - **LibreSSL vs OpenSSL on macOS**: macOS ships LibreSSL under the `openssl` binary name, but it doesn't support all OpenSSL options. Install `openssl@3` via Homebrew for full compatibility when writing cross-platform scripts.
+
+## See Also
+
+- **certbot** — automated Let's Encrypt certificate management (uses openssl under the hood)
+- **step-ca** — private certificate authority for internal services
+- **ssh-keygen** — SSH key management (complementary to TLS certificate operations)
+- **age** — modern file encryption as an alternative to openssl enc
+
+## References
+
+See `references/` for:
+- `cheatsheet.md` — certificate inspection, key generation, CSR creation, format conversion patterns
+- `docs.md` — official documentation links

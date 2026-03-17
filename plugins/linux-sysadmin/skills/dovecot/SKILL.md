@@ -3,13 +3,27 @@ name: dovecot
 description: >
   Dovecot IMAP/POP3 server administration: configuration, authentication,
   mail storage, SSL/TLS, quota, LMTP delivery, and troubleshooting.
-  Triggers on: dovecot, IMAP server, POP3 server, dovecot mail, dovecot SSL,
-  mail delivery agent, MDA dovecot, LMTP dovecot, doveadm, doveconf,
-  imap-login, pop3-login, passdb, userdb, Maildir dovecot.
+triggerPhrases:
+  - "dovecot"
+  - "IMAP server"
+  - "POP3 server"
+  - "dovecot mail"
+  - "dovecot SSL"
+  - "mail delivery agent"
+  - "MDA dovecot"
+  - "LMTP dovecot"
+  - "doveadm"
+  - "doveconf"
+  - "imap-login"
+  - "pop3-login"
+  - "passdb"
+  - "userdb"
+  - "Maildir dovecot"
 globs:
   - "**/dovecot.conf"
   - "**/dovecot/**/*.conf"
   - "**/conf.d/*.conf"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -21,10 +35,20 @@ globs:
 - **User**: `dovecot` (daemon processes), `dovenull` (login process pre-auth)
 - **Distro install**: `apt install dovecot-imapd dovecot-pop3d` / `dnf install dovecot`
 
+## Quick Start
+
+```bash
+sudo apt install dovecot-imapd dovecot-pop3d   # install IMAP and POP3 support
+sudo systemctl enable dovecot                   # enable on boot
+sudo systemctl start dovecot                    # start the service
+doveconf -n                                     # verify effective config (non-defaults)
+doveadm auth test <username>                    # test user authentication
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Status | `systemctl status dovecot` |
 | Test / dump config | `doveconf -n` (non-defaults only); `doveconf -a` (all settings) |
 | Reload after config change | `sudo systemctl reload dovecot` |
@@ -55,8 +79,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check / Fix |
-|---------|-------------|-------------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `Authentication failed` | Wrong passdb lookup, PAM not configured, or password mismatch | `doveadm auth test <user>`; check `/etc/dovecot/conf.d/10-auth.conf` passdb driver; inspect PAM config in `/etc/pam.d/dovecot` |
 | `Mailbox doesn't exist` | Wrong `mail_location` or namespace path, mail not yet delivered | Check `mail_location` in `10-mail.conf`; verify the Maildir exists: `ls ~/Maildir/` |
 | TLS handshake fails / `SSL_accept() failed` | Cert or key path wrong, file unreadable by dovecot user, or protocol mismatch | `doveconf ssl_cert ssl_key`; check file permissions; verify cert chain with `openssl verify` |
@@ -73,6 +97,11 @@ globs:
 - **LMTP requires Postfix integration**: Dovecot does not receive mail directly. Postfix must be configured to hand off to Dovecot's LMTP socket or port. Socket path and permissions must match on both sides; a mismatch produces silent delivery failures logged only in Postfix.
 - **auth-master socket permissions**: Services that authenticate against Dovecot (e.g., Postfix SASL) use the `auth-userdb` or `auth-master` socket. The socket must be writable by the Postfix user (`postfix` or `mail`). This is set via `mode`, `user`, and `group` under `service auth` in `10-master.conf`.
 - **SSL is not optional**: `ssl = no` disables encryption entirely. On any network-exposed server, set `ssl = required` and configure valid cert/key paths. Using self-signed certs requires clients to accept the cert — use Let's Encrypt or a proper CA for production. The cert file must include the full chain.
+
+## See Also
+
+- **postfix** — MTA that delivers mail to Dovecot via LMTP
+- **opendkim** — DKIM signing/verification for mail passing through Postfix before Dovecot delivery
 
 ## References
 See `references/` for:

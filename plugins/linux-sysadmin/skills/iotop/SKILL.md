@@ -3,9 +3,17 @@ name: iotop
 description: >
   iotop monitors disk I/O usage per process in real time, similar to top for CPU.
   It shows which processes are reading and writing to disk and at what rates.
-  Triggers on: iotop, disk I/O by process, io usage, what process is writing,
-  high disk activity, process disk usage, who is writing to disk, disk write by pid.
+triggerPhrases:
+  - "iotop"
+  - "disk I/O by process"
+  - "io usage"
+  - "what process is writing"
+  - "high disk activity"
+  - "process disk usage"
+  - "who is writing to disk"
+  - "disk write by pid"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -17,6 +25,15 @@ globs: []
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool |
 | **Install** | `apt install iotop` / `dnf install iotop` (Python version); `apt install iotop-c` / `dnf install iotop-c` (C version) |
+
+## Quick Start
+
+```bash
+sudo apt install iotop-c              # install the maintained C rewrite
+sudo iotop -o                          # show only processes with active I/O
+sudo iotop -b -o -n 5                  # batch mode, 5 samples of active I/O
+sudo iotop -a                          # show accumulated I/O totals
+```
 
 ## Key Operations
 
@@ -54,6 +71,11 @@ globs: []
 - **Disk I/O only — not network**: iotop shows block device reads and writes. Network I/O, pipe I/O, and socket traffic do not appear. Use `nethogs` or `ss` for network per-process stats.
 - **FUSE filesystem attribution**: I/O to FUSE-mounted filesystems (sshfs, rclone, etc.) appears under the FUSE kernel thread, not the user process initiating the access. The actual data mover is identified by correlating PID with the FUSE mount.
 - **Batch mode is required for scripting**: interactive mode uses terminal control codes unsuitable for logging or pipelines. Always use `-b` when capturing output to a file or piping to another tool.
+
+## See Also
+
+- **iostat** — Per-device disk throughput and latency metrics (complements iotop's per-process view)
+- **vmstat** — System-wide memory, swap, and I/O wait statistics for overall health assessment
 
 ## References
 

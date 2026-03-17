@@ -1,10 +1,20 @@
 ---
 name: firewalld
 description: >
-  firewalld zone-based firewall management and nftables — zone configuration,
+  firewalld zone-based firewall management and nftables: zone configuration,
   rich rules, port forwarding, services, runtime vs permanent rules, and
-  troubleshooting. Triggers on: firewalld, firewall-cmd, nftables, nft, zone,
-  rich rule, RHEL firewall, Fedora firewall.
+  troubleshooting.
+triggerPhrases:
+  - "firewalld"
+  - "firewall-cmd"
+  - "nftables"
+  - "nft"
+  - "zone"
+  - "rich rule"
+  - "RHEL firewall"
+  - "Fedora firewall"
+globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -17,9 +27,19 @@ description: >
 - **Logs**: `journalctl -u firewalld`
 - **Install**: `dnf install firewalld` (default on RHEL/Fedora); `apt install firewalld`
 
+## Quick Start
+
+```bash
+sudo apt install firewalld
+sudo systemctl enable --now firewalld
+sudo firewall-cmd --add-service=ssh --permanent
+sudo firewall-cmd --reload
+sudo firewall-cmd --list-all          # verify active zone rules
+```
+
 ## Key Operations
 
-| Goal | Command |
+| Task | Command |
 |------|---------|
 | Check if running | `sudo firewall-cmd --state` |
 | Get default zone | `sudo firewall-cmd --get-default-zone` |
@@ -61,8 +81,8 @@ Default policy after install: `public` zone active, `ssh` (and `dhcpv6-client`) 
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | Rule added but traffic still blocked | Used `--permanent` but forgot `--reload` | `sudo firewall-cmd --reload` |
 | Rule lost after reload/restart | Forgot `--permanent` flag | Re-add with `--permanent`; rules without it are runtime-only |
 | Service not found | Service name not recognized | `sudo firewall-cmd --get-services` to list valid names |
@@ -84,6 +104,12 @@ Default policy after install: `public` zone active, `ssh` (and `dhcpv6-client`) 
 - **Rich rules for complex logic**: Regular `--add-port` and `--add-service` can't express source IP restrictions, port forwarding, or logging. Rich rules handle all of these. The rich rule language is verbose — see `references/common-rules.md` for copy-paste examples.
 
 - **`--runtime-to-permanent`**: If you've made several runtime changes and want to persist them all at once without re-entering each command, `sudo firewall-cmd --runtime-to-permanent` promotes the entire current runtime configuration to permanent.
+
+## See Also
+
+- **ufw** — simpler iptables frontend for Debian/Ubuntu environments
+- **fail2ban** — automatic IP banning based on log pattern matching
+- **crowdsec** — collaborative intrusion prevention with community-shared blocklists
 
 ## References
 See `references/` for:

@@ -3,13 +3,24 @@ name: gitea
 description: >
   Gitea and Forgejo self-hosted git service administration: installation,
   configuration, admin CLI, user and repository management, SSH setup,
-  backup/restore, reverse proxy, LFS, and troubleshooting. Triggers on:
-  gitea, forgejo, Gitea, Forgejo, self-hosted git, gitea docker,
-  self-hosted github, app.ini, gitea admin, gitea dump, gitea migrate.
+  backup/restore, reverse proxy, LFS, and troubleshooting.
+triggerPhrases:
+  - "gitea"
+  - "forgejo"
+  - "Gitea"
+  - "Forgejo"
+  - "self-hosted git"
+  - "gitea docker"
+  - "self-hosted github"
+  - "app.ini"
+  - "gitea admin"
+  - "gitea dump"
+  - "gitea migrate"
 globs:
   - "**/app.ini"
   - "**/gitea/conf/app.ini"
   - "**/gitea/**/*.ini"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -23,16 +34,29 @@ globs:
 - **Ports**: 3000 (HTTP web UI), 22 or 2222 (SSH git operations)
 - **Forgejo**: community fork of Gitea with identical `app.ini` format and CLI — all commands below work on both. Replace `gitea` binary with `forgejo` where applicable.
 
+## Quick Start
+
+```bash
+# Docker (recommended)
+docker compose pull
+docker compose up -d
+curl -s http://localhost:3000/api/healthz
+# Bare-metal
+wget -O gitea https://dl.gitea.com/gitea/latest/gitea-linux-amd64
+chmod +x gitea && sudo mv gitea /usr/local/bin/
+sudo systemctl enable --now gitea
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Service status | `systemctl status gitea` |
 | Start / stop / restart | `systemctl start\|stop\|restart gitea` |
 | Reload config (no restart) | `systemctl reload gitea` — note: most `[server]` changes require a full restart |
 | Admin CLI help | `gitea admin --help` (or `forgejo admin --help`) |
-| Create first admin user | `gitea admin user create --username admin --password <pass> --email admin@example.com --admin` |
-| Reset a user's password | `gitea admin user change-password --username <user> --password <newpass>` |
+| Create first admin user | `gitea admin user create --username admin --password-from-env --email admin@example.com --admin` |
+| Reset a user credential | `gitea admin user change-password --username <user> --password-from-env` |
 | Regenerate git hooks | `gitea admin regenerate hooks` — fixes broken push/post-receive hooks after upgrade |
 | Regenerate SSH keys | `gitea admin regenerate keys` — rebuilds `~git/.ssh/authorized_keys` |
 | List all users | `gitea admin user list` |
@@ -62,8 +86,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check / Fix |
-|---------|-------------|-------------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | "There is no user with that email" on first web setup | No admin user exists yet | Run `gitea admin user create --admin` from the CLI before opening the web installer |
 | SSH key accepted but `git clone` returns "Permission denied" | `authorized_keys` not rebuilt after install or upgrade | Run `gitea admin regenerate keys`; check `~git/.ssh/authorized_keys` contains entries |
 | SSH works locally but not through reverse proxy | SSH passthrough not configured — proxy only forwards HTTP | Use a dedicated TCP proxy for port 22/2222, or configure `SSH_DOMAIN` and map Docker port directly |
@@ -82,6 +106,10 @@ globs:
 - **Forgejo is a drop-in replacement**: all `app.ini` keys, Docker image layout, and CLI commands are identical. Replace `gitea` binary/image with `forgejo` equivalent; no config changes required. Forgejo may diverge in future versions — check its changelog before assuming parity.
 - **Docker volume layout differs from native**: inside the container `/data/gitea/conf/app.ini` is the config, `/data/git/repositories` holds repos. Mount `/data` as a single volume or map subdirectories individually — mixing strategies causes permission issues.
 - **`INSTALL_LOCK = true` must be set before first start in automated deployments**: without it, any unauthenticated visitor who reaches the install page can become the first admin. Set it in `app.ini` before exposing the port.
+
+## See Also
+
+- **nextcloud** — self-hosted file storage and collaboration platform that complements a Gitea code hosting setup
 
 ## References
 
