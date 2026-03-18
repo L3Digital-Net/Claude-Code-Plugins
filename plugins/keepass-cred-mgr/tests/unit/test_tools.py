@@ -89,9 +89,30 @@ class TestParseShowOutput:
     def test_single_line_notes_unchanged(self):
         """Existing single-line notes behavior preserved."""
         from server.tools.read import _parse_show_output
-        output = "Title: Entry\nNotes: Single line\nUserName: admin\n"
+        # Real keepassxc-cli output order: Title, UserName, Password, URL, Notes
+        output = "Title: Entry\nUserName: admin\nNotes: Single line\n"
         result = _parse_show_output(output)
         assert result["notes"] == "Single line"
+
+    def test_notes_containing_field_like_text(self):
+        """Notes with 'Password: ...' inside are NOT misinterpreted as fields."""
+        from server.tools.read import _parse_show_output
+        output = (
+            "Title: Entry\n"
+            "UserName: admin\n"
+            "Password: secret\n"
+            "URL: https://example.com\n"
+            "Notes: See credentials below\n"
+            "Password: old-value-for-reference\n"
+            "URL: https://internal.example.com\n"
+        )
+        result = _parse_show_output(output)
+        assert result["password"] == "secret"
+        assert result["notes"] == (
+            "See credentials below\n"
+            "Password: old-value-for-reference\n"
+            "URL: https://internal.example.com"
+        )
 
 
 # ---------------------------------------------------------------------------

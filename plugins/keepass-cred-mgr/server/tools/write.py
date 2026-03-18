@@ -38,6 +38,18 @@ from server.tools.read import _parse_tags
 log: structlog.stdlib.BoundLogger = structlog.get_logger("keepass-cred-mgr.tools.write")
 
 
+def _escape_notes_for_cli(notes: str) -> str:
+    """Escape a notes string for --notes argument to keepassxc-cli.
+
+    The CLI's Add.cpp and Edit.cpp replace literal '\\n' with actual newlines
+    before storing (entry->setNotes(notes.replace("\\\\n", "\\n"))). If the
+    user's notes contain the two-character sequence '\\n', the CLI silently
+    converts it to a newline. Escape it to '\\\\n' so the CLI round-trips
+    to '\\n' as intended.
+    """
+    return notes.replace("\\n", "\\\\n")
+
+
 @contextmanager
 def _write_lock(vault: Vault) -> Generator[FileLock]:
     """Acquire and release a file lock around database writes."""
@@ -104,7 +116,7 @@ async def create_entry(
         if url is not None:
             cmd.extend(["--url", url])
         if notes is not None:
-            cmd.extend(["--notes", notes])
+            cmd.extend(["--notes", _escape_notes_for_cli(notes)])
         if password:
             # keepassxc-cli add has no --password flag; -p prompts stdin.
             # Write the password to stdin upfront so run_cli() doesn't deadlock.
@@ -152,7 +164,7 @@ async def deactivate_entry(
         # Update notes using new path — non-critical, log and continue on failure
         new_path = vault.entry_path(new_title, group)
         try:
-            await vault.run_cli("edit", "--notes", new_notes, db, new_path)
+            await vault.run_cli("edit", "--notes", _escape_notes_for_cli(new_notes), db, new_path)
         except KeePassCLIError:
             log.warning("deactivate_notes_update_failed", title=title, group=group)
 

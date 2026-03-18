@@ -23,15 +23,20 @@ type EntrySummary = dict[str, str]
 type SearchResult = dict[str, str | None]
 
 
-# Known field prefixes that terminate a multi-line notes block.
-_KNOWN_FIELDS = {"username", "password", "url", "notes", "title", "tags"}
+# Fields that appear BEFORE notes in keepassxc-cli show output.
+# Once we enter notes mode, only "tags" (which appears after notes) terminates it.
+# This prevents notes containing "Password: ..." from being misinterpreted as fields.
+_PRE_NOTES_FIELDS = {"username", "password", "url", "title"}
 
 
 def _parse_show_output(stdout: str) -> EntryFields:
     """Parse keepassxc-cli show output into a string field dict.
 
-    Notes can span multiple lines; continuation lines have no 'Key: ' prefix.
-    Continuation stops when a line starts with a known field key followed by ': '.
+    keepassxc-cli show outputs fields in order: Title, UserName, Password,
+    URL, Notes, then Tags. Notes can span multiple lines with embedded
+    newlines. Once we enter notes mode, only a Tags line terminates it;
+    lines that look like "Password: foo" inside notes are continuation lines,
+    not field boundaries.
     """
     fields: dict[str, str] = {}
     in_notes = False
@@ -41,22 +46,24 @@ def _parse_show_output(stdout: str) -> EntryFields:
         if ": " in line:
             key, _, value = line.partition(": ")
             key_lower = key.strip().lower()
-            if key_lower in _KNOWN_FIELDS:
-                if in_notes:
+
+            # Inside notes, only "tags" can terminate — everything else is content
+            if in_notes:
+                if key_lower == "tags":
                     fields["notes"] = "\n".join(notes_lines)
                     in_notes = False
-                if key_lower == "notes":
-                    notes_lines = [value.strip()]
-                    in_notes = True
-                elif key_lower == "username":
-                    fields["username"] = value.strip()
-                elif key_lower == "password":
-                    fields["password"] = value.strip()
-                elif key_lower == "url":
-                    fields["url"] = value.strip()
-                elif key_lower == "title":
-                    fields["title"] = value.strip()
+                    # Tags value is captured by _parse_tags separately; skip
+                    continue
+                notes_lines.append(line)
                 continue
+
+            if key_lower == "notes":
+                notes_lines = [value.strip()]
+                in_notes = True
+            elif key_lower in _PRE_NOTES_FIELDS:
+                fields[key_lower] = value.strip()
+            continue
+
         if in_notes:
             notes_lines.append(line)
 

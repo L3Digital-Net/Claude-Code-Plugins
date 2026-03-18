@@ -38,18 +38,24 @@ _REPL_INITIAL_PROMPT = b"> "
 _REPL_PROMPT = b"\n> "
 _REPL_TIMEOUT = 30
 
-# Characters that require double-quoting in the keepassxc-cli REPL.
-# The REPL uses Qt's QProcess::splitCommand (double-quote style),
-# NOT POSIX quoting — single quotes are NOT treated as delimiters.
+# The keepassxc-cli REPL uses Utils::splitCommandString (src/cli/Utils.cpp),
+# NOT Qt's QProcess::splitCommand. Key differences from POSIX:
+#   - backslash escapes ANY next character (\x → x), not just inside quotes
+#   - double quotes toggle quoting mode (only at start or after whitespace)
+#   - single quotes have NO special meaning
+# Always double-quote arguments containing whitespace, quotes, or backslashes
+# to prevent the parser from consuming backslashes as escape characters.
 _REPL_NEEDS_QUOTING = frozenset(' \t"\\')
 
 
 def _repl_quote(arg: str) -> str:
-    """Quote one argument for keepassxc-cli REPL (double-quote style).
+    """Quote one argument for the keepassxc-cli REPL.
 
-    Qt's argument parser recognises double-quoted strings but not single-quoted
-    strings.  shlex.quote() prefers single quotes, which silently pass through
-    the REPL as literal characters — breaking any argument that contains spaces.
+    The REPL's parser (Utils::splitCommandString) treats backslash as an
+    escape character for ANY following character. An unquoted backslash in
+    a password or notes value silently drops the backslash and takes the
+    next character literally. Double-quoting prevents this: inside quotes,
+    only \\\\ and \\" are recognised as escapes.
 
     Newlines and carriage returns are replaced with spaces before quoting.
     The REPL is line-based: a literal newline inside an argument splits the

@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Newlines in REPL arguments (notes, urls) corrupt the keepassxc-cli command stream, causing garbled entries and data loss. `_repl_quote()` now sanitizes `\n`/`\r` to spaces before quoting.
 - `deactivate_entry` constructed notes with an embedded newline (`\n[DEACTIVATED: ...]`) that split the REPL command across two lines. Uses ` | ` separator instead.
 - `run_cli` stdin_lines (passwords) now reject embedded newlines with a clear error instead of silently corrupting the stream.
+- Corrected REPL quoting model: the CLI uses `Utils::splitCommandString` (backslash escapes any character), not `QProcess::splitCommand`. Updated comments and docs.
+- `_parse_show_output` no longer misinterprets notes containing `Password: ...` or `URL: ...` text as field boundaries. Notes is the last standard field; only `Tags:` terminates it.
+- Notes passed via `--notes` are now escaped to prevent keepassxc-cli from silently converting literal `\n` text into newlines (the CLI replaces `\\n` → newline before storing).
 
 ## [0.5.1] - 2026-03-15
 
