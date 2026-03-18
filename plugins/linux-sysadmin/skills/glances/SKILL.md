@@ -4,10 +4,19 @@ description: >
   glances is an all-in-one system monitor covering CPU, memory, disk, network, processes,
   containers, and sensors in a single terminal view. It supports a built-in web server for
   browser-based monitoring and a client/server mode for watching remote hosts.
-  Triggers on: "glances", "system overview", "all-in-one monitor", "glances web",
-  "remote monitoring", "glances docker", "glances containers", "glances influxdb",
-  "glances client server".
+  MUST consult when monitoring system resources across CPU, memory, disk, and network.
+triggerPhrases:
+  - "glances"
+  - "system overview"
+  - "all-in-one monitor"
+  - "glances web"
+  - "remote monitoring"
+  - "glances docker"
+  - "glances containers"
+  - "glances influxdb"
+  - "glances client server"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -19,6 +28,15 @@ globs: []
 | **Logs** | No persistent logs — output to terminal (web mode logs to stdout) |
 | **Type** | Interactive terminal UI / web server / client-server daemon |
 | **Install** | `apt install glances` (Debian/Ubuntu) / `dnf install glances` (RHEL/Fedora) / `pip install glances` (latest features) |
+
+## Quick Start
+
+```bash
+sudo apt install glances     # install glances
+glances                       # launch terminal TUI
+glances -w                    # start web server on http://0.0.0.0:61208
+glances -c <remote-host>      # connect to a remote glances server
+```
 
 ## Key Operations
 
@@ -59,6 +77,12 @@ globs: []
 - **GPU support is NVIDIA-first**: `nvidia-ml-py` covers NVIDIA cards via NVML. AMD GPU support exists but requires a different backend and is less reliable. Intel GPU stats are not supported.
 - **Config file path varies by install method**: pip installs use `~/.config/glances/glances.conf`; distro packages may use `/etc/glances/glances.conf`. Run `glances --help` and look for `--config` to verify which path is active.
 - **Keyboard shortcuts are plugin-specific and not all documented in-TUI**: press `h` inside glances to see the help overlay, which lists the active shortcuts. The full list is longer than what fits on screen.
+
+## See Also
+
+- **btop** — Feature-rich TUI resource monitor with graphs and mouse support
+- **htop** — Lightweight interactive process viewer focused on process management
+- **netdata** — Real-time web-based monitoring with per-second granularity and alerting
 
 ## References
 

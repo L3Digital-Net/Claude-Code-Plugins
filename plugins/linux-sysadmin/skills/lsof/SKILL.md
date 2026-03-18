@@ -3,10 +3,22 @@ name: lsof
 description: >
   lsof (List Open Files) lists all open file descriptors on the system, including
   regular files, sockets, pipes, and devices. It is the standard tool for answering
-  "which process has this file/port open". Triggers on: lsof, open files, what has
-  file open, which process, port in use, file descriptor, deleted file still open,
-  address in use, who is listening, socket in use, EADDRINUSE.
+  "which process has this file/port open".
+  MUST consult when identifying which process has a file or port open.
+triggerPhrases:
+  - "lsof"
+  - "open files"
+  - "what has file open"
+  - "which process"
+  - "port in use"
+  - "file descriptor"
+  - "deleted file still open"
+  - "address in use"
+  - "who is listening"
+  - "socket in use"
+  - "EADDRINUSE"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,6 +30,16 @@ globs: []
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool |
 | **Install** | `apt install lsof` / `dnf install lsof` |
+
+## Quick Start
+
+```bash
+sudo apt install lsof
+sudo lsof -i :80                        # what has port 80 open
+sudo lsof -p 1234                       # open files for a PID
+sudo lsof +L1                           # deleted files still held open
+sudo lsof -i -sTCP:LISTEN -nP           # all listening TCP ports
+```
 
 ## Key Operations
 
@@ -57,6 +79,11 @@ globs: []
 - **`-n` and `-P` are essential for performance**: by default, lsof resolves every IP address to a hostname and every port to a service name via DNS and `/etc/services`. On systems with many open sockets, this adds seconds. `-n` skips hostname resolution; `-P` skips port-to-name resolution. Use both when running on busy servers.
 - **Combining filters with NOT (`^`)**: lsof allows combining `-u`, `-p`, and `-c` filters. Prefix with `^` to negate: `-u ^root` excludes root's files. Multiple positive terms are OR'd by default; add `-a` to AND them.
 - **lsof is single-threaded and slow on large `/proc` trees**: on systems with thousands of open file descriptors, a full `lsof` run can take 5-10 seconds. Scope queries as narrowly as possible (`-p`, `-u`, or `-i :port`) rather than running a system-wide dump.
+
+## See Also
+
+- **ss** — Socket statistics; faster alternative for network-only queries
+- **strace** — Trace system calls to see file operations in real time
 
 ## References
 

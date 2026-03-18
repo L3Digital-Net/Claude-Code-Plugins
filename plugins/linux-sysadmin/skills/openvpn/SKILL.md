@@ -3,11 +3,20 @@ name: openvpn
 description: >
   OpenVPN server and client administration: PKI setup with Easy-RSA, server
   configuration, client config generation, routing, troubleshooting, and
-  certificate management. Triggers on: openvpn, ovpn, easy-rsa, PKI, VPN
-  server, openvpn config, .ovpn file.
+  certificate management.
+  MUST consult when installing, configuring, or troubleshooting openvpn.
+triggerPhrases:
+  - "openvpn"
+  - "ovpn"
+  - "easy-rsa"
+  - "PKI"
+  - "VPN server"
+  - "openvpn config"
+  - ".ovpn file"
 globs:
   - "**/*.ovpn"
   - "**/openvpn/**/*.conf"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -17,10 +26,20 @@ globs:
 - **Logs**: `journalctl -u openvpn@server`, `/var/log/openvpn/` (if `log-append` is set)
 - **Distro install**: `apt install openvpn easy-rsa` / `dnf install openvpn easy-rsa`
 
+## Quick Start
+
+```bash
+sudo apt install openvpn easy-rsa
+cd /etc/easy-rsa && sudo easyrsa init-pki
+sudo easyrsa build-ca                       # create certificate authority
+sudo easyrsa build-server-full server nopass # generate server cert
+sudo systemctl enable --now openvpn@server
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Start / stop / restart | `systemctl start\|stop\|restart openvpn@server` |
 | Check status | `systemctl status openvpn@server` |
 | Follow logs | `journalctl -fu openvpn@server` |
@@ -50,8 +69,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check / Fix |
-|---------|-------------|-------------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `TLS handshake failed` | Wrong `tls-auth` key direction or mismatched key | Server uses `tls-auth ta.key 0`; client must use `tls-auth ta.key 1`. Verify both sides use the same `ta.key` file. |
 | `VERIFY ERROR: depth=0, error=certificate verify failed` | CN mismatch, expired cert, or revoked cert | Check `easyrsa show-cert <name>`; confirm server's `verify-x509-name` matches the cert CN |
 | Traffic not routing through VPN | `ip_forward` disabled or missing NAT rule | `sysctl net.ipv4.ip_forward` must be `1`; check masquerade rule: `iptables -t nat -L POSTROUTING` |
@@ -70,6 +89,11 @@ globs:
 - **UDP vs TCP**: UDP is faster and handles packet loss correctly. TCP 443 bypasses more firewalls but creates TCP-over-TCP meltdown under packet loss: the outer TCP retransmits before the inner TCP can recover, creating cascading slowdowns. Never choose TCP without a specific firewall bypass requirement.
 - **Client config distribution**: `.ovpn` inline files embed the private key in plaintext. Treat them like passwords. Deliver over SFTP or a secure secrets manager — never email.
 - **`tls-crypt` vs `tls-auth`**: `tls-crypt` (OpenVPN 2.4+) both authenticates and encrypts the TLS control channel, preventing even unauthenticated clients from triggering the TLS handshake. Prefer `tls-crypt` for new deployments.
+
+## See Also
+
+- **wireguard** — lightweight kernel-level VPN with simpler config but no TCP fallback
+- **tailscale** — zero-config mesh VPN built on WireGuard with centralized identity management
 
 ## References
 See `references/` for:

@@ -3,13 +3,31 @@ name: mdadm
 description: >
   Linux software RAID administration with mdadm: creating and assembling arrays,
   adding and replacing disks, monitoring health, reshaping arrays, and
-  troubleshooting degraded or failed RAID sets. Triggers on: mdadm, software RAID,
-  RAID-1, RAID-5, RAID-6, RAID-10, linux RAID, md device, /proc/mdstat,
-  RAID array, md0, md1, raid level, degraded array, rebuild, resync,
-  hot spare, mdadm.conf.
+  troubleshooting degraded or failed RAID sets.
+  MUST consult when installing, configuring, or troubleshooting mdadm.
+triggerPhrases:
+  - "mdadm"
+  - "software RAID"
+  - "RAID-1"
+  - "RAID-5"
+  - "RAID-6"
+  - "RAID-10"
+  - "linux RAID"
+  - "md device"
+  - "/proc/mdstat"
+  - "RAID array"
+  - "md0"
+  - "md1"
+  - "raid level"
+  - "degraded array"
+  - "rebuild"
+  - "resync"
+  - "hot spare"
+  - "mdadm.conf"
 globs:
   - "**/etc/mdadm/mdadm.conf"
   - "**/etc/mdadm.conf"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -21,10 +39,20 @@ globs:
 - **Logs**: `journalctl -k | grep -i md`, `/var/log/syslog` or `/var/log/messages`
 - **Distro install**: `apt install mdadm` / `dnf install mdadm`
 
+## Quick Start
+
+```bash
+sudo apt install mdadm
+sudo mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/sdb1 /dev/sdc1
+cat /proc/mdstat
+sudo mdadm --detail --scan | sudo tee /etc/mdadm/mdadm.conf
+sudo update-initramfs -u
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Check array status (summary) | `cat /proc/mdstat` |
 | Check array status (detail) | `mdadm --detail /dev/md0` |
 | Check individual disk superblock | `mdadm --examine /dev/sdb1` |
@@ -67,8 +95,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check / Fix |
-|---------|-------------|-------------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | Array state is `degraded` | One or more disks failed or missing | `mdadm --detail /dev/md0` — find `(F)` device; check `dmesg` for I/O errors; replace disk |
 | `/proc/mdstat` shows `_` in bitmap | Disk dropped from array (kernel evicted after errors) | Check `dmesg` for I/O errors on the device; replace the failed disk and `--add` a new one |
 | Rebuild stalled or very slow | Speed limits too low, or competing I/O | Check `speed_limit_min`/`speed_limit_max` in `/proc/sys/dev/raid/`; raise limits temporarily |
@@ -89,6 +117,12 @@ globs:
 - **`update-initramfs` (Debian/Ubuntu) or `dracut -f` (RHEL/Fedora) required after config changes**: The initramfs contains a copy of `mdadm.conf`. Without regenerating it, the system will fail to assemble the root/boot array on next boot even though the config on disk is correct.
 - **Email alert setup is not automatic**: `mdadm --monitor` sends mail on disk failures, but `MAILADDR` in `mdadm.conf` and a working MTA (e.g. `postfix`, `msmtp`) must both be configured. Many installs silently have no alerting until a disk fails.
 - **Hot spare scope**: A spare added to `/dev/md0` is bound to that array. To share a spare across multiple arrays use `--add --spare-group`; otherwise each array must have its own dedicated spare device.
+
+## See Also
+
+- **lvm** — Logical volume management layered on top of mdadm arrays; use to create flexible, resizable volumes on RAID devices
+- **zfs** — Integrated volume manager with built-in RAID (RAIDZ); eliminates the write hole without a separate RAID layer
+- **smartctl** — SMART disk health monitoring; use proactively to detect failing drives before they degrade an array
 
 ## References
 

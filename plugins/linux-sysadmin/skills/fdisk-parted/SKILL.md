@@ -2,12 +2,27 @@
 name: fdisk-parted
 description: >
   fdisk, parted, and gdisk create and modify disk partition tables (MBR and GPT).
-  Invoked when the user asks about partitioning a disk, creating or deleting
-  partitions, setting up a GPT or MBR layout, inspecting partition tables, or
-  resizing partitions. Triggers on: fdisk, parted, gdisk, partition, partition table,
-  GPT, MBR, create partition, resize partition, disk setup, new disk partitioning,
-  format disk, partition scheme, 4K alignment, partition alignment.
+  Use when partitioning a disk, creating or deleting partitions, setting up GPT or
+  MBR layouts, inspecting partition tables, or resizing partitions.
+  MUST consult when partitioning disks with fdisk, parted, or gdisk.
+triggerPhrases:
+  - "fdisk"
+  - "parted"
+  - "gdisk"
+  - "partition"
+  - "partition table"
+  - "GPT"
+  - "MBR"
+  - "create partition"
+  - "resize partition"
+  - "disk setup"
+  - "new disk partitioning"
+  - "format disk"
+  - "partition scheme"
+  - "4K alignment"
+  - "partition alignment"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -19,6 +34,16 @@ globs: []
 | **Logs** | No persistent logs — changes written directly to disk |
 | **Type** | CLI tools |
 | **Install** | `apt install fdisk parted gdisk` / `dnf install util-linux parted gdisk` |
+
+## Quick Start
+
+```bash
+sudo apt install fdisk parted gdisk
+sudo fdisk -l                           # list all disks and partitions
+sudo parted /dev/sdb mklabel gpt        # create GPT partition table
+sudo parted /dev/sdb mkpart primary ext4 1MiB 100%  # create partition
+sudo partprobe /dev/sdb                 # inform kernel of changes
+```
 
 ## Tool Selection Guide
 
@@ -84,6 +109,13 @@ globs: []
 - **4K alignment matters for SSDs**: starting partitions on 1 MiB boundaries ensures alignment to both 512-byte and 4096-byte physical sector boundaries. Misaligned partitions cause extra read-modify-write cycles on SSDs. Always specify start offsets in MiB when using parted non-interactively.
 - **Never partition a mounted disk**: partitioning a disk with active mounts risks data corruption. Unmount all partitions and deactivate LVM/RAID before editing the partition table.
 - **`partprobe` is not always sufficient**: if any partition on the disk is mounted or held by LVM/RAID, the kernel will refuse to re-read the table. A reboot is the safe fallback.
+
+## See Also
+
+- **lsblk** — list block devices, partitions, and mount points before partitioning
+- **lvm** — logical volume management for flexible partitioning on top of physical volumes
+- **mdadm** — software RAID arrays that sit between partitions and filesystems
+- **exfat-ntfs** — format partitions for Windows/macOS interoperability
 
 ## References
 

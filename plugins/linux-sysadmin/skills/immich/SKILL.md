@@ -1,17 +1,27 @@
 ---
 name: immich
 description: >
-  Immich self-hosted photo and video management — multi-container Docker stack
+  Immich self-hosted photo and video management: multi-container Docker stack
   administration, backup strategy, external library sync, machine learning face
-  detection, job queue management, and troubleshooting. Triggers on: immich,
-  Immich, photo management, Google Photos alternative, self-hosted photos,
-  photo backup server, immich-server, immich-microservices, immich-machine-learning.
+  detection, job queue management, and troubleshooting.
+  MUST consult when installing, configuring, or troubleshooting immich.
+triggerPhrases:
+  - "immich"
+  - "Immich"
+  - "photo management"
+  - "Google Photos alternative"
+  - "self-hosted photos"
+  - "photo backup server"
+  - "immich-server"
+  - "immich-microservices"
+  - "immich-machine-learning"
 globs:
   - "**/immich/**/docker-compose.yml"
   - "**/immich/**/docker-compose.yaml"
   - "**/immich/**/.env"
   - "**/immich/**/compose.yml"
   - "**/immich/**/compose.yaml"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -26,9 +36,21 @@ globs:
 - **Upload dir**: controlled by `UPLOAD_LOCATION` in `.env` — must be a persistent volume mount
 - **Project page**: https://immich.app
 
+## Quick Start
+
+```bash
+# Download official docker-compose.yml and .env
+wget https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml
+wget https://github.com/immich-app/immich/releases/latest/download/.env
+# Edit .env to set UPLOAD_LOCATION and DB credential
+docker compose pull
+docker compose up -d
+curl -s http://localhost:2283/api/server-info/ping
+```
+
 ## Key Operations
 
-| Goal | Command |
+| Task | Command |
 |------|---------|
 | Check all container status | `docker compose ps` |
 | View logs (all containers) | `docker compose logs -f` |
@@ -42,7 +64,7 @@ globs:
 | Force thumbnail regeneration | Web UI → Administration → Jobs → Generate Thumbnails → Run all |
 | Sync external library | Web UI → Administration → External Libraries → Scan All |
 | Create user via CLI | `docker compose exec immich-server immich-admin user create` |
-| Create user via API | `curl -X POST http://localhost:2283/api/user -H 'x-api-key: <key>' -d '{"email":"...","name":"...","password":"..."}'` |
+| Create user via API | `curl -X POST http://localhost:2283/api/user -H 'x-api-key: <key>' -d '{"email":"...","name":"..."}'` |
 | Import external library (one-off) | `docker compose exec immich-server immich-admin library scan <library-id>` |
 | Check storage usage | Web UI → Administration → Server Stats, or `du -sh $UPLOAD_LOCATION` |
 | PostgreSQL dump (backup) | `docker compose exec database pg_dumpall -U postgres > immich-db-$(date +%F).sql` |
@@ -60,10 +82,10 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | "Internal Server Error" on login or API calls | PostgreSQL migration failure on upgrade | `docker compose logs database` and `docker compose logs immich-server` — look for migration errors; often requires manual intervention or rollback |
-| `immich-machine-learning` restarting in loop | Out of memory (OOM kill) | `docker stats` or `dmesg | grep -i oom`; increase container memory limit or disable ML with `MACHINE_LEARNING_ENABLED=false` |
+| `immich-machine-learning` restarting in loop | Out of memory (OOM kill) | `docker stats` or `dmesg \| grep -i oom`; increase container memory limit or disable ML with `MACHINE_LEARNING_ENABLED=false` |
 | Face detection not running / no faces recognized | ML container down or never started | `docker compose ps immich-machine-learning`; check `MACHINE_LEARNING_URL` in `.env` points to correct container name |
 | Photos not appearing after upload | `UPLOAD_LOCATION` path misconfigured or volume not mounted | `docker compose exec immich-server ls /usr/src/app/upload`; confirm the volume mount matches `UPLOAD_LOCATION` in `.env` |
 | Upgrade broke the stack | Missing or failed database migration | Always read the release notes before upgrading — check https://github.com/immich-app/immich/releases; rolling back requires a database restore |
@@ -76,9 +98,13 @@ globs:
 - **Immich updates frequently and can be breaking.** The project moves fast — breaking changes appear in minor versions. Always read the GitHub release notes before running `docker compose pull`. Never update without a current database backup.
 - **PostgreSQL is not standard postgres.** Immich requires the `pgvecto-rs` extension for vector similarity search. Use the `ghcr.io/immich-app/postgres` image (or the official Immich-provided compose file) — a plain `postgres:16` image will fail to start with migration errors.
 - **Machine learning is optional but memory-hungry.** The ML container runs CLIP and facial recognition models that can consume 2–4 GB RAM. On memory-constrained hosts, disable it with `MACHINE_LEARNING_ENABLED=false` in `.env`; the core photo library remains fully functional without it.
-- **The upload directory must have sufficient space.** Immich stores originals, thumbnails, video transcodes, and encoded clips all under `UPLOAD_LOCATION`. Plan for at least 2–3× your raw photo storage. Monitor with `df -h` or integrate with a monitoring stack.
+- **The upload directory must have sufficient space.** Immich stores originals, thumbnails, video transcodes, and encoded clips all under `UPLOAD_LOCATION`. Plan for at least 2–3x your raw photo storage. Monitor with `df -h` or integrate with a monitoring stack.
 - **Backup strategy must cover two things: the PostgreSQL database AND the upload directory.** Neither alone is sufficient. The database holds metadata, albums, faces, and user accounts; the upload directory holds the actual media. A restored database pointing at missing files — or media files with no metadata — leaves the library unusable.
 - **External library scanning is a separate job.** Photos in an external library path are not automatically indexed. You must configure the library in the UI, mount the path as a Docker volume, and trigger a scan manually or via a cron-based `docker compose exec` call.
+
+## See Also
+
+- **jellyfin** — self-hosted media server for movies and TV shows, complementing Immich's photo/video focus
 
 ## References
 See `references/` for:

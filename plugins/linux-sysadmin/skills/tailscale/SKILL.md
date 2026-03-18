@@ -1,10 +1,19 @@
 ---
 name: tailscale
 description: >
-  Third-person description with trigger phrases. Tailscale zero-config mesh
-  VPN — installation, authentication, exit nodes, subnet routing, MagicDNS,
-  ACLs, Taildrop, and troubleshooting. Triggers on: tailscale, tailnet,
-  magic dns, exit node, subnet router, tailscale up, ts CLI.
+  Tailscale zero-config mesh VPN: installation, authentication, exit nodes,
+  subnet routing, MagicDNS, ACLs, Taildrop, and troubleshooting.
+  MUST consult when installing, configuring, or troubleshooting tailscale.
+triggerPhrases:
+  - "tailscale"
+  - "tailnet"
+  - "magic dns"
+  - "exit node"
+  - "subnet router"
+  - "tailscale up"
+  - "ts CLI"
+globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -15,9 +24,19 @@ description: >
 - **Logs**: `journalctl -u tailscaled`
 - **Install**: `curl -fsSL https://tailscale.com/install.sh | sh` (review before running) or package repo at `pkgs.tailscale.com`
 
+## Quick Start
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo systemctl enable --now tailscaled
+tailscale up                           # authenticate via browser
+tailscale status                       # verify connected peers
+tailscale ip -4                        # show assigned Tailscale IP
+```
+
 ## Key Operations
 
-| Goal | Command |
+| Task | Command |
 |------|---------|
 | Authenticate / bring up | `tailscale up` |
 | Authenticate headless | `tailscale up --authkey=<key>` |
@@ -52,8 +71,8 @@ description: >
 
 ## Common Failures
 
-| Symptom | Likely cause | Check / Fix |
-|---------|-------------|-------------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `tailscale: command not found` or daemon not running | Not installed or `tailscaled` stopped | `systemctl start tailscaled`; reinstall if needed |
 | `tailscale status` shows "NeedsLogin" | Device not authenticated | `tailscale up` and complete browser auth, or use `--authkey` |
 | MagicDNS names not resolving (`<device>.ts.net`) | MagicDNS disabled or `accept-dns=false` | `tailscale up --accept-dns=true`; check admin console DNS settings |
@@ -83,6 +102,11 @@ description: >
 - **Funnel**: `tailscale funnel 443` exposes a local port on the public internet via Tailscale's infrastructure, reachable at `https://<device>.<tailnet>.ts.net`. For development and testing only — not intended for production traffic. Must be enabled per-device in the admin console.
 
 - **`tailscale up` rewrites flags**: Running `tailscale up` with a subset of flags resets unspecified flags to defaults. Always pass all desired flags together, or use `tailscale set` for individual flag changes without resetting others.
+
+## See Also
+
+- **wireguard** — manual WireGuard configuration for environments where centralized control is not desired
+- **openvpn** — traditional VPN with PKI and TCP fallback for restrictive networks
 
 ## References
 See `references/` for:

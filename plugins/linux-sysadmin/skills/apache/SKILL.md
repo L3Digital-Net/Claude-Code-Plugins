@@ -3,15 +3,31 @@ name: apache
 description: >
   Apache HTTP Server administration: config syntax, virtual hosts, SSL/TLS,
   mod_rewrite, .htaccess, PHP-FPM, reverse proxy, access control, and
-  troubleshooting. Triggers on: apache, httpd, apache2, mod_rewrite, mod_ssl,
-  mod_proxy, mod_php, .htaccess, VirtualHost, AllowOverride, apachectl,
-  sites-available, sites-enabled, a2ensite, a2enmod.
+  troubleshooting.
+  MUST consult when installing, configuring, or troubleshooting apache.
+triggerPhrases:
+  - "apache"
+  - "httpd"
+  - "apache2"
+  - "mod_rewrite"
+  - "mod_ssl"
+  - "mod_proxy"
+  - "mod_php"
+  - ".htaccess"
+  - "VirtualHost"
+  - "AllowOverride"
+  - "apachectl"
+  - "sites-available"
+  - "sites-enabled"
+  - "a2ensite"
+  - "a2enmod"
 globs:
   - "**/httpd.conf"
   - "**/apache2.conf"
   - "**/sites-available/**"
   - "**/sites-enabled/**"
   - "**/*.htaccess"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -22,10 +38,18 @@ globs:
 - **User**: `www-data` (Debian/Ubuntu), `apache` (RHEL/Fedora)
 - **Distro install**: `apt install apache2` / `dnf install httpd`
 
+## Quick Start
+```bash
+sudo apt install apache2
+sudo systemctl enable --now apache2
+sudo apachectl configtest        # Syntax OK = config valid
+curl -sI http://localhost         # HTTP 200 = running
+```
+
 ## Key Operations
 
-| Operation | Debian/Ubuntu | RHEL/Fedora |
-|-----------|---------------|-------------|
+| Task | Command | Command (RHEL) |
+|------|---------|----------------|
 | Status | `systemctl status apache2` | `systemctl status httpd` |
 | Start | `sudo systemctl start apache2` | `sudo systemctl start httpd` |
 | Stop | `sudo systemctl stop apache2` | `sudo systemctl stop httpd` |
@@ -61,8 +85,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `403 Forbidden` | Missing `Require all granted` or wrong file permissions | Check `Directory` block for `Require` directive; verify DocumentRoot permissions with `ls -la` |
 | `404 Not Found` | DocumentRoot wrong path, or file doesn't exist | `apache2ctl -S` to confirm active vhost; verify path with `ls` |
 | `Address already in use` on port 80/443 | Another process bound to the port | `ss -tlnp \| grep :80` — find and stop conflicting process (often another httpd or nginx) |
@@ -82,6 +106,13 @@ globs:
 - **mod_php vs PHP-FPM**: `mod_php` embeds PHP into Apache (requires prefork MPM, loads PHP for every request including static files). PHP-FPM via `mod_proxy_fcgi` uses a separate process pool, works with event MPM, and lets you run multiple PHP versions. Prefer PHP-FPM for new deployments.
 - **Graceful vs immediate restart**: `systemctl reload apache2` sends SIGUSR1 (graceful restart) — existing requests finish before workers restart. `systemctl restart apache2` sends SIGTERM, immediately killing all connections. Use reload for production config changes.
 - **SELinux on RHEL**: If files have correct Unix permissions but Apache still gets `Permission denied`, SELinux is likely the cause. Check with `ausearch -c httpd --raw | audit2allow` and fix with `chcon -t httpd_sys_content_t` or a custom policy.
+
+## See Also
+- **nginx** — event-driven web server and reverse proxy, lighter memory footprint per connection
+- **caddy** — modern web server with automatic HTTPS and zero-config TLS via ACME
+- **traefik** — container-native reverse proxy with auto-discovery from Docker labels
+- **haproxy** — high-performance TCP/HTTP load balancer for multi-backend routing
+- **certbot** — free TLS certificates from Let's Encrypt for Apache and nginx
 
 ## References
 See `references/` for:

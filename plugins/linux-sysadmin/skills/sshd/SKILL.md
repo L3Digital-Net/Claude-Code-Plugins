@@ -1,14 +1,23 @@
 ---
 name: sshd
 description: >
-  OpenSSH server (sshd) administration — config, key-based auth, hardening,
-  troubleshooting connection issues, tunneling, and port forwarding. Triggers
-  on: sshd, ssh server, ssh config, openssh, ssh hardening, ssh keys,
-  authorized_keys, sshd_config.
+  OpenSSH server (sshd) administration: config, key-based auth, hardening,
+  troubleshooting connection issues, tunneling, and port forwarding.
+  MUST consult when installing, configuring, or troubleshooting sshd.
+triggerPhrases:
+  - "sshd"
+  - "ssh server"
+  - "ssh config"
+  - "openssh"
+  - "ssh hardening"
+  - "ssh keys"
+  - "authorized_keys"
+  - "sshd_config"
 globs:
   - "**/sshd_config"
   - "**/sshd_config.d/**"
   - "**/.ssh/authorized_keys"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,13 +27,26 @@ globs:
 - **User**: runs as root (drops privs per session)
 - **Install**: pre-installed on most distros; `apt install openssh-server` / `dnf install openssh-server`
 
+## Quick Start
+
+```bash
+sudo apt install openssh-server
+sudo systemctl enable --now sshd
+sudo sshd -t                          # validate config syntax
+ss -tlnp | grep ':22'                 # verify listening on port 22
+ssh -v localhost                       # test connection
+```
+
 ## Key Operations
-- **Validate config**: `sudo sshd -t`
-- **Reload (without dropping connections)**: `sudo systemctl reload sshd`
-- **Restart (drops active sessions!)**: `sudo systemctl restart sshd`
-- **Test connection**: `ssh -v user@host` (verbose, shows auth methods tried)
-- **Check effective config**: `sudo sshd -T` (shows full parsed config with defaults)
-- **Test config for specific user**: `sudo sshd -T -C user=myuser,host=1.2.3.4`
+
+| Task | Command |
+|------|---------|
+| Validate config | `sudo sshd -t` |
+| Reload (without dropping connections) | `sudo systemctl reload sshd` |
+| Restart (drops active sessions!) | `sudo systemctl restart sshd` |
+| Test connection | `ssh -v user@host` (verbose, shows auth methods tried) |
+| Check effective config | `sudo sshd -T` (shows full parsed config with defaults) |
+| Test config for specific user | `sudo sshd -T -C user=myuser,host=1.2.3.4` |
 
 ## Expected Ports
 - 22/tcp (default); commonly changed to reduce noise
@@ -38,8 +60,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `Connection refused` | sshd not running or wrong port | `systemctl status sshd`, `ss -tlnp \| grep sshd` |
 | `Permission denied (publickey)` | Wrong key, wrong permissions, wrong user | Check `~/.ssh/` perms (700), `authorized_keys` perms (600), correct public key present |
 | `Permission denied (password)` | `PasswordAuthentication no` or wrong password | `sudo sshd -T \| grep passwordauth` |
@@ -56,6 +78,11 @@ globs:
 - **`AuthorizedKeysFile` path**: `.ssh/authorized_keys` is relative to the user's home. If home dir permissions are wrong, key auth silently fails.
 - **Restart vs reload**: `systemctl reload sshd` re-reads config without dropping existing sessions. `restart` drops all active sessions. Always prefer reload.
 - **fail2ban interaction**: fail2ban bans IPs at the firewall level; sshd itself doesn't know. Check both logs when diagnosing lockouts.
+
+## See Also
+
+- **ssh-keygen** — generate, manage, and convert SSH keys used for sshd authentication
+- **fail2ban** — automatic brute-force protection by banning IPs after repeated login failures
 
 ## References
 See `references/` for:

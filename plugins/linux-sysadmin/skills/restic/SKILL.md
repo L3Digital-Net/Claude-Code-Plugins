@@ -5,11 +5,23 @@ description: >
   snapshot management, restore, forget/prune retention policies, integrity
   checks, and FUSE mount browsing. Supports local, SFTP, S3, Backblaze B2,
   and REST server backends.
-  Triggers on: "restic", "restic backup", "restic restore", "restic forget",
-  "restic prune", "restic snapshots", "restic init", "restic check",
-  "restic mount", "RESTIC_REPOSITORY", "RESTIC_PASSWORD", deduplicating backup,
-  encrypted backup.
+  MUST consult when installing, configuring, or troubleshooting restic.
+triggerPhrases:
+  - "restic"
+  - "restic backup"
+  - "restic restore"
+  - "restic forget"
+  - "restic prune"
+  - "restic snapshots"
+  - "restic init"
+  - "restic check"
+  - "restic mount"
+  - "RESTIC_REPOSITORY"
+  - "RESTIC_PASSWORD"
+  - "deduplicating backup"
+  - "encrypted backup"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -23,6 +35,16 @@ globs: []
 | **Type** | CLI backup tool (content-addressed deduplication + AES-256 encryption) |
 | **Install** | `apt install restic` / `dnf install restic` / `brew install restic` / binary from GitHub releases |
 | **Self-update** | `restic self-update` (updates the binary in-place) |
+
+## Quick Start
+
+```bash
+sudo apt install restic
+restic -r /path/to/repo init
+restic -r /path/to/repo backup /home /etc
+restic -r /path/to/repo snapshots
+restic -r /path/to/repo check
+```
 
 ## Key Operations
 
@@ -64,8 +86,8 @@ globs: []
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `Fatal: wrong password or no key found` | Incorrect password or wrong repo path | Verify `RESTIC_REPOSITORY` and `RESTIC_PASSWORD` / `RESTIC_PASSWORD_FILE` env vars |
 | `Fatal: unable to open config file: ...is already locked` | Previous backup crashed while holding repo lock | Verify no backup is running: `pgrep restic`; then `restic -r /repo unlock` |
 | `FUSE mount fails: fusermount: exec: "fusermount": executable file not found` | `fuse` package not installed | `apt install fuse` / `dnf install fuse`; user needs to be in the `fuse` group or run as root |
@@ -87,6 +109,12 @@ globs: []
 - **Lock file deadlock with parallel runs** — Two simultaneous `restic backup` commands against the same repository will deadlock on the lock file — the second run will fail immediately with a "repository is already locked" error. For cron/systemd automation, use `Conflicts=` in the systemd service or a script-level lock guard (`flock`) to prevent overlapping runs.
 
 - **Snapshot IDs are not stable across forget/prune cycles** — Short IDs (8 hex chars) are computed from the full 64-char SHA-256 prefix and can collide as the repository grows. Scripts should use either the full 64-char ID or the `latest` keyword. Always retrieve current IDs with `restic snapshots` rather than storing them long-term.
+
+## See Also
+
+- **borg** — Deduplicated encrypted backup with borgmatic automation wrapper
+- **rsync** — File-level synchronization for simple backup and mirroring
+- **rclone** — Cloud storage sync and mount supporting 70+ providers
 
 ## References
 

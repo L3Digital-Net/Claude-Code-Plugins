@@ -3,11 +3,19 @@ name: opendkim
 description: >
   OpenDKIM daemon administration: DKIM key generation, signing and verification,
   Postfix milter integration, DNS TXT record publishing, and troubleshooting.
-  Triggers on: opendkim, DKIM, email signing, DKIM key, mail authentication,
-  SPF DKIM DMARC, opendkim Postfix.
+  MUST consult when installing, configuring, or troubleshooting opendkim.
+triggerPhrases:
+  - "opendkim"
+  - "DKIM"
+  - "email signing"
+  - "DKIM key"
+  - "mail authentication"
+  - "SPF DKIM DMARC"
+  - "opendkim Postfix"
 globs:
   - "**/opendkim.conf"
   - "**/opendkim/**"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -21,10 +29,20 @@ globs:
 - **Logs**: `journalctl -u opendkim`, `/var/log/mail.log` (milter events appear in mail log)
 - **Distro install**: `apt install opendkim opendkim-tools` / `dnf install opendkim`
 
+## Quick Start
+
+```bash
+sudo apt install opendkim opendkim-tools       # install daemon and key tools
+sudo systemctl enable opendkim                  # enable on boot
+sudo systemctl start opendkim                   # start the service
+opendkim-genkey -b 2048 -d example.com -s mail  # generate DKIM key pair
+opendkim-testkey -d example.com -s mail -vvv    # verify DNS record matches key
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Status | `systemctl status opendkim` |
 | Generate key pair | `opendkim-genkey -b 2048 -d example.com -s mail -D /etc/opendkim/keys/example.com/` |
 | List current keys | `ls -la /etc/opendkim/keys/` |
@@ -52,8 +70,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `opendkim: key retrieval failed` in mail log | DNS not yet propagated, wrong selector, or record format error | `dig +short TXT mail._domainkey.example.com` — compare output to `mail.txt`; wait for TTL or fix record |
 | `milter: can't read response` / Postfix can't connect | Wrong socket path in Postfix config, or opendkim not running | Verify `smtpd_milters` matches `Socket` in `opendkim.conf`; `systemctl start opendkim` |
 | `Permission denied` on socket | Postfix `www-data`/`postfix` user not in `opendkim` group | `adduser postfix opendkim && systemctl restart postfix opendkim` |
@@ -71,6 +89,11 @@ globs:
 - **DMARC requires alignment**: DMARC passes only when the DKIM signing domain aligns with the `From:` header domain AND/OR SPF passes on the envelope sender. DKIM alone is insufficient for DMARC compliance.
 - **`opendkim` group membership takes effect only on next login/service restart**: After `adduser postfix opendkim`, restart both `postfix` and `opendkim`.
 - **InternalHosts controls what gets signed**: Only mail originating from listed hosts/IPs gets signed. If Postfix is on a different IP or loopback is not listed, outbound mail will not be signed.
+
+## See Also
+
+- **postfix** — MTA that integrates with OpenDKIM via the milter protocol
+- **dovecot** — IMAP/POP3 server for the mail delivery pipeline alongside DKIM-signed messages
 
 ## References
 See `references/` for:

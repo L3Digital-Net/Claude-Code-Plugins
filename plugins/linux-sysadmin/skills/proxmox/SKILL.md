@@ -3,21 +3,47 @@ name: proxmox
 description: >
   Proxmox VE hypervisor administration: VM and LXC container lifecycle,
   storage pools, cluster management, backup and restore, network bridge
-  and VLAN configuration, and troubleshooting. Triggers on: proxmox,
-  Proxmox VE, PVE, qemu KVM proxmox, LXC proxmox, proxmox cluster,
-  proxmox backup server, qm, pct, pvesh, pvecm, vzdump, pveupdate,
-  /etc/pve, /var/lib/vz.
+  and VLAN configuration, and troubleshooting.
+  MUST consult when installing, configuring, or troubleshooting proxmox.
+triggerPhrases:
+  - "proxmox"
+  - "Proxmox VE"
+  - "PVE"
+  - "qemu KVM proxmox"
+  - "LXC proxmox"
+  - "proxmox cluster"
+  - "proxmox backup server"
+  - "qm"
+  - "pct"
+  - "pvesh"
+  - "pvecm"
+  - "vzdump"
+  - "pveupdate"
+  - "/etc/pve"
+  - "/var/lib/vz"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
 
-- **Web UI**: `https://<host>:8006` (HTTPS only; self-signed cert by default)
-- **CLI tools**: `qm` (QEMU/KVM VMs), `pct` (LXC containers), `pvesh` (REST API shell), `pvecm` (cluster manager), `vzdump` (backup)
-- **Config root**: `/etc/pve/` (cluster-synced filesystem — do not edit files here directly unless documented)
-- **Storage root**: `/var/lib/vz/` (images, templates, backups for local storage)
-- **Logs**: `journalctl -u pvedaemon`, `journalctl -u pveproxy`, `/var/log/pve/`
-- **Install method**: bare-metal ISO installer from `pve.proxmox.com/wiki/Downloads`
+| Property | Value |
+|----------|-------|
+| **Web UI** | `https://<host>:8006` (HTTPS only; self-signed cert by default) |
+| **CLI tools** | `qm` (VMs), `pct` (LXC), `pvesh` (REST API), `pvecm` (cluster), `vzdump` (backup) |
+| **Config root** | `/etc/pve/` (cluster-synced FUSE filesystem; do not edit directly unless documented) |
+| **Storage root** | `/var/lib/vz/` (images, templates, backups for local storage) |
+| **Logs** | `journalctl -u pvedaemon`, `journalctl -u pveproxy`, `/var/log/pve/` |
+| **Install** | Bare-metal ISO installer from `pve.proxmox.com/wiki/Downloads` |
+
+## Quick Start
+```bash
+# After bare-metal ISO install:
+apt update && apt full-upgrade -y
+pvesm status                                       # verify storage pools
+qm list                                            # list VMs (empty on fresh install)
+curl -sk https://localhost:8006/api2/json/version   # API responds = PVE running
+```
 
 ## Key Operations
 
@@ -71,9 +97,9 @@ globs: []
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
-| "You do not have a valid subscription" banner | No enterprise subscription (expected on free installs) | Disable via UI hook patch; switch to community repo — see common-patterns.md §8 |
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| "You do not have a valid subscription" banner | No enterprise subscription (expected on free installs) | Disable via UI hook patch; switch to community repo — see common-patterns.md |
 | VM fails to start: `KVM kernel module not loaded` | CPU lacks VT-x/AMD-V or it is disabled in BIOS/UEFI | `egrep -c '(vmx\|svm)' /proc/cpuinfo`; enable virtualization in host firmware |
 | VM fails to start: `cannot allocate memory` | Host is overcommitted | `free -h`; reduce VM memory, balloon, or stop other VMs |
 | LXC container fails to start: `Permission denied` | AppArmor profile blocking nested operations | Enable `nesting=1` and `apparmor=1` in container Options, or set `lxc.apparmor.profile: unconfined` |
@@ -93,6 +119,11 @@ globs: []
 - **HA cluster requires 3+ nodes for reliable quorum**: A 2-node cluster loses quorum if either node goes down. Use a third node or a QDevice (Corosync quorum device) to achieve quorum with 2 physical hosts.
 - **`/etc/pve` is a FUSE filesystem (pmxcfs)**: Files here are cluster-synced. Do not edit them with tools that write via a temp file and rename (e.g., some editors). Use `pvesh` or the API, or edit directly with `echo`/`tee`.
 - **Online migration requires shared storage**: Live migrating a VM between nodes only works if its disk is on shared storage (NFS, Ceph, iSCSI). Local storage requires offline migration with the `--offline` flag.
+
+## See Also
+- **lxc-lxd** — standalone LXC/LXD container management without the Proxmox hypervisor layer
+- **docker** — application-level containerization for microservices, complementary to Proxmox VMs/LXC
+- **kvm-libvirt** — raw KVM/QEMU management with virsh; Proxmox uses this under the hood
 
 ## References
 

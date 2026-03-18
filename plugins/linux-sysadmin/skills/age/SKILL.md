@@ -1,12 +1,20 @@
 ---
 name: age
 description: >
-  age file encryption tool: invoked when the user asks about age, file encryption,
-  encrypt file, decrypt file, age encryption, GPG alternative, or modern encryption.
-  Covers keypair generation, encryption to public key recipients, passphrase
-  encryption, multiple recipients, ASCII armor, SSH key recipients, stdin/stdout
-  pipelines, and batch file encryption patterns.
+  age file encryption tool: keypair generation, encryption to public key
+  recipients, passphrase encryption, multiple recipients, ASCII armor,
+  SSH key recipients, stdin/stdout pipelines, and batch file encryption patterns.
+  MUST consult when installing, configuring, or troubleshooting age.
+triggerPhrases:
+  - "age"
+  - "file encryption"
+  - "encrypt file"
+  - "decrypt file"
+  - "age encryption"
+  - "GPG alternative"
+  - "modern encryption"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,6 +26,16 @@ globs: []
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool |
 | **Install** | `apt install age` / `dnf install age` |
+
+## Quick Start
+
+```bash
+sudo apt install age
+age-keygen -o ~/.age/key.txt
+age-keygen -y ~/.age/key.txt        # show public key
+age -r age1PUBLIC_KEY... -o secret.age plaintext.txt
+age -d -i ~/.age/key.txt -o plaintext.txt secret.age
+```
 
 ## Key Operations
 
@@ -55,4 +73,18 @@ globs: []
 - **`-r` takes the public key string, not a file**: The public key (starting with `age1...`) is passed directly to `-r`. To read from a file of public keys (one per line), use `-R keyfile` (capital R).
 - **SSH public keys work as recipients**: Any `~/.ssh/id_ed25519.pub` or `~/.ssh/id_rsa.pub` can be used as an age recipient with `-R`. This is convenient for homelab use where you already manage SSH keys.
 - **Passphrase mode uses scrypt**: The slow KDF is intentional — it makes offline brute-forcing expensive. If decryption feels slow, it's working correctly. For automated workflows, use key-based encryption instead.
+
+## See Also
+- **openssl-cli** — TLS certificate management and general-purpose encryption/hashing
+- **ssh-keygen** — SSH key generation and management; age can use SSH keys as recipients
+
+## References
+See `references/` for:
+- `cheatsheet.md` — task-organized command reference
+- `docs.md` — official documentation links
 - **age is encryption-only, not signing**: age provides confidentiality but not authentication or integrity verification beyond what encryption provides. For signed releases or verification, use `minisign` or `ssh-keygen -Y sign`.
+
+## See Also
+
+- **openssl-cli** — TLS certificate management and general-purpose encryption/hashing
+- **ssh-keygen** — SSH key generation and management; age can use SSH keys as recipients

@@ -3,28 +3,51 @@ name: exfat-ntfs
 description: >
   Cross-platform filesystem management for external drives and USB sticks shared
   between Linux, Windows, and macOS: mounting, formatting, repair, permissions,
-  fstab entries, and troubleshooting. Triggers on: exFAT, NTFS, external drive
-  linux, USB drive, format exfat, ntfs-3g, windows drive linux, cross-platform
-  filesystem, exfatprogs, ntfsfix, NTFS3, removable media, mount external drive.
+  fstab entries, and troubleshooting.
+  MUST consult when installing, configuring, or troubleshooting exFAT/NTFS cross-platform filesystems.
+triggerPhrases:
+  - "exFAT"
+  - "NTFS"
+  - "external drive linux"
+  - "USB drive"
+  - "format exfat"
+  - "ntfs-3g"
+  - "windows drive linux"
+  - "cross-platform filesystem"
+  - "exfatprogs"
+  - "ntfsfix"
+  - "NTFS3"
+  - "removable media"
+  - "mount external drive"
 globs:
   - "**/fstab"
   - "**/etc/fstab"
+last_verified: "unverified"
 ---
 
 ## Identity
-- **exFAT**: Kernel-native since 5.4 (module `exfat`). Userspace tools: `exfatprogs` (preferred, replaces `exfat-fuse`). No daemon.
-- **NTFS (ntfs-3g)**: FUSE-based read-write driver. Slow but battle-tested. Install: `ntfs-3g`.
-- **NTFS (NTFS3)**: Kernel-native read-write driver since 5.15. Significantly faster than ntfs-3g. Mount with `-t ntfs3`.
-- **No daemon**: Both are mount-time configured — no background service to manage.
-- **Distro install**:
-  - Debian/Ubuntu: `apt install exfatprogs ntfs-3g`
-  - RHEL/Fedora: `dnf install exfatprogs ntfs-3g`
-  - Arch: `pacman -S exfatprogs ntfs-3g`
+
+| Property | Value |
+|----------|-------|
+| **exFAT** | Kernel-native since 5.4 (module `exfat`). Userspace tools: `exfatprogs` (preferred, replaces `exfat-fuse`). No daemon. |
+| **NTFS (ntfs-3g)** | FUSE-based read-write driver. Slow but battle-tested. Install: `ntfs-3g`. |
+| **NTFS (NTFS3)** | Kernel-native read-write driver since 5.15. Significantly faster than ntfs-3g. Mount with `-t ntfs3`. |
+| **Daemon** | None — both are mount-time configured. |
+| **Distro install** | Debian/Ubuntu: `apt install exfatprogs ntfs-3g`; RHEL/Fedora: `dnf install exfatprogs ntfs-3g`; Arch: `pacman -S exfatprogs ntfs-3g` |
+
+## Quick Start
+
+```bash
+sudo apt install exfatprogs ntfs-3g
+lsblk -f /dev/sdX
+sudo mount -t exfat -o uid=$(id -u),gid=$(id -g),umask=022 /dev/sdX1 /mnt/usb
+touch /mnt/usb/testfile && rm /mnt/usb/testfile
+```
 
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Detect filesystem type | `blkid /dev/sdX1` or `file -s /dev/sdX1` |
 | List partitions and sizes | `lsblk -f` (shows fs type, label, UUID) |
 | List all disks with partition table | `sudo fdisk -l` |
@@ -55,11 +78,11 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | NTFS mounts read-only, `read-only filesystem` errors | Windows fast startup left the volume dirty (hibernation file present) | Boot Windows fully and shut down (not restart, not hibernate); or `sudo ntfsfix /dev/sdX1` to clear dirty bit as a workaround |
 | `Permission denied` accessing files | Missing `uid`/`gid` mount options — files owned by root | Remount with `-o uid=$(id -u),gid=$(id -g),umask=022` |
-| `wrong fs type, bad option, bad superblock` | Missing kernel module or userspace package | `lsmod | grep exfat`; install `exfatprogs` or ensure kernel ≥ 5.4; for NTFS install `ntfs-3g` |
+| `wrong fs type, bad option, bad superblock` | Missing kernel module or userspace package | `lsmod | grep exfat`; install `exfatprogs` or ensure kernel >= 5.4; for NTFS install `ntfs-3g` |
 | `modprobe: FATAL: Module exfat not found` | Kernel < 5.4 or module not built | Install `exfat-fuse` as fallback or upgrade kernel |
 | Slow write speed on NTFS | ntfs-3g is FUSE-based (userspace overhead) | Use kernel NTFS3 driver: `mount -t ntfs3` (requires Linux 5.15+) |
 | NTFS metadata corruption after unclean unmount | Journal not replayed properly | `sudo ntfsfix /dev/sdX1`; then remount |
@@ -72,6 +95,11 @@ globs:
 - **exFAT has no Unix permissions**: Every file appears owned by the `uid`/`gid` specified at mount time with the `umask` applied uniformly. You cannot `chmod` individual files. Plan the mount options upfront.
 - **FAT32 4 GB file limit**: If someone asks why a large file copy fails to a FAT32 drive, the filesystem does not support files larger than 4 GB. Use exFAT (no practical file size limit) or NTFS instead.
 - **Always sync before removing**: `sync && udisksctl unmount -b /dev/sdX1` before unplugging. Pulling a drive with dirty buffers causes corruption. On desktop systems, `udisksctl` is safer than raw `umount` because it also powers down the drive after unmounting.
+
+## See Also
+
+- **ext4** — Native Linux filesystem; use when the drive does not need to be read on Windows or macOS
+- **fdisk-parted** — Partition management tools; use to create partition tables before formatting with exFAT or NTFS
 
 ## References
 See `references/` for:

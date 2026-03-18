@@ -3,25 +3,50 @@ name: sqlite
 description: >
   SQLite embedded database administration: opening and querying database files,
   schema inspection, data import/export, backup, PRAGMA tuning, WAL mode, and
-  troubleshooting. Triggers on: sqlite, SQLite, sqlite3, .db file, embedded
-  database, single-file database, sqlite backup, database locked, WAL mode,
-  PRAGMA, FTS5, full-text search sqlite.
+  troubleshooting.
+  MUST consult when installing, configuring, or troubleshooting sqlite.
+triggerPhrases:
+  - "sqlite"
+  - "SQLite"
+  - "sqlite3"
+  - ".db file"
+  - "embedded database"
+  - "single-file database"
+  - "sqlite backup"
+  - "database locked"
+  - "WAL mode"
+  - "PRAGMA"
+  - "FTS5"
+  - "full-text search sqlite"
 globs:
   - "**/*.db"
   - "**/*.sqlite"
   - "**/*.sqlite3"
+last_verified: "unverified"
 ---
 
 ## Identity
-- **Binary**: `sqlite3`
-- **No service**: SQLite is embedded — there is no daemon, no port, no systemd unit
-- **Database**: a single file on disk (e.g. `/var/lib/myapp/data.db`)
-- **Distro install**: `apt install sqlite3` / `dnf install sqlite`
+
+| Property | Value |
+|----------|-------|
+| **Binary** | `sqlite3` |
+| **Config** | No persistent config — SQLite is embedded with no daemon |
+| **Database** | A single file on disk (e.g. `/var/lib/myapp/data.db`) |
+| **Install** | `apt install sqlite3` / `dnf install sqlite` |
+
+## Quick Start
+
+```bash
+sudo apt install sqlite3                          # install SQLite CLI
+sqlite3 /path/to/db.sqlite3 ".tables"            # list tables in a database
+sqlite3 /path/to/db.sqlite3 "PRAGMA integrity_check;"  # verify database health
+sqlite3 /path/to/db.sqlite3 "PRAGMA journal_mode = WAL;"  # enable WAL mode
+```
 
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Open a database file | `sqlite3 /path/to/db.sqlite3` |
 | Help (dot-command list) | `.help` |
 | List tables | `.tables` |
@@ -61,8 +86,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `database is locked` | Another writer has an exclusive lock | Only one write connection at a time; switch to WAL mode (`PRAGMA journal_mode = WAL`) for concurrent reads |
 | `disk I/O error` | Bad file permissions, full disk, or corruption | Check `ls -lh`, `df -h`, and `PRAGMA integrity_check` |
 | WAL side-car files left behind | Crash or missing checkpoint | Safe to open — SQLite auto-checkpoints on next open; force with `PRAGMA wal_checkpoint(FULL);` |
@@ -79,6 +104,11 @@ globs:
 - **Type affinity, not strict typing**: SQLite uses type affinity — `INSERT INTO t (int_col) VALUES ('abc')` succeeds silently unless the table was created with `STRICT`. This causes surprises when migrating from other databases.
 - **Datetime has no native type**: Dates are stored as TEXT (ISO-8601), REAL (Julian day), or INTEGER (Unix timestamp). `strftime()` and `date()` functions handle conversion but behavior differs from PostgreSQL/MySQL.
 - **FTS5 is a separate virtual table**: Full-text search requires creating a `VIRTUAL TABLE ... USING fts5(...)` and inserting separately from the main table, or using a content table.
+
+## See Also
+
+- **mariadb** — Client-server relational database for workloads that outgrow SQLite's single-writer model
+- **postgresql** — Full-featured relational database with advanced concurrency and indexing
 
 ## References
 See `references/` for:

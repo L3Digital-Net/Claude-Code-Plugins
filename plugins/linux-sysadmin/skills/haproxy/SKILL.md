@@ -3,13 +3,24 @@ name: haproxy
 description: >
   HAProxy load balancer and TCP/HTTP proxy administration: config syntax,
   frontend/backend sections, ACL-based routing, SSL termination, health checks,
-  stats socket, session persistence, and troubleshooting. Triggers on: haproxy,
-  load balancer, HAProxy, haproxy stats, haproxy backend, TCP load balance,
-  haproxy frontend, haproxy ACL, haproxy reload, haproxy drain.
+  stats socket, session persistence, and troubleshooting.
+  MUST consult when installing, configuring, or troubleshooting haproxy.
+triggerPhrases:
+  - "haproxy"
+  - "load balancer"
+  - "HAProxy"
+  - "haproxy stats"
+  - "haproxy backend"
+  - "TCP load balance"
+  - "haproxy frontend"
+  - "haproxy ACL"
+  - "haproxy reload"
+  - "haproxy drain"
 globs:
   - "**/haproxy.cfg"
   - "**/haproxy/**/*.cfg"
   - "**/haproxy/**/*.conf"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -20,10 +31,18 @@ globs:
 - **User/group**: `haproxy` (both Debian/Ubuntu and RHEL/Fedora)
 - **Distro install**: `apt install haproxy` / `dnf install haproxy`
 
+## Quick Start
+```bash
+sudo apt install haproxy
+sudo systemctl enable --now haproxy
+sudo haproxy -c -f /etc/haproxy/haproxy.cfg   # Configuration file is valid
+curl -sI http://localhost                       # verify frontend responds
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Status | `systemctl status haproxy` |
 | Graceful reload (no dropped connections) | `sudo systemctl reload haproxy` or `haproxy -sf $(cat /run/haproxy.pid) -f /etc/haproxy/haproxy.cfg` |
 | Validate config | `sudo haproxy -c -f /etc/haproxy/haproxy.cfg` |
@@ -60,8 +79,8 @@ Verify: `ss -tlnp | grep haproxy`
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `cannot bind socket [0.0.0.0:80]` | Port already in use or permission denied | `ss -tlnp \| grep :80`; below port 1024 requires root or `CAP_NET_BIND_SERVICE` |
 | All servers DOWN in backend | Health check path returning non-2xx, or wrong check port | `echo "show servers state" \| socat stdio /run/haproxy/admin.sock`; verify `option httpchk` path |
 | SSL: `no suitable signature algorithm` | PEM bundle missing intermediate cert | Bundle must be: leaf cert + intermediates + (optionally) root, concatenated in order |
@@ -82,6 +101,14 @@ Verify: `ss -tlnp | grep haproxy`
 - **Stats socket security**: The admin socket (`level admin`) allows disabling servers and changing weights — it must be restricted to root or a dedicated admin group. Never expose it to application users.
 - **`option forwardfor` strips existing header by default**: If HAProxy is behind another proxy, the `X-Forwarded-For` header from the upstream proxy is preserved only when using `option forwardfor except 127.0.0.1` or similar. Without it, the header is replaced with the connecting IP.
 - **`maxconn` must be set at multiple levels**: The global `maxconn` caps the total process, `defaults`/`frontend` `maxconn` caps per-listener, and each `server` line can have its own `maxconn`. All three interact; the lowest one wins.
+
+## See Also
+- **nginx** — web server and reverse proxy with built-in load balancing, also handles static content
+- **traefik** — container-native reverse proxy with auto-discovery from Docker labels and ACME support
+- **caddy** — web server with automatic HTTPS and simple reverse proxy configuration
+- **patroni** — PostgreSQL HA that uses HAProxy for connection routing
+- **kong** — API gateway with load balancing, auth plugins, and rate limiting
+- **envoy** — L4/L7 proxy with advanced traffic management and xDS API
 
 ## References
 See `references/` for:

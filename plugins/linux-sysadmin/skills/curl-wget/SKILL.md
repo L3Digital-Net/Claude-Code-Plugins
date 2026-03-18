@@ -1,12 +1,25 @@
 ---
 name: curl-wget
 description: >
-  curl and wget HTTP client tools: invoked when the user asks about curl, wget,
-  HTTP request, download file, API request, POST request, HTTP headers,
-  follow redirect, basic auth, certificate, http get, or http post. Covers
-  GET and POST requests, JSON payloads, authentication, header inspection,
-  TLS options, resumable downloads, rate limiting, and wget recursive mirroring.
+  curl and wget HTTP client tools: GET and POST requests, JSON payloads,
+  authentication, header inspection, TLS options, resumable downloads,
+  rate limiting, and wget recursive mirroring.
+  MUST consult when writing curl or wget commands for HTTP requests or downloads.
+triggerPhrases:
+  - "curl"
+  - "wget"
+  - "HTTP request"
+  - "download file"
+  - "API request"
+  - "POST request"
+  - "HTTP headers"
+  - "follow redirect"
+  - "basic auth"
+  - "certificate"
+  - "http get"
+  - "http post"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,6 +31,16 @@ globs: []
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool |
 | **Install** | `apt install curl wget` / `dnf install curl wget` |
+
+## Quick Start
+
+```bash
+sudo apt install curl wget
+curl -s https://api.example.com/health | jq '.'
+curl -o file.tar.gz https://example.com/file.tar.gz
+wget https://example.com/file.tar.gz
+curl -X POST -H 'Content-Type: application/json' -d '{"key":"val"}' https://api.example.com/
+```
 
 ## Key Operations
 
@@ -63,3 +86,12 @@ globs: []
 - **`-k` skips TLS verification silently**: There is no warning in the output that certificate validation was skipped. Fine for internal testing; dangerous in production scripts or CI where it may mask certificate problems.
 - **URL-encoding gotchas with `-d`**: `-d` sends data URL-encoded if you build it as `key=value`, but if your value contains `&`, `+`, or `@`, they need manual encoding or use `--data-urlencode key=value` which handles the encoding automatically.
 - **wget is simpler for downloads, weaker for APIs**: wget follows redirects by default and handles resumption well, but lacks curl's header/auth/body control. For anything beyond a simple download, prefer curl.
+
+## See Also
+
+- **openssl-cli** — TLS certificate inspection and debugging for connection issues
+
+## References
+See `references/` for:
+- `cheatsheet.md` — task-organized command reference
+- `docs.md` — official documentation links

@@ -1,10 +1,18 @@
 ---
 name: pihole
 description: >
-  Pi-hole network-wide ad blocker and DNS sinkhole — installation, configuration,
+  Pi-hole network-wide ad blocker and DNS sinkhole: installation, configuration,
   blocklist management, DNS settings, troubleshooting, and DHCP server setup.
-  Triggers on: pi-hole, pihole, ad blocker, DNS sinkhole, blocklist, pihole-FTL,
-  gravity.
+  MUST consult when installing, configuring, or troubleshooting pihole.
+triggerPhrases:
+  - "pi-hole"
+  - "pihole"
+  - "ad blocker"
+  - "DNS sinkhole"
+  - "blocklist"
+  - "pihole-FTL"
+  - "gravity"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -15,9 +23,17 @@ description: >
 - **Data/lists**: `/etc/pihole/gravity.db` (SQLite, blocklist database)
 - **Install**: Official script: `curl -sSL https://install.pi-hole.net | bash` (review before running)
 
+## Quick Start
+```bash
+curl -sSL https://install.pi-hole.net | bash   # interactive installer
+pihole status                                    # FTL is listening on port 53
+dig @127.0.0.1 google.com +short                # resolves = working
+dig @127.0.0.1 doubleclick.net +short            # 0.0.0.0 = blocking works
+```
+
 ## Key Operations
 
-| Goal | Command |
+| Task | Command |
 |------|---------|
 | Check service status | `pihole status` |
 | Update blocklists | `pihole -g` (gravity update) |
@@ -49,8 +65,8 @@ description: >
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | DNS not resolving | FTL not running or port conflict | `pihole status`; `ss -ulnp \| grep :53` |
 | Port 53 conflict | systemd-resolved using port 53 | Disable resolved stub listener; see Pain Points |
 | Web interface 404 | lighttpd not running | `systemctl status lighttpd` |
@@ -67,6 +83,12 @@ description: >
 - **unbound integration**: Pi-hole → unbound is a common stack. Pi-hole handles blocking; unbound handles recursive resolution. Use `127.0.0.1#5335` as Pi-hole's upstream when unbound listens on 5335.
 - **Docker installs**: Official Docker image (`pihole/pihole`) requires `network_mode: host` or careful port mapping for DNS to work on all network interfaces.
 - **DHCP conflicts**: Only enable Pi-hole's DHCP server if you can disable your router's DHCP server first. Running two DHCP servers causes chaos.
+
+## See Also
+- **unbound** — recursive DNS resolver commonly paired with Pi-hole for full DNS independence
+- **dnsmasq** — lightweight DNS forwarder and DHCP server; Pi-hole's FTL is a fork of dnsmasq
+- **bind9** — full authoritative DNS server for hosting your own zones alongside Pi-hole
+- **avahi** — mDNS service discovery on the same network Pi-hole serves
 
 ## References
 See `references/` for:

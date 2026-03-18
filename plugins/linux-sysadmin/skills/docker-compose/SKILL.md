@@ -1,27 +1,46 @@
 ---
 name: docker-compose
 description: >
-  Docker Compose multi-container application orchestration — compose file syntax, service
-  definitions, networking, volumes, environment variables, healthchecks,
-  and troubleshooting. Triggers on: docker compose, docker-compose,
-  compose.yml, compose.yaml, multi-container, docker stack.
+  Docker Compose multi-container application orchestration: compose file syntax,
+  service definitions, networking, volumes, environment variables, healthchecks,
+  and troubleshooting.
+  MUST consult when installing, configuring, or troubleshooting Docker Compose.
+triggerPhrases:
+  - "docker compose"
+  - "docker-compose"
+  - "compose.yml"
+  - "compose.yaml"
+  - "multi-container"
+  - "docker stack"
 globs:
   - "**/docker-compose.yml"
   - "**/docker-compose.yaml"
   - "**/compose.yml"
   - "**/compose.yaml"
   - "**/docker-compose.*.yml"
+last_verified: "unverified"
 ---
 
 ## Identity
-- **CLI**: `docker compose` (v2, plugin) or `docker-compose` (v1, standalone)
-- **Config**: `compose.yml` / `compose.yaml` / `docker-compose.yml` (searched in order)
-- **Default project name**: directory name of the compose file
-- **Install**: Included with Docker Desktop; `apt install docker-compose-plugin` (Compose v2 plugin)
+
+| Property | Value |
+|----------|-------|
+| **CLI** | `docker compose` (v2, plugin) or `docker-compose` (v1, standalone) |
+| **Config** | `compose.yml` / `compose.yaml` / `docker-compose.yml` (searched in order) |
+| **Default project name** | directory name of the compose file |
+| **Install** | Included with Docker Desktop; `apt install docker-compose-plugin` (Compose v2 plugin) |
+
+## Quick Start
+```bash
+sudo apt install docker-compose-plugin
+docker compose version                  # Docker Compose version v2.x.x
+docker compose config                   # validate compose file in current dir
+docker compose up -d                    # start all services detached
+```
 
 ## Key Operations
 
-| Goal | Command |
+| Task | Command |
 |------|---------|
 | Start all services (detached) | `docker compose up -d` |
 | Stop and remove containers | `docker compose down` |
@@ -39,8 +58,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | Service won't start | Config error or port conflict | `docker compose logs servicename` |
 | `network not found` | Stale network from old run | `docker compose down` then `docker compose up -d` |
 | Volume data lost | Used `down -v` | Volumes are persistent unless explicitly deleted |
@@ -57,6 +76,10 @@ globs:
 - **Environment variable precedence**: shell env > `.env` file > `environment:` in compose > `env_file:`. Shell always wins.
 - **`profiles`**: Services with a profile are not started by default. `docker compose --profile debug up` to include them.
 - **Compose v1 vs v2**: `docker-compose` (hyphen) is v1 (deprecated). `docker compose` (space) is v2. Behavior differences exist; prefer v2.
+
+## See Also
+- **docker** — container runtime that Compose orchestrates; required for all Compose operations
+- **podman** — daemonless container alternative with `podman compose` compatibility for Compose files
 
 ## References
 See `references/` for:

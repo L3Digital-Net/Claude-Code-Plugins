@@ -3,12 +3,24 @@ name: logrotate
 description: >
   logrotate log file rotation administration: config syntax, rotation frequency,
   compression, postrotate scripts, application signal handling, troubleshooting
-  rotation failures, and state file inspection. Triggers on: logrotate,
-  log rotation, log file rotation, logs growing, rotate logs, logrotate.conf,
-  /etc/logrotate.d, copytruncate, postrotate, log cleanup, log archiving.
+  rotation failures, and state file inspection.
+  MUST consult when installing, configuring, or troubleshooting logrotate.
+triggerPhrases:
+  - "logrotate"
+  - "log rotation"
+  - "log file rotation"
+  - "logs growing"
+  - "rotate logs"
+  - "logrotate.conf"
+  - "/etc/logrotate.d"
+  - "copytruncate"
+  - "postrotate"
+  - "log cleanup"
+  - "log archiving"
 globs:
   - "**/logrotate.conf"
   - "**/logrotate.d/**"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -19,10 +31,19 @@ globs:
 - **Scheduler**: run daily via `/etc/cron.daily/logrotate` or `logrotate.timer` (systemd)
 - **Distro install**: `apt install logrotate` / `dnf install logrotate`
 
+## Quick Start
+
+```bash
+sudo apt install logrotate
+sudo systemctl enable --now logrotate.timer
+logrotate -d /etc/logrotate.conf      # dry-run to validate config
+logrotate -vf /etc/logrotate.d/myapp  # force-rotate a specific config
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Test config (dry-run, verbose) | `logrotate -d /etc/logrotate.conf` |
 | Test a specific drop-in config | `logrotate -d /etc/logrotate.d/nginx` |
 | Force rotation now (ignore schedule) | `logrotate -f /etc/logrotate.conf` |
@@ -48,8 +69,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `error: error opening /var/log/app.log: Permission denied` | logrotate runs as root but postrotate script or create mode doesn't match log owner | Run `ls -la /var/log/app.log`; add `su <user> <group>` directive to config block |
 | `postrotate script failed` | postrotate command exits non-zero (e.g., service not running, wrong path) | Run the postrotate command manually; check `$?`; add `sharedscripts` to avoid re-running on each matched file |
 | `unknown option` or config parse error | Typo or unsupported directive in config file | Run `logrotate -d /etc/logrotate.d/<file>` and read the error line number |
@@ -66,6 +87,11 @@ globs:
 - **Daily rotation runs via cron.daily, not at a precise time.** The actual run time depends on when cron.daily fires (commonly 06:25 on Debian systems). Logs are not rotated in real time; a 1 GB log can accumulate between runs.
 - **`dateext` makes filenames substantially clearer than numbered suffixes.** Numbered rotation (`app.log.1`, `.2`) shifts all existing files on each run, making timestamp-based grep harder. `dateext` with `dateformat -%Y%m%d` avoids this and prevents name collisions.
 - **`sharedscripts` is almost always wanted for glob patterns.** Without it, `postrotate` runs once per matched file, potentially sending SIGHUP dozens of times to the same process.
+
+## See Also
+
+- **journald** — systemd's structured logging subsystem; an alternative to file-based logs
+- **systemd** — logrotate is often triggered by systemd timers instead of cron
 
 ## References
 See `references/` for:

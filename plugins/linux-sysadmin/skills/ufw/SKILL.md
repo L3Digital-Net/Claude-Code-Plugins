@@ -1,13 +1,22 @@
 ---
 name: ufw
 description: >
-  ufw (Uncomplicated Firewall) administration — enabling, rules management, app
+  ufw (Uncomplicated Firewall) administration: enabling, rules management, app
   profiles, logging, and troubleshooting. Covers iptables frontend basics.
-  Triggers on: ufw, firewall, iptables, uncomplicated firewall, open port, block
-  port, firewall rules, allow ssh.
+  MUST consult when installing, configuring, or troubleshooting ufw.
+triggerPhrases:
+  - "ufw"
+  - "firewall"
+  - "iptables"
+  - "uncomplicated firewall"
+  - "open port"
+  - "block port"
+  - "firewall rules"
+  - "allow ssh"
 globs:
   - "**/ufw/**"
   - "**/ufw/user.rules"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,9 +27,18 @@ globs:
 - **Install**: `apt install ufw` (Debian/Ubuntu); not default on RHEL (use firewalld instead)
 - **Backend**: iptables/nftables (abstraction layer)
 
+## Quick Start
+
+```bash
+sudo apt install ufw
+sudo ufw allow ssh                  # CRITICAL: allow SSH before enabling
+sudo ufw enable                     # activate firewall
+sudo ufw status verbose             # verify rules and default policy
+```
+
 ## Key Operations
 
-| Goal | Command |
+| Task | Command |
 |------|---------|
 | Check status + rules | `sudo ufw status verbose` |
 | Enable firewall | `sudo ufw enable` |
@@ -45,8 +63,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | Locked out after enabling | SSH not allowed before `ufw enable` | Access via console; `sudo ufw allow ssh` then re-enable |
 | Rule shows but traffic still blocked | Rule order matters; more specific rules win | Check `sudo ufw status numbered`; rule order is insertion order |
 | Docker bypasses ufw | Docker modifies iptables directly | ufw rules don't apply to Docker-published ports by default; see Pain Points |
@@ -61,6 +79,12 @@ globs:
 - **App profiles**: `/etc/ufw/applications.d/` defines named profiles (like 'Nginx Full', 'OpenSSH'). Show available profiles: `sudo ufw app list`.
 - **Rule order**: First matching rule wins. More specific rules must appear before broader ones.
 - **Logging**: `ufw logging on` logs at LOW level by default. Increase with `sudo ufw logging medium` or `high`.
+
+## See Also
+
+- **firewalld** — zone-based firewall for RHEL/Fedora with richer rule semantics
+- **fail2ban** — automatic IP banning based on log pattern matching (pairs well with ufw)
+- **crowdsec** — collaborative intrusion prevention with community-shared blocklists
 
 ## References
 See `references/` for:

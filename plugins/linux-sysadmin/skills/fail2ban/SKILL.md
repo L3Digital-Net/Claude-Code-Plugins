@@ -1,10 +1,20 @@
 ---
 name: fail2ban
 description: >
-  fail2ban intrusion prevention — jail configuration, filter rules, ban/unban
-  management, log monitoring, and troubleshooting. Triggers on: fail2ban,
-  intrusion prevention, ban IP, brute force protection, jail, f2b, unban,
-  fail2ban-client, fail2ban-regex, jail.local.
+  fail2ban intrusion prevention: jail configuration, filter rules, ban/unban
+  management, log monitoring, and troubleshooting.
+  MUST consult when installing, configuring, or troubleshooting fail2ban.
+triggerPhrases:
+  - "fail2ban"
+  - "intrusion prevention"
+  - "ban IP"
+  - "brute force protection"
+  - "jail"
+  - "f2b"
+  - "unban"
+  - "fail2ban-client"
+  - "fail2ban-regex"
+  - "jail.local"
 globs:
   - "**/fail2ban/**"
   - "**/jail.local"
@@ -12,6 +22,7 @@ globs:
   - "**/jail.d/**"
   - "**/filter.d/**"
   - "**/action.d/**"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -23,9 +34,19 @@ globs:
 - **Logs**: `journalctl -u fail2ban`, `/var/log/fail2ban.log`
 - **Install**: `apt install fail2ban` / `dnf install fail2ban`
 
+## Quick Start
+
+```bash
+sudo apt install fail2ban
+sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+sudo systemctl enable --now fail2ban
+sudo fail2ban-client status            # list active jails
+sudo fail2ban-client status sshd       # check sshd jail details
+```
+
 ## Key Operations
 
-| Goal | Command |
+| Task | Command |
 |------|---------|
 | Check status (all jails) | `sudo fail2ban-client status` |
 | Status of specific jail | `sudo fail2ban-client status sshd` |
@@ -39,8 +60,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | Jail not catching failures | Filter regex doesn't match log format | Test with `fail2ban-regex`; check `datepattern` |
 | Ban not applied | Action misconfigured or iptables not working | Check `fail2ban.log`; verify action with `fail2ban-client get sshd actions` |
 | IP unbanned immediately | `ignoreip` includes the IP | Check `ignoreip` in jail.local |
@@ -56,6 +77,13 @@ globs:
 - **Bantime multiplier**: `bantime.multiplier = true` enables recidivism — repeat offenders get exponentially longer bans. Very useful.
 - **`fail2ban-regex` for testing**: Always test filters before deploying: `sudo fail2ban-regex /var/log/nginx/error.log /etc/fail2ban/filter.d/nginx-http-auth.conf`
 - **Database**: Persistent ban state stored in `/var/lib/fail2ban/fail2ban.sqlite3`. Survives restarts if `dbpurgeage` is sufficient.
+
+## See Also
+
+- **crowdsec** — collaborative intrusion prevention that shares threat intelligence across installations
+- **ufw** — simple firewall frontend; fail2ban injects rules into ufw/iptables to enforce bans
+- **firewalld** — zone-based firewall; fail2ban can use firewalld actions for ban enforcement
+- **sshd** — most common service protected by fail2ban; configure sshd hardening alongside fail2ban
 
 ## References
 See `references/` for:

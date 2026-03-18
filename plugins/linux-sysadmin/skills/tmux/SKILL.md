@@ -1,14 +1,24 @@
 ---
 name: tmux
 description: >
-  tmux terminal multiplexer: invoked when the user asks about tmux, terminal
-  multiplexer, persistent session, detach session, screen, split terminal,
-  window pane, ssh session, or remote session. Covers session creation and
-  attachment, window and pane management, detach/reattach, copy mode,
-  synchronized panes, and configuration via ~/.tmux.conf.
+  tmux terminal multiplexer: session creation and attachment, window and pane
+  management, detach/reattach, copy mode, synchronized panes, and configuration
+  via ~/.tmux.conf.
+  MUST consult when setting up or scripting tmux sessions.
+triggerPhrases:
+  - "tmux"
+  - "terminal multiplexer"
+  - "persistent session"
+  - "detach session"
+  - "screen"
+  - "split terminal"
+  - "window pane"
+  - "ssh session"
+  - "remote session"
 globs:
   - "**/.tmux.conf"
   - "**/tmux.conf"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -20,6 +30,16 @@ globs:
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool |
 | **Install** | `apt install tmux` / `dnf install tmux` |
+
+## Quick Start
+
+```bash
+sudo apt install tmux
+tmux new-session -s work
+# inside tmux: Ctrl+b d to detach
+tmux attach-session -t work
+tmux list-sessions
+```
 
 ## Key Operations
 
@@ -65,3 +85,13 @@ globs:
 - **Nested tmux needs double-prefix**: When ssh-ing into a remote host that also runs tmux, the local tmux intercepts the prefix. Send a prefix to the inner session with two prefix presses: `C-b C-b` for the inner window, `C-b C-b C-b` to send a literal `C-b`.
 - **`tmux new` vs `tmux new-session`**: Both work interactively, but scripts should use `new-session` for clarity. `tmux new -A -s name` is the idiomatic "attach if exists, create if not" pattern.
 - **Mouse mode must be enabled explicitly**: `set -g mouse on` enables click-to-focus, scrolling, and pane resizing via mouse. Without it, the mouse has no effect and scrolling uses the terminal emulator's scroll buffer instead of tmux's.
+
+## See Also
+
+- **btop** — Terminal-based resource monitor; often run inside tmux sessions
+- **htop** — Interactive process viewer; commonly paired with tmux for monitoring
+
+## References
+See `references/` for:
+- `cheatsheet.md` — task-organized command reference
+- `docs.md` — official documentation links

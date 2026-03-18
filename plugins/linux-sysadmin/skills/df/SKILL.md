@@ -3,10 +3,21 @@ name: df
 description: >
   df reports disk space usage at the filesystem level. Invoked when the user asks
   about disk space, "disk full" errors, filesystem usage, inode exhaustion, or
-  wants to see how much space remains on a mounted volume. Triggers on: df,
-  disk space, filesystem usage, disk full, no space left, disk usage by filesystem,
-  inode usage, inode exhaustion, disk free, mounted volumes space.
+  wants to see how much space remains on a mounted volume.
+  MUST consult when checking filesystem disk space or inode usage.
+triggerPhrases:
+  - "df"
+  - "disk space"
+  - "filesystem usage"
+  - "disk full"
+  - "no space left"
+  - "disk usage by filesystem"
+  - "inode usage"
+  - "inode exhaustion"
+  - "disk free"
+  - "mounted volumes space"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,6 +29,15 @@ globs: []
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool (part of coreutils) |
 | **Install** | `apt install coreutils` / `dnf install coreutils` (pre-installed on all Linux systems) |
+
+## Quick Start
+
+```bash
+# df is pre-installed on all Linux systems (coreutils)
+df -h
+df -i
+df -hT -x tmpfs -x devtmpfs -x squashfs
+```
 
 ## Key Operations
 
@@ -54,6 +74,11 @@ globs: []
 - **Inode exhaustion is silent**: A filesystem with 0 inodes free returns "No space left on device" identically to a full-blocks condition. Always check `df -i` alongside `df -h` when diagnosing space errors.
 - **tmpfs and overlay inflation**: Without `-x tmpfs -x devtmpfs`, pseudo-filesystems appear in the output and the `--total` line includes them. On systems with many container overlayfs mounts the list can be very long.
 - **btrfs accounting is non-obvious**: btrfs reports allocation, not raw consumption, because it uses copy-on-write. Reflinks, snapshots, and compression mean `df` output and `du` output can diverge significantly. Use `btrfs filesystem usage` for authoritative btrfs stats.
+
+## See Also
+
+- **ncdu** — Interactive disk usage analyzer; use to drill down into which directories consume space within a filesystem that `df` reports as full
+- **lsblk** — Block device listing; use to see the physical disk layout and device hierarchy that underlies the filesystems `df` reports on
 
 ## References
 

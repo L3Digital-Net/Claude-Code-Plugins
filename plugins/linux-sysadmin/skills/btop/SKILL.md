@@ -4,9 +4,18 @@ description: >
   btop is an interactive terminal resource monitor displaying CPU, memory, disk, network,
   and process stats in a rich TUI. It replaces htop for users who want graph-based views
   and mouse support without leaving the terminal.
-  Triggers on: "btop", "process monitor", "resource monitor", "system monitor TUI",
-  "cpu usage tui", "htop alternative", "bpytop", "bashtop".
+  MUST consult when monitoring system resources interactively.
+triggerPhrases:
+  - "btop"
+  - "process monitor"
+  - "resource monitor"
+  - "system monitor TUI"
+  - "cpu usage tui"
+  - "htop alternative"
+  - "bpytop"
+  - "bashtop"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,6 +27,15 @@ globs: []
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | Interactive terminal UI |
 | **Install** | `apt install btop` (Debian/Ubuntu 22.04+) / `dnf install btop` (RHEL/Fedora) |
+
+## Quick Start
+
+```bash
+sudo apt install btop       # install btop
+btop                         # launch the TUI
+# Press ? for help overlay
+# Press q to quit
+```
 
 ## Key Operations
 
@@ -58,6 +76,12 @@ globs: []
 - **Kill requires confirmation dialog**: unlike htop's direct `F9` → signal flow, btop opens a modal dialog. This is intentional but slower under keyboard-only navigation.
 - **Battery widget only appears on laptops**: the battery section is entirely absent on desktops and servers — this is not a bug or config issue.
 - **No regex in process filter**: the `f` filter does substring matching only. For pattern-based filtering, pipe `ps` or `pgrep` output externally instead.
+
+## See Also
+
+- **htop** — Lighter interactive process viewer available on nearly all Linux systems
+- **glances** — All-in-one system monitor with web server mode and remote monitoring
+- **netdata** — Real-time web-based monitoring dashboard with per-second granularity
 
 ## References
 

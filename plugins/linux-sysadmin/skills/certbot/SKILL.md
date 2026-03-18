@@ -2,13 +2,23 @@
 name: certbot
 description: >
   Certbot (Let's Encrypt) certificate management: obtaining, renewing, and
-  revoking TLS certificates via ACME protocol. Triggers on: certbot,
-  Let's Encrypt, letsencrypt, ACME certificate, SSL certificate, certbot nginx,
-  certbot renew, acme.sh, certbot wildcard.
+  revoking TLS certificates via ACME protocol.
+  MUST consult when installing, configuring, or troubleshooting certbot.
+triggerPhrases:
+  - "certbot"
+  - "Let's Encrypt"
+  - "letsencrypt"
+  - "ACME certificate"
+  - "SSL certificate"
+  - "certbot nginx"
+  - "certbot renew"
+  - "acme.sh"
+  - "certbot wildcard"
 globs:
   - "**/letsencrypt/**/*.conf"
   - "**/letsencrypt/live/**"
   - "**/letsencrypt/renewal/**"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -21,10 +31,19 @@ globs:
 - **Auto-renewal**: `certbot.timer` (systemd) or `/etc/cron.d/certbot` (cron-based installs)
 - **Install options**: `snap install --classic certbot` (recommended), `apt install certbot` / `dnf install certbot`, or `pip install certbot`
 
+## Quick Start
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d example.com -d www.example.com
+sudo certbot renew --dry-run           # verify auto-renewal works
+sudo systemctl status certbot.timer    # confirm renewal timer is active
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Obtain cert (HTTP-01 via nginx plugin) | `sudo certbot --nginx -d example.com -d www.example.com` |
 | Obtain cert (HTTP-01 via apache plugin) | `sudo certbot --apache -d example.com` |
 | Obtain cert (standalone, port 80) | `sudo certbot certonly --standalone -d example.com` |
@@ -58,8 +77,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `Too many certificates already issued for this exact set of domains` | Hit the 5 certs/week duplicate limit | Use `--staging` to test; wait up to 7 days or use a different subdomain |
 | `Problem binding to port 80` | nginx/Apache is already listening on port 80 | Use `--nginx` or `--apache` plugin instead of `--standalone`; or stop the web server first |
 | `Connection refused` / `Timeout during connect` on HTTP-01 | Port 80 not reachable from internet | Check firewall (`ufw allow 80`), check NAT/router port forwarding, verify DNS points to this server |
@@ -79,6 +98,14 @@ globs:
 - **Auto-renewal runs twice daily but only renews when under 30 days to expiry**: `certbot renew` checks all certs and skips any with more than 30 days remaining. This means a newly issued cert will not be renewed for ~60 days. Use `--force-renewal` only when genuinely needed — it still counts against rate limits.
 - **Deploy hooks not configured by default**: Certbot renews the cert files but does not reload the web server unless a deploy hook is present. Without a hook, the web server keeps serving the old cert from its in-memory cache until it is manually restarted.
 - **Cert files are symlinks into a versioned archive directory**: `/etc/letsencrypt/live/example.com/fullchain.pem` points to `/etc/letsencrypt/archive/example.com/fullchain3.pem` (or similar). Scripts that copy certs or check inodes must follow symlinks. Web server configs should always reference the `live/` paths, not `archive/`.
+
+## See Also
+
+- **step-ca** — private certificate authority for internal/homelab HTTPS without public DNS requirements
+- **openssl-cli** — inspect, verify, and convert certificates obtained from certbot
+- **nginx** — most common web server paired with certbot for automatic HTTPS
+- **caddy** — web server with built-in automatic HTTPS that can replace certbot entirely
+- **apache** — traditional web server with certbot plugin support
 
 ## References
 

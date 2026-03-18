@@ -3,11 +3,23 @@ name: chrony
 description: >
   chrony NTP time synchronization administration: daemon status, source tracking,
   clock offset diagnostics, makestep, RTC sync, and timedatectl integration.
-  Triggers on: chrony, NTP, time sync, chronyd, chronyc, clock sync,
-  network time, timedatectl NTP, chrony.conf, time drift, NTP sources.
+  MUST consult when installing, configuring, or troubleshooting chrony.
+triggerPhrases:
+  - "chrony"
+  - "NTP"
+  - "time sync"
+  - "chronyd"
+  - "chronyc"
+  - "clock sync"
+  - "network time"
+  - "timedatectl NTP"
+  - "chrony.conf"
+  - "time drift"
+  - "NTP sources"
 globs:
   - "**/chrony.conf"
   - "**/chrony/chrony.conf"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,10 +30,19 @@ globs:
 - **Logs**: `journalctl -u chronyd`
 - **Distro install**: `apt install chrony` / `dnf install chrony`
 
+## Quick Start
+
+```bash
+sudo apt install chrony
+sudo systemctl enable --now chronyd
+chronyc tracking
+chronyc sources -v
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Daemon status | `systemctl status chronyd` |
 | Tracking info (offset, frequency, stratum) | `chronyc tracking` |
 | List NTP sources with detail | `chronyc sources -v` |
@@ -49,8 +70,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `No NTP sources reachable` | Firewall blocking outbound UDP 123 | `firewall-cmd --add-service=ntp` or `ufw allow ntp`; verify with `nc -uzv pool.ntp.org 123` |
 | All sources show `?` in `chronyc sources` | DNS resolution failing or network down | `ping pool.ntp.org`; check `/etc/resolv.conf` and network interface |
 | Large offset, clock not converging | chrony is slewing (slow) but offset is huge | Run `chronyc makestep` to force an immediate step; or add `makestep 1 -1` to config |
@@ -65,6 +86,10 @@ globs:
 - **makestep vs slew**: By default chrony slews the clock gradually (never jumps) once initial sync is complete. If a large offset accumulates (reboot, suspended VM), `chronyc makestep` forces an immediate correction. The config `makestep 1.0 3` allows automatic stepping for the first 3 clock updates only.
 - **chrony replaced ntpd**: chrony's config format is different from the legacy `ntp.conf` (ntpd). Common migration mistake: copying `server` lines directly — the `iburst` option works the same but `burst`, `restrict`, and `fudge` directives do not exist in chrony.
 - **systemd-timesyncd is simpler but less capable**: It handles basic NTP synchronization but has no `chronyc`-equivalent query tool, no hardware clock sync, no NTP server mode, and no support for GPS/PPS sources. Prefer chrony on servers.
+
+## See Also
+
+- **systemd** — chronyd is managed as a systemd service; timedatectl integrates with systemd-timesyncd
 
 ## References
 See `references/` for:

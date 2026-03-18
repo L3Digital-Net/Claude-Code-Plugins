@@ -3,13 +3,28 @@ name: samba
 description: >
   Samba file server administration: smb.conf configuration, user management,
   share access, Windows/macOS interoperability, SELinux/AppArmor integration,
-  and troubleshooting. Triggers on: samba, SMB, CIFS, samba share, smb.conf,
-  Windows file sharing, smbclient, NAS samba, smbpasswd, smbstatus, testparm,
-  winbind, nmbd, smbd.
+  and troubleshooting.
+  MUST consult when installing, configuring, or troubleshooting samba.
+triggerPhrases:
+  - "samba"
+  - "SMB"
+  - "CIFS"
+  - "samba share"
+  - "smb.conf"
+  - "Windows file sharing"
+  - "smbclient"
+  - "NAS samba"
+  - "smbpasswd"
+  - "smbstatus"
+  - "testparm"
+  - "winbind"
+  - "nmbd"
+  - "smbd"
 globs:
   - "**/smb.conf"
   - "**/samba/**/*.conf"
   - "**/samba/smb.conf"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,6 +33,16 @@ globs:
 - **Samba password DB**: `/var/lib/samba/private/passdb.tdb`
 - **Logs**: `journalctl -u smbd`, `/var/log/samba/log.smbd`, `/var/log/samba/log.nmbd`
 - **Distro install**: `apt install samba` / `dnf install samba`
+
+## Quick Start
+
+```bash
+sudo apt install samba
+sudo cp /etc/samba/smb.conf /etc/samba/smb.conf.bak
+testparm                                # validate config syntax
+sudo systemctl enable --now smbd nmbd
+smbclient -L localhost -U%              # verify shares are visible
+```
 
 ## Key Operations
 
@@ -68,8 +93,8 @@ Firewall (ufw): `sudo ufw allow samba`
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `NT_STATUS_LOGON_FAILURE` | Samba password not set or differs from what client is using | `sudo smbpasswd -a username` — Samba has its own password DB separate from `/etc/shadow` |
 | `NT_STATUS_ACCESS_DENIED` | File system permissions deny access, or `valid users`/`write list` excludes the user | Check `ls -la /path/to/share` and `valid users` in smb.conf; both must allow |
 | `NT_STATUS_BAD_NETWORK_NAME` | Share name in client doesn't match `[section]` in smb.conf | `testparm -s` to list active share names; check typos and case |
@@ -93,6 +118,11 @@ Firewall (ufw): `sudo ufw allow samba`
 - **`nmbd` is needed only for legacy NetBIOS browsing.** Modern SMB2/3 clients use DNS to find servers. If you only need file sharing with current Windows 10/11 or macOS clients, `nmbd` is optional. Disable it to reduce attack surface if browsing is not required.
 - **`read only = yes` is the default for new shares.** Every share is read-only unless you explicitly set `read only = no` or `writable = yes`. This catches many admins who see directories but can't write.
 - **`force group` changes GID for all new files.** Useful for shared project directories, but understand the consequence: all files are group-owned by the forced group regardless of which user created them. Pair with `create mask = 0660` and `directory mask = 0770`.
+
+## See Also
+
+- **nfs** — NFS file sharing for Linux-to-Linux environments where Windows interop is not needed
+- **avahi** — advertise Samba shares via mDNS for macOS/Linux auto-discovery
 
 ## References
 See `references/` for:

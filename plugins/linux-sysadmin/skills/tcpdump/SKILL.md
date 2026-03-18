@@ -3,9 +3,19 @@ name: tcpdump
 description: >
   Command-line packet capture tool for capturing, filtering, and inspecting
   network traffic in real time or writing to pcap files for later analysis with
-  Wireshark or tshark. Triggers on: tcpdump, packet capture, network traffic,
-  wireshark, pcap, packet analysis, capture traffic, sniff.
+  Wireshark or tshark.
+  MUST consult when capturing or analyzing network traffic.
+triggerPhrases:
+  - "tcpdump"
+  - "packet capture"
+  - "network traffic"
+  - "wireshark"
+  - "pcap"
+  - "packet analysis"
+  - "capture traffic"
+  - "sniff"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -13,10 +23,20 @@ globs: []
 | Property | Value |
 |----------|-------|
 | **Binary** | `tcpdump` |
-| **Config** | `No persistent config — invoked directly` |
-| **Logs** | `No persistent logs — output to terminal or pcap file` |
+| **Config** | No persistent config — invoked directly |
+| **Logs** | No persistent logs — output to terminal or pcap file |
 | **Type** | CLI tool |
 | **Install** | `apt install tcpdump` / `dnf install tcpdump` |
+
+## Quick Start
+
+```bash
+sudo apt install tcpdump
+sudo tcpdump -D                           # list available interfaces
+sudo tcpdump -i eth0 -nn -c 20           # capture 20 packets, no DNS lookups
+sudo tcpdump -i eth0 -nn port 443        # filter by port
+sudo tcpdump -i eth0 -w capture.pcap     # write to pcap file for Wireshark
+```
 
 ## Key Operations
 
@@ -57,3 +77,14 @@ globs: []
 - **pcap files grow fast**: Full-packet captures on a gigabit interface can fill disk in minutes. Use `-s 96` to capture only headers (usually sufficient for diagnosis), `-C 100` to rotate at 100MB, and `-W 10` to keep only 10 files.
 - **`not port 22` is essential over SSH**: When you're connected to a remote server via SSH and you start a tcpdump capture without filtering, every tcpdump output line generates an SSH packet which is also captured, which generates another tcpdump output line. The session floods, lags, and may disconnect.
 - **Promiscuous mode may be blocked**: Cloud instances (AWS, GCP, Azure) and some hypervisors block promiscuous mode at the virtual switch level. tcpdump will appear to capture but only sees traffic addressed to the local MAC, not traffic between other VMs on the same host.
+
+## See Also
+
+- **nmap** — actively scan for open ports and services rather than passively capturing traffic
+- **ss** — inspect local socket state and connections without capturing packets
+- **mtr** — trace the network path to a remote host to identify latency or loss at specific hops
+
+## References
+See `references/` for:
+- `cheatsheet.md` — task-organized command reference
+- `docs.md` — official documentation links

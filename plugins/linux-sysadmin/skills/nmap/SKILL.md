@@ -2,10 +2,19 @@
 name: nmap
 description: >
   Network scanner for port scanning, host discovery, service version detection,
-  OS fingerprinting, and NSE scripting. Triggers on: nmap, port scan, host
-  discovery, network scan, open ports, service detection, OS fingerprint, nmap
-  script.
+  OS fingerprinting, and NSE scripting.
+  MUST consult when scanning networks or detecting services.
+triggerPhrases:
+  - "nmap"
+  - "port scan"
+  - "host discovery"
+  - "network scan"
+  - "open ports"
+  - "service detection"
+  - "OS fingerprint"
+  - "nmap script"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -13,10 +22,20 @@ globs: []
 | Property | Value |
 |----------|-------|
 | **Binary** | `nmap` |
-| **Config** | `No persistent config — invoked directly` |
-| **Logs** | `No persistent logs — output to terminal` |
+| **Config** | No persistent config — invoked directly |
+| **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool |
 | **Install** | `apt install nmap` / `dnf install nmap` |
+
+## Quick Start
+
+```bash
+sudo apt install nmap
+nmap -sn 192.168.1.0/24            # ping sweep to discover hosts
+nmap -sV 192.168.1.1               # detect service versions on open ports
+sudo nmap -sS -T4 192.168.1.1      # fast SYN scan (requires root)
+nmap -p 22,80,443 192.168.1.1      # scan specific ports
+```
 
 ## Key Operations
 
@@ -58,3 +77,14 @@ globs: []
 - **-T5 reliability**: The `insane` timing template can cause missed ports on any link with latency above ~50ms or moderate packet loss. `-T4` is the practical maximum for reliable results on internet-facing scans.
 - **NSE script scope creep**: Scripts in the `intrusive`, `exploit`, or `vuln` categories actively probe services in ways that may crash unstable software, trigger alerts, or constitute unauthorized access on systems you don't own. Always review what a script does before running it.
 - **Cloud network firewalls are invisible**: AWS security groups, GCP firewall rules, and Azure NSGs operate at the hypervisor level. nmap scanning from outside sees a wall of `filtered` regardless of what the OS firewall allows — and the host never sees the packets.
+
+## See Also
+
+- **ss** — list listening ports and established connections on the local host without scanning
+- **tcpdump** — capture and inspect packets to understand what nmap is sending and receiving
+- **mtr** — trace the network path to a target to diagnose routing or latency issues before scanning
+
+## References
+See `references/` for:
+- `cheatsheet.md` — task-organized command reference
+- `docs.md` — official documentation links

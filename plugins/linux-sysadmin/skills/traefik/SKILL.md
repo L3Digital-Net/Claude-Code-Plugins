@@ -3,15 +3,27 @@ name: traefik
 description: >
   Traefik reverse proxy and load balancer: static/dynamic config, Docker label-based
   routing, entrypoints, routers, services, middlewares, ACME/Let's Encrypt, dashboard,
-  and troubleshooting. Triggers on: traefik, traefik reverse proxy, traefik router,
-  traefik middleware, traefik dashboard, container-native proxy, traefik labels,
-  traefik entrypoint, traefik provider, traefik acme, traefik tls.
+  and troubleshooting.
+  MUST consult when installing, configuring, or troubleshooting traefik.
+triggerPhrases:
+  - "traefik"
+  - "traefik reverse proxy"
+  - "traefik router"
+  - "traefik middleware"
+  - "traefik dashboard"
+  - "container-native proxy"
+  - "traefik labels"
+  - "traefik entrypoint"
+  - "traefik provider"
+  - "traefik acme"
+  - "traefik tls"
 globs:
   - "traefik.yml"
   - "traefik.toml"
   - "**/traefik/**"
   - "**/traefik.yml"
   - "**/traefik.toml"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -24,10 +36,18 @@ globs:
 - **Logs**: Docker: `docker logs traefik`; Systemd: `journalctl -u traefik`
 - **Distro install**: `apt install traefik` / download binary from https://github.com/traefik/traefik/releases
 
+## Quick Start
+```bash
+sudo apt install traefik
+sudo systemctl enable --now traefik
+curl -sf http://localhost:8080/ping   # OK = API responding
+curl -sI http://localhost             # verify web entrypoint
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Check dashboard (browser) | `http://localhost:8080/dashboard/` (trailing slash required) |
 | API: list routers | `curl -s http://localhost:8080/api/http/routers \| jq '.[].name'` |
 | API: list services | `curl -s http://localhost:8080/api/http/services \| jq '.[].name'` |
@@ -60,8 +80,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `404 page not found` | No router rule matches the request | Check `Host` label on the container; verify `rule` syntax in router; confirm entrypoint is listed |
 | Dashboard shows router but 404 in browser | Router has no service, or service has no healthy backend | Check service definition; container must be running |
 | `Gateway Timeout` / no response | Container not reachable on its port | Verify container is on the same Docker network as Traefik; check `traefik.http.services.<n>.loadbalancer.server.port` label |
@@ -83,6 +103,12 @@ globs:
 - **Traefik v2 vs v3 differences**: v3 removes the `pilot` section, changes some middleware names (e.g., `ReplacePathRegex` capitalization), and introduces the Hub integration. Docker Compose examples online are often v2 — check the `image:` tag before copying.
 - **`exposedByDefault: false` is the safe default**: With `true`, every container gets a router — including databases and internal services. Set to `false` and opt in with `traefik.enable=true`.
 - **`@provider` suffix in cross-provider references**: A middleware defined via Docker labels is `name@docker`. If a file-provider router references it, the full name `name@docker` is required.
+
+## See Also
+- **nginx** — high-performance web server and reverse proxy with manual config, better for static content
+- **caddy** — web server with automatic HTTPS, simpler config than Traefik for non-Docker setups
+- **docker** — container runtime that Traefik auto-discovers via the Docker socket provider
+- **docker-compose** — multi-container orchestration where Traefik labels define routing rules
 
 ## References
 See `references/` for:

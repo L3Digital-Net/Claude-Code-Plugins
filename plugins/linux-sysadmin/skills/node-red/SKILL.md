@@ -3,15 +3,27 @@ name: node-red
 description: >
   Node-RED flow automation runtime administration: service management, flow
   deployment, palette node installation, settings configuration, credentials,
-  Docker volume setup, debugging flows, and backup/restore. Triggers on:
-  node-red, Node-RED, node red, flow automation, IoT automation, node-red MQTT,
-  visual programming automation, flows.json, settings.js Node-RED, 1880, node-red-admin.
+  Docker volume setup, debugging flows, and backup/restore.
+  MUST consult when installing, configuring, or troubleshooting Node-RED.
+triggerPhrases:
+  - "node-red"
+  - "Node-RED"
+  - "node red"
+  - "flow automation"
+  - "IoT automation"
+  - "node-red MQTT"
+  - "visual programming automation"
+  - "flows.json"
+  - "settings.js Node-RED"
+  - "1880"
+  - "node-red-admin"
 globs:
   - "**/settings.js"
   - "**/flows.json"
   - "**/flows_*.json"
   - "**/.node-red/settings.js"
   - "**/node-red/**"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -23,10 +35,22 @@ globs:
 - **User**: typically `pi` (Raspberry Pi), `nodered` (dedicated service user), or the installing user
 - **Install**: `npm install -g --unsafe-perm node-red` (native) or Docker image `nodered/node-red`
 
+## Quick Start
+
+```bash
+# Native install
+sudo apt install nodejs npm
+sudo npm install -g --unsafe-perm node-red
+node-red &                         # start in background
+curl -s -o /dev/null -w "%{http_code}" http://localhost:1880/
+# Docker
+docker run -d -p 1880:1880 -v node_red_data:/data --name nodered nodered/node-red
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Start (systemd) | `sudo systemctl start nodered` |
 | Stop (systemd) | `sudo systemctl stop nodered` |
 | Start (PM2) | `pm2 start node-red` |
@@ -62,12 +86,12 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
-| `Error: Cannot find module 'node-red-contrib-…'` | Node installed in wrong context | Install with `cd ~/.node-red && npm install <pkg>`, not global npm |
-| Port 1880 not accessible | Firewall blocking or wrong bind address | `ss -tlnp | grep 1880`; check `uiHost` in settings.js; open firewall port |
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `Error: Cannot find module 'node-red-contrib-...'` | Node installed in wrong context | Install with `cd ~/.node-red && npm install <pkg>`, not global npm |
+| Port 1880 not accessible | Firewall blocking or wrong bind address | `ss -tlnp \| grep 1880`; check `uiHost` in settings.js; open firewall port |
 | Flows not persisting (Docker) | Volume not mounted or wrong path | Verify Docker volume maps to `/data`; `docker inspect <container>` to check mounts |
-| UI accessible without login | adminAuth not configured | Add `adminAuth` block to settings.js with bcrypt-hashed password |
+| UI accessible without login | adminAuth not configured | Add `adminAuth` block to settings.js with bcrypt-hashed credential |
 | Node install fails | Incompatible Node.js version or network issue | Check `node --version` against node compatibility matrix; try `npm install --legacy-peer-deps` |
 | `Permission denied` accessing GPIO | Process user lacks gpio group membership | `sudo usermod -aG gpio <user>`, then log out/in |
 | Editor shows "Not deployed" banner | Flows changed in UI but not deployed | Click Deploy button — changes are not auto-saved |
@@ -75,11 +99,18 @@ globs:
 | Node-RED crashes on startup | Corrupt `flows.json` | Check logs for parse error; restore from backup; validate with `node -e "require('./flows.json')"` |
 
 ## Pain Points
-- **UI is unauthenticated by default**: anyone who can reach port 1880 has full access. Set `adminAuth` in settings.js before exposing Node-RED to a network. The admin password hash uses bcrypt — generate with `node-red-admin hash-pw`.
+- **UI is unauthenticated by default**: anyone who can reach port 1880 has full access. Set `adminAuth` in settings.js before exposing Node-RED to a network. The admin auth hash uses bcrypt — generate with `node-red-admin hash-pw`.
 - **Custom nodes must be installed in Node-RED's own `node_modules`**: installing a package globally with `npm install -g` does not make it available to Node-RED. Always install from `~/.node-red/` (or `/data/` in Docker) using `npm install`.
 - **`flows.json` is the entire flow logic**: deleting or corrupting it loses all flows. Back it up before every significant change. There is no built-in undo across restarts.
 - **Docker volumes must mount `/data`, not individual files**: Node-RED stores settings, flows, credentials, and installed packages all under `/data`. Mounting only `flows.json` causes package installs and settings changes to be lost on container restart.
 - **Node.js version compatibility**: palette nodes often declare peer dependency ranges. Upgrading Node.js (e.g. 18 → 20) can silently break installed nodes. Check the node's npm page before upgrading the runtime.
+
+## See Also
+
+- **mosquitto** — MQTT broker commonly used as Node-RED's messaging backbone for IoT flows
+- **zigbee2mqtt** — Zigbee device bridge that publishes device state to MQTT for Node-RED consumption
+- **zwave-js** — Z-Wave device controller that integrates with Node-RED via MQTT topics
+- **gotify** — push notifications that Node-RED flows can trigger via REST API
 
 ## References
 See `references/` for:

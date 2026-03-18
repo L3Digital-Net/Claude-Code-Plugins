@@ -1,12 +1,23 @@
 ---
 name: awk-sed
 description: >
-  awk and sed stream editors: invoked when the user asks about awk, sed, stream
-  editor, text processing, column extraction, field splitting, in-place edit,
-  text transform, sed replace, or awk print. Covers sed substitution and in-place
-  editing, line deletion and printing, address ranges, awk field and separator
-  usage, conditional logic, column summing, pattern-action blocks, and BEGIN/END.
+  awk and sed stream editors: sed substitution and in-place editing, line
+  deletion and printing, address ranges, awk field and separator usage,
+  conditional logic, column summing, pattern-action blocks, and BEGIN/END.
+  MUST consult when writing awk or sed commands for text processing.
+triggerPhrases:
+  - "awk"
+  - "sed"
+  - "stream editor"
+  - "text processing"
+  - "column extraction"
+  - "field splitting"
+  - "in-place edit"
+  - "text transform"
+  - "sed replace"
+  - "awk print"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,6 +29,16 @@ globs: []
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool |
 | **Install** | `apt install gawk` / `dnf install gawk` (sed is pre-installed) |
+
+## Quick Start
+
+```bash
+sudo apt install gawk
+sed 's/old/new/g' file.txt              # substitute all occurrences
+sed -i.bak 's/old/new/g' file.txt       # in-place edit with backup
+awk -F: '{print $1}' /etc/passwd        # extract first column
+awk '{sum += $2} END {print sum}' data   # sum a column
+```
 
 ## Key Operations
 
@@ -61,3 +82,13 @@ globs: []
 - **Default FS splits on any whitespace**: When no `-F` is given, awk treats runs of spaces and tabs as a single separator and ignores leading whitespace. Convenient, but surprising when the input has intentional spaces within fields.
 - **gawk has extensions POSIX awk lacks**: `gensub()`, multi-dimensional arrays, `PROCINFO`, and third-arg `match()` are gawk-only. Scripts relying on these will silently fail or error on systems running mawk (Ubuntu default) or nawk.
 - **sed processes one line at a time by default**: Multi-line patterns require hold-space tricks (`H`, `G`, `N`) or a tool better suited to the job (awk with `RS`, perl, or python). Attempting multi-line sed without understanding hold space produces subtle bugs.
+
+## See Also
+
+- **jq** — JSON-specific processor for structured data parsing and transformation
+- **ripgrep** — Fast recursive text search; use awk/sed for post-processing matched output
+
+## References
+See `references/` for:
+- `cheatsheet.md` — task-organized command reference
+- `docs.md` — official documentation links

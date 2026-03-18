@@ -3,14 +3,26 @@ name: nextcloud
 description: >
   Nextcloud self-hosted cloud file storage and collaboration platform:
   installation, occ CLI administration, background jobs, file scanning,
-  app management, upgrades, and troubleshooting. Triggers on: nextcloud,
-  Nextcloud, nextcloud docker, nextcloud install, nextcloud occ, self-hosted
-  cloud, nextcloud apps, occ maintenance:mode, occ files:scan,
-  occ upgrade, nextcloud cron, nextcloud Redis.
+  app management, upgrades, and troubleshooting.
+  MUST consult when installing, configuring, or troubleshooting nextcloud.
+triggerPhrases:
+  - "nextcloud"
+  - "Nextcloud"
+  - "nextcloud docker"
+  - "nextcloud install"
+  - "nextcloud occ"
+  - "self-hosted cloud"
+  - "nextcloud apps"
+  - "occ maintenance:mode"
+  - "occ files:scan"
+  - "occ upgrade"
+  - "nextcloud cron"
+  - "nextcloud Redis"
 globs:
   - "**/config/config.php"
   - "**/nextcloud.conf"
   - "**/nextcloud/**/*.conf"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -26,10 +38,22 @@ globs:
 - **Dependencies**: Web server (nginx or Apache) + PHP-FPM + MariaDB/PostgreSQL + Redis (required for file locking with multiple users)
 - **Web server user**: `www-data` (Debian/Ubuntu), `apache` (RHEL/Fedora), or the container's `www-data`
 
+## Quick Start
+
+```bash
+# Docker Compose (recommended)
+docker compose pull
+docker compose up -d
+docker compose exec --user www-data nextcloud php occ status
+# Bare-metal
+sudo apt install php-fpm php-mysql php-redis php-gd php-intl php-zip
+sudo -u www-data php /var/www/nextcloud/occ status
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Check system status | `occ status` |
 | Check for upgrade | `occ update:check` |
 | Enable maintenance mode | `occ maintenance:mode --on` |
@@ -75,8 +99,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | "Your data directory is not readable by the server" | Wrong ownership or permissions on data dir | `chown -R www-data:www-data <data-dir>` and `chmod 750 <data-dir>` |
 | "The PHP OPcache is not properly configured" | `opcache.memory_consumption` too low or `opcache.revalidate_freq` not 0 | Set `opcache.memory_consumption=128`, `opcache.revalidate_freq=0`, `opcache.save_comments=1` in `php.ini` |
 | Redis connection failing / file locking errors | Redis not running, wrong socket path, or missing `php-redis` extension | `redis-cli ping`; verify `memcache.locking` config; check PHP redis extension is loaded |
@@ -96,3 +120,13 @@ globs:
 - **Redis is required in multi-user installs**: Without Redis for file locking (`memcache.locking`), concurrent writes cause data corruption. The default `NoopLockingProvider` silently accepts all lock requests without actually locking.
 - **Cron must be configured explicitly**: Out of the box, Nextcloud uses AJAX cron (triggered by user page loads). This is unreliable. Switch to system cron or use a dedicated cron container. Background jobs not running causes notification backlogs, activity feed issues, and share link expiry failures.
 - **`occ upgrade` can be slow**: Upgrades on large installs (millions of files, many apps) can take 10–60 minutes. Always enable maintenance mode first. Do not interrupt mid-upgrade — partial upgrades require manual DB repair.
+
+## See Also
+
+- **gitea** — self-hosted Git service that pairs well with Nextcloud for code hosting alongside file storage
+- **vaultwarden** — self-hosted password manager for securing credentials used across Nextcloud and other services
+
+## References
+See `references/` for:
+- `docker-compose.yml.annotated` — annotated Docker Compose configuration
+- `docs.md` — official documentation links

@@ -3,25 +3,51 @@ name: xfs
 description: >
   XFS filesystem administration: creation, repair, online growth, quota
   management, label/UUID changes, freeze/unfreeze for snapshots, defragmentation,
-  dump and restore, and fragmentation analysis. Triggers on: XFS, xfs_repair,
-  xfsprogs, XFS filesystem, xfs_db, xfs_growfs, mkfs.xfs, xfs_info, xfs_admin,
-  xfs_fsr, xfsdump, xfsrestore, xfs_freeze.
+  dump and restore, and fragmentation analysis.
+  MUST consult when installing, configuring, or troubleshooting xfs.
+triggerPhrases:
+  - "XFS"
+  - "xfs_repair"
+  - "xfsprogs"
+  - "XFS filesystem"
+  - "xfs_db"
+  - "xfs_growfs"
+  - "mkfs.xfs"
+  - "xfs_info"
+  - "xfs_admin"
+  - "xfs_fsr"
+  - "xfsdump"
+  - "xfsrestore"
+  - "xfs_freeze"
 globs:
   - "**/fstab"
   - "**/etc/fstab"
+last_verified: "unverified"
 ---
 
 ## Identity
-- **Kernel module**: Built-in (no module load needed on modern kernels)
-- **CLI tools**: `mkfs.xfs`, `xfs_repair`, `xfs_info`, `xfs_admin`, `xfs_growfs`, `xfs_db`, `xfs_freeze`, `xfs_fsr`, `xfsdump`, `xfsrestore`
-- **Install**: `apt install xfsprogs` / `dnf install xfsprogs`
-- **Default on**: RHEL, CentOS Stream, Fedora (root filesystem)
-- **Logs**: kernel ring buffer via `dmesg | grep -i xfs`
+
+| Property | Value |
+|----------|-------|
+| **Kernel module** | Built-in (no module load needed on modern kernels) |
+| **CLI tools** | `mkfs.xfs`, `xfs_repair`, `xfs_info`, `xfs_admin`, `xfs_growfs`, `xfs_db`, `xfs_freeze`, `xfs_fsr`, `xfsdump`, `xfsrestore` |
+| **Install** | `apt install xfsprogs` / `dnf install xfsprogs` |
+| **Default on** | RHEL, CentOS Stream, Fedora (root filesystem) |
+| **Logs** | kernel ring buffer via `dmesg | grep -i xfs` |
+
+## Quick Start
+
+```bash
+sudo apt install xfsprogs
+sudo mkfs.xfs -L mydata /dev/sdX1
+sudo mount /dev/sdX1 /mnt/mydata
+xfs_info /mnt/mydata
+```
 
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Show filesystem info | `xfs_info /mount/point` or `xfs_info /dev/sdXN` |
 | Create filesystem | `mkfs.xfs /dev/sdXN` |
 | Create with label | `mkfs.xfs -L mylabel /dev/sdXN` |
@@ -53,8 +79,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | Filesystem won't mount; journal dirty | Unclean shutdown; journal not yet replayed | Mount normally — kernel replays journal automatically; if it fails, run `xfs_repair` |
 | `xfs_repair` refuses to run | Filesystem is mounted | Unmount first; repair requires the device to be offline |
 | `XFS metadata I/O error` in dmesg | Failing hardware (disk or controller) | Run `smartctl -a /dev/sdX`; check controller logs; do not repair until hardware is confirmed good |
@@ -72,6 +98,13 @@ globs:
 - **Metadata locking on large directories**: Very large directories (millions of entries) can cause extended hold times on metadata locks, stalling other operations. Distribute files across subdirectories where possible.
 - **`norecovery` mount option is dangerous**: It bypasses journal replay and is intended for read-only forensic access on an unclean filesystem. Never use it on a filesystem you intend to write to.
 - **`ftype=1` required for overlayfs/Docker**: If mkfs.xfs was run without `-n ftype=1` (the default on modern xfsprogs, but not on older versions), Docker's overlay2 storage driver will refuse to use the filesystem.
+
+## See Also
+
+- **ext4** — Traditional Linux filesystem with offline shrink support; use when you need to resize in both directions or have many small files
+- **btrfs** — Copy-on-write filesystem with built-in snapshots; use when you need snapshot/rollback without LVM
+- **zfs** — Full storage stack with pooling, checksums, and send/receive; use when you need end-to-end data integrity verification
+- **lvm** — Logical volume manager; pair with XFS for online growth via `lvextend` + `xfs_growfs`
 
 ## References
 See `references/` for:

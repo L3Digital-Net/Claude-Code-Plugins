@@ -3,9 +3,20 @@ name: vmstat
 description: >
   vmstat reports virtual memory statistics, CPU activity, swap usage, and I/O wait
   in a compact tabular format. It is part of procps-ng and available on all Linux systems.
-  Triggers on: vmstat, virtual memory statistics, swap usage, memory pressure,
-  system stats, io wait, cpu steal time, blocked processes, swap in out, si so columns.
+  MUST consult when checking virtual memory, CPU, and I/O statistics.
+triggerPhrases:
+  - "vmstat"
+  - "virtual memory statistics"
+  - "swap usage"
+  - "memory pressure"
+  - "system stats"
+  - "io wait"
+  - "cpu steal time"
+  - "blocked processes"
+  - "swap in out"
+  - "si so columns"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -17,6 +28,15 @@ globs: []
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool (part of procps-ng) |
 | **Install** | `apt install procps` / `dnf install procps-ng` (usually pre-installed) |
+
+## Quick Start
+
+```bash
+# vmstat is pre-installed on virtually all Linux systems (part of procps)
+vmstat 1                    # continuous output every 1 second (ignore first line)
+vmstat -tw 1                # wide output with timestamps every 1 second
+vmstat -s                   # detailed memory summary
+```
 
 ## Key Operations
 
@@ -67,6 +87,12 @@ globs: []
 - **`wa` > 10% signals a disk bottleneck**: CPU time spent waiting for I/O completion means processes are stalled on disk. Follow up with `iostat -x` to identify which device and what latency (`await`) looks like.
 - **`st` (steal) is a cloud VM signal**: non-zero steal time means the hypervisor is not delivering the CPU time the VM is entitled to. This is invisible from inside the guest and requires the host to be less oversubscribed.
 - **`b` (blocked) > 0 means I/O saturation**: processes sitting in the uninterruptible sleep state waiting for I/O. Sustained `b` > 0 combined with high `wa` is a reliable sign the I/O subsystem is a bottleneck.
+
+## See Also
+
+- **iostat** — Per-device disk throughput, IOPS, and latency metrics for diagnosing I/O bottlenecks
+- **iotop** — Per-process disk I/O usage to identify which processes are consuming disk bandwidth
+- **perf** — Linux profiling tool for deep CPU and system performance analysis
 
 ## References
 

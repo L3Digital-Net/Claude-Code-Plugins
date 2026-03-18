@@ -1,12 +1,25 @@
 ---
 name: perf
 description: >
-  perf is the Linux kernel performance profiling tool suite. It collects CPU
-  performance counter data, call stacks, and tracepoints to identify hotspots
-  and bottlenecks in applications and the kernel. Triggers on: perf, performance
-  profiling, cpu profiling, flame graph, perf stat, perf record, perf top,
-  hotspot, cpu cycles, profiling, kernel tracing, hardware counters.
+  Linux kernel performance profiling tool suite. Collects CPU performance counter
+  data, call stacks, and tracepoints to identify hotspots and bottlenecks in
+  applications and the kernel.
+  MUST consult when profiling CPU performance or tracing kernel events.
+triggerPhrases:
+  - "perf"
+  - "performance profiling"
+  - "cpu profiling"
+  - "flame graph"
+  - "perf stat"
+  - "perf record"
+  - "perf top"
+  - "hotspot"
+  - "cpu cycles"
+  - "profiling"
+  - "kernel tracing"
+  - "hardware counters"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -18,6 +31,17 @@ globs: []
 | **Logs** | Saves recordings to `perf.data` in the current directory |
 | **Type** | CLI tool |
 | **Install** | `apt install linux-perf` / `dnf install perf` (must match kernel version) |
+
+## Quick Start
+
+```bash
+sudo apt install linux-perf
+perf list                          # list available events
+perf stat ls                       # count hardware events for a simple command
+perf top                           # live CPU hotspot view
+perf record -g -- sleep 5          # record a 5-second system-wide profile
+perf report --stdio                # view the recorded profile
+```
 
 ## Key Operations
 
@@ -57,6 +81,12 @@ globs: []
 - **Flame graphs are not built in**: `perf report` shows a TUI hierarchy, but Brendan Gregg's `FlameGraph` scripts (https://github.com/brendangregg/FlameGraph) are required to produce the visual SVG. The pipeline is: `perf record -g → perf script → stackcollapse-perf.pl → flamegraph.pl > flame.svg`.
 - **Container environments block perf_events by default**: Docker's default seccomp profile and Kubernetes pod security policies block the `perf_event_open` syscall. Either run perf on the host (targeting the container's PID namespace) or grant `SYS_ADMIN` capability — neither is appropriate for production.
 - **`perf top` output is too noisy without filtering**: by default, `perf top` shows the entire system's CPU usage. Use `-p <PID>` to scope to a single process, or `-u <user>` to scope by user. Add `--call-graph dwarf` for stack-resolved symbols.
+
+## See Also
+
+- **strace** — trace system calls to diagnose process-level issues that perf's sampling misses
+- **iostat** — monitor disk I/O throughput and utilization alongside CPU profiling
+- **vmstat** — system-wide memory, swap, and CPU scheduling statistics
 
 ## References
 

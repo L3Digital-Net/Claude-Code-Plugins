@@ -2,26 +2,53 @@
 name: ext4
 description: >
   ext4 filesystem administration: create, check, repair, tune, and resize ext4
-  filesystems. Triggers on: ext4, e2fsck, tune2fs, mke2fs, ext4 filesystem,
-  resize2fs, ext4 journal, mkfs.ext4, debugfs, dumpe2fs, e2fsprogs, fsck,
-  reserved blocks, inode exhaustion, filesystem repair.
+  filesystems.
+  MUST consult when installing, configuring, or troubleshooting ext4.
+triggerPhrases:
+  - "ext4"
+  - "e2fsck"
+  - "tune2fs"
+  - "mke2fs"
+  - "ext4 filesystem"
+  - "resize2fs"
+  - "ext4 journal"
+  - "mkfs.ext4"
+  - "debugfs"
+  - "dumpe2fs"
+  - "e2fsprogs"
+  - "fsck"
+  - "reserved blocks"
+  - "inode exhaustion"
+  - "filesystem repair"
 globs:
   - "**/fstab"
   - "**/etc/fstab"
+last_verified: "unverified"
 ---
 
 ## Identity
 
-- **Kernel module**: Built-in (`ext4` — no separate package needed)
-- **Userspace tools**: `e2fsprogs` package (`apt install e2fsprogs` / `dnf install e2fsprogs`)
-- **CLI tools**: `mkfs.ext4` (alias: `mke2fs -t ext4`), `e2fsck`, `tune2fs`, `resize2fs`, `debugfs`, `dumpe2fs`, `blkid`, `findmnt`
-- **Config**: `/etc/fstab` (mount options), no daemon config file
-- **Logs**: `journalctl -k | grep ext4` (kernel messages), `dmesg | grep ext4`
+| Property | Value |
+|----------|-------|
+| **Kernel module** | Built-in (`ext4` — no separate package needed) |
+| **Userspace tools** | `e2fsprogs` package (`apt install e2fsprogs` / `dnf install e2fsprogs`) |
+| **CLI tools** | `mkfs.ext4` (alias: `mke2fs -t ext4`), `e2fsck`, `tune2fs`, `resize2fs`, `debugfs`, `dumpe2fs`, `blkid`, `findmnt` |
+| **Config** | `/etc/fstab` (mount options), no daemon config file |
+| **Logs** | `journalctl -k | grep ext4` (kernel messages), `dmesg | grep ext4` |
+
+## Quick Start
+
+```bash
+sudo apt install e2fsprogs
+sudo mkfs.ext4 -L mydata /dev/sdX1
+sudo mount /dev/sdX1 /mnt/mydata
+sudo dumpe2fs -h /dev/sdX1 | grep "Filesystem state"
+```
 
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Check filesystem (unmounted) | `sudo e2fsck -f /dev/sdXN` |
 | Check and auto-repair (unmounted) | `sudo e2fsck -y /dev/sdXN` |
 | Create filesystem | `sudo mkfs.ext4 /dev/sdXN` |
@@ -60,8 +87,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `structure needs cleaning` in dmesg | Unclean journal or corruption | Unmount, run `e2fsck -f /dev/sdXN`; use `-y` to auto-accept all fixes |
 | `No space left on device` but `df` shows free space | Inode exhaustion — too many small files | `df -i` to confirm; inode count is fixed at mkfs time, only option is reformat or migrate to xfs |
 | Disk 95% full immediately after mkfs | Reserved blocks at default 5% | `tune2fs -m 1 /dev/sdXN` for data disks (reserve 1% or 0%) |
@@ -82,6 +109,15 @@ globs:
 - **ext4 vs xfs for large files**: xfs handles large files and high-throughput workloads better; ext4 is preferable for workloads with many small files (better directory indexing via htree). Neither is universally better — choose at mkfs time.
 - **Journal replay on mount**: If the previous unmount was unclean, ext4 replays the journal automatically on the next mount. This is safe and normal, but dmesg will show recovery messages. If journal replay fails, the filesystem goes read-only.
 - **`noatime` is almost always correct**: Default `relatime` still writes atime on first access after mtime changes. For high-throughput workloads, `noatime` in fstab eliminates all atime writes entirely.
+
+## See Also
+
+- **xfs** — High-performance filesystem for large files and RHEL default; use when you need online growth and high-throughput sequential I/O
+- **btrfs** — Copy-on-write filesystem with snapshots and checksums; use when you need built-in snapshot/rollback capabilities
+- **zfs** — Full storage stack with pooling, checksums, and replication; use when you need enterprise-grade data integrity
+- **fdisk-parted** — Partition management tools; use before mkfs.ext4 to create or resize partitions
+- **lvm** — Logical volume management; use to create resizable volumes that host ext4 filesystems
+- **exfat-ntfs** — cross-platform filesystems for external drives shared with Windows/macOS
 
 ## References
 

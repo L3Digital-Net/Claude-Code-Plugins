@@ -3,9 +3,18 @@ name: cron
 description: >
   cron daemon and crontab administration: scheduling jobs, cron expression
   syntax, user and system crontabs, drop-in directories, logging, and
-  troubleshooting. Triggers on: cron, crontab, cron job, cron schedule,
-  cron expression, scheduled task, crontab -e, at command,
-  systemd timer alternative.
+  troubleshooting.
+  MUST consult when installing, configuring, or troubleshooting cron.
+triggerPhrases:
+  - "cron"
+  - "crontab"
+  - "cron job"
+  - "cron schedule"
+  - "cron expression"
+  - "scheduled task"
+  - "crontab -e"
+  - "at command"
+  - "systemd timer alternative"
 globs:
   - "**/crontab"
   - "**/cron.d/**"
@@ -13,9 +22,11 @@ globs:
   - "**/cron.hourly/**"
   - "**/cron.weekly/**"
   - "**/cron.monthly/**"
+last_verified: "unverified"
 ---
 
 ## Identity
+
 - **Daemon**: `cron` (Debian/Ubuntu) or `crond` (RHEL/Fedora/Arch)
 - **Unit**: `cron.service` (Debian/Ubuntu) or `crond.service` (RHEL/Fedora)
 - **User crontabs**: `crontab -e` — stored in `/var/spool/cron/crontabs/<user>`
@@ -25,10 +36,20 @@ globs:
 - **Logs**: `journalctl -u cron` or `journalctl -u crond`; also `/var/log/syslog` (Debian) or `/var/log/cron` (RHEL)
 - **Distro install**: `apt install cron` / `dnf install cronie`
 
+## Quick Start
+
+```bash
+sudo apt install cron
+sudo systemctl enable --now cron
+systemctl status cron
+crontab -e                            # edit your user crontab
+crontab -l                            # list your scheduled jobs
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | List current user's crontab | `crontab -l` |
 | Edit current user's crontab | `crontab -e` |
 | Edit another user's crontab (root) | `crontab -u username -e` |
@@ -59,8 +80,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | Job never runs | PATH not set; command not found | Use absolute paths; add `PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin` at crontab top |
 | Job runs but produces wrong output | Wrong timezone | Set `TZ=America/New_York` (or correct zone) at crontab top |
 | No visible output, nothing in logs | Output goes to mail; mail not configured | Redirect: `>> /var/log/myjob.log 2>&1` and set `MAILTO=""` |
@@ -78,6 +99,11 @@ globs:
 - **`/etc/cron.d/` requires the username field** — unlike user crontabs, files in `/etc/cron.d/` use the same format as `/etc/crontab` and must include the running user between the schedule and the command. Omitting it causes the field to be silently misinterpreted.
 - **`run-parts` strips dots from filenames** — scripts in `/etc/cron.daily/` etc. whose names contain dots (e.g., `backup.sh`) are silently skipped by `run-parts` on Debian-based systems. Use names without dots or extensions.
 - **`crontab -r` has no confirmation** — it removes the entire crontab immediately. If you meant `crontab -e`, the job is gone. There is no undo; keep backups with `crontab -l > ~/crontab.bak`.
+
+## See Also
+
+- **systemd** — Systemd timers are the modern replacement for cron jobs
+- **logrotate** — Log rotation often scheduled via cron or systemd timers
 
 ## References
 See `references/` for:

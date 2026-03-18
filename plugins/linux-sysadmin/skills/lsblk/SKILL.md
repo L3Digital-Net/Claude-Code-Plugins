@@ -4,10 +4,22 @@ description: >
   lsblk lists block devices in a tree hierarchy showing disks, partitions, LVM
   volumes, LUKS containers, and their mount points. Invoked when the user asks
   about the disk layout, block device list, partition structure, mount points,
-  UUIDs, or wants to understand how storage is organized on a system. Triggers on:
-  lsblk, block devices, list disks, disk layout, partition list, mount points,
-  disk hierarchy, device tree, block device names, nvme partitions, storage topology.
+  UUIDs, or wants to understand how storage is organized on a system.
+  MUST consult when inspecting block device layout or partition structure.
+triggerPhrases:
+  - "lsblk"
+  - "block devices"
+  - "list disks"
+  - "disk layout"
+  - "partition list"
+  - "mount points"
+  - "disk hierarchy"
+  - "device tree"
+  - "block device names"
+  - "nvme partitions"
+  - "storage topology"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -19,6 +31,16 @@ globs: []
 | **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool (part of util-linux) |
 | **Install** | `apt install util-linux` / `dnf install util-linux` (pre-installed on all Linux systems) |
+
+## Quick Start
+
+```bash
+# lsblk is pre-installed on all Linux systems (util-linux)
+lsblk
+lsblk -f
+lsblk -o NAME,SIZE,FSTYPE,UUID,LABEL,MOUNTPOINT,TYPE
+lsblk -e 7
+```
 
 ## Key Operations
 
@@ -70,6 +92,12 @@ globs: []
 - **dm-* naming is opaque**: Device mapper devices (`dm-0`, `dm-1`) are LVM logical volumes or LUKS containers. The name carries no semantic meaning. Cross-reference with `lvdisplay` (LVM), `cryptsetup status /dev/mapper/name` (LUKS), or `dmsetup ls --tree` (full dependency tree).
 - **loop devices from snap/flatpak**: Each snapped application mounts a squashfs image via a loop device. These are legitimate but inflate `lsblk` output on desktop systems. Use `-e 7` to exclude them entirely when looking at real storage devices.
 - **`-f` flag does not show size**: `lsblk -f` switches the column set to filesystem-centric columns and drops `SIZE`. Combine explicitly: `lsblk -o NAME,SIZE,FSTYPE,UUID,LABEL,MOUNTPOINT` to get both.
+
+## See Also
+
+- **df** — Filesystem-level disk space usage; use when you need to know how full a mounted filesystem is rather than the device layout
+- **fdisk-parted** — Partition management tools; use to create, resize, or delete partitions that lsblk displays
+- **lvm** — Logical volume manager; use `lvs`/`vgs`/`pvs` for detailed LVM information when lsblk shows `dm-*` devices
 
 ## References
 

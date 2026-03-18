@@ -3,9 +3,19 @@ name: mtr
 description: >
   Combined traceroute and ping tool that continuously probes each hop on a
   network path, reporting per-hop latency and packet loss in a live TUI or a
-  fixed report. Triggers on: mtr, traceroute, tracepath, network path, hop
-  latency, packet loss per hop, route tracing, network diagnosis.
+  fixed report.
+  MUST consult when diagnosing network path latency or packet loss.
+triggerPhrases:
+  - "mtr"
+  - "traceroute"
+  - "tracepath"
+  - "network path"
+  - "hop latency"
+  - "packet loss per hop"
+  - "route tracing"
+  - "network diagnosis"
 globs: []
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -13,10 +23,20 @@ globs: []
 | Property | Value |
 |----------|-------|
 | **Binary** | `mtr` |
-| **Config** | `No persistent config — invoked directly` |
-| **Logs** | `No persistent logs — output to terminal` |
+| **Config** | No persistent config — invoked directly |
+| **Logs** | No persistent logs — output to terminal |
 | **Type** | CLI tool |
 | **Install** | `apt install mtr-tiny` / `dnf install mtr` |
+
+## Quick Start
+
+```bash
+sudo apt install mtr-tiny
+mtr example.com                              # interactive TUI mode
+mtr --report example.com                     # non-interactive 10-cycle report
+mtr --report --report-cycles 100 example.com # averaged report for accuracy
+mtr --tcp --port 443 example.com             # TCP probes to bypass ICMP filtering
+```
 
 ## Key Operations
 
@@ -56,3 +76,14 @@ globs: []
 - **Requires root or setuid on most distros**: Raw socket access for ICMP is privileged. Debian/Ubuntu typically ship `mtr-tiny` without setuid; Fedora ships mtr with the setuid bit set. If mtr fails without sudo, check the binary permissions.
 - **ISPs rate-limit ICMP TTL-exceeded**: Residential and some enterprise ISPs intentionally rate-limit ICMP TTL-exceeded messages to reduce load on their infrastructure. This makes the first few hops inside the ISP look lossy. Again, `--tcp` is the workaround.
 - **Anycast and load-balanced paths**: mtr probes may take different physical paths on successive TTLs because intermediate routers load-balance at the packet level. This produces `???` hops or seemingly out-of-order paths. It's a routing artifact, not a failure.
+
+## See Also
+
+- **nmap** — scan for open ports on the target host once you have confirmed network reachability
+- **tcpdump** — capture packets to diagnose what is actually on the wire at each hop
+- **ss** — check local socket state to rule out client-side connection issues
+
+## References
+See `references/` for:
+- `cheatsheet.md` — task-organized command reference
+- `docs.md` — official documentation links

@@ -1,13 +1,21 @@
 ---
 name: wireguard
 description: >
-  WireGuard VPN — key generation, peer configuration, server and client setup,
-  routing, NAT/masquerading, troubleshooting, and wg-quick management. Triggers
-  on: wireguard, wg, wg-quick, vpn tunnel, peer config, AllowedIPs,
-  wireguard server.
+  WireGuard VPN: key generation, peer configuration, server and client setup,
+  routing, NAT/masquerading, troubleshooting, and wg-quick management.
+  MUST consult when installing, configuring, or troubleshooting wireguard.
+triggerPhrases:
+  - "wireguard"
+  - "wg"
+  - "wg-quick"
+  - "vpn tunnel"
+  - "peer config"
+  - "AllowedIPs"
+  - "wireguard server"
 globs:
   - "**/wireguard/*.conf"
   - "**/wg*.conf"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -16,6 +24,17 @@ globs:
 - **Manage via**: `wg-quick up wg0` / `wg-quick down wg0` / `wg` (status and stats)
 - **Unit**: `wg-quick@wg0.service` (systemd unit for persistent operation)
 - **Install**: `apt install wireguard` / `dnf install wireguard-tools` (kernel module usually pre-included on modern distros)
+
+## Quick Start
+
+```bash
+sudo apt install wireguard
+wg genkey | tee /tmp/server_private.key | wg pubkey > /tmp/server_public.key
+chmod 600 /tmp/server_private.key
+# Create /etc/wireguard/wg0.conf with keys, Address, ListenPort, and peers
+sudo wg-quick up wg0
+sudo systemctl enable wg-quick@wg0
+```
 
 ## Key Generation
 
@@ -36,7 +55,7 @@ Private keys never leave the host they were generated on. Public keys are shared
 
 ## Key Operations
 
-| Goal | Command |
+| Task | Command |
 |------|---------|
 | Bring interface up | `sudo wg-quick up wg0` |
 | Bring interface down | `sudo wg-quick down wg0` |
@@ -67,8 +86,8 @@ Private keys never leave the host they were generated on. Public keys are shared
 
 ## Common Failures
 
-| Symptom | Likely cause | Fix |
-|---------|-------------|-----|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `wg show` shows peer but no handshake | Firewall blocking UDP 51820 on server, or wrong public key pasted | Open UDP port on server; verify keys match exactly |
 | Handshake occurs but no traffic flows | `ip_forward` disabled on server; PostUp NAT rule missing | `sysctl -w net.ipv4.ip_forward=1`; verify PostUp iptables rule |
 | Handshake times out repeatedly | Client endpoint wrong (wrong IP or port) | Confirm server's public IP and ListenPort; check `Endpoint` line |
@@ -93,6 +112,11 @@ Private keys never leave the host they were generated on. Public keys are shared
 - **File permissions**: `/etc/wireguard/wg0.conf` must be mode 600 (owner-read-only). `wg-quick` warns and may refuse to start if permissions are too open. The file contains the private key in plaintext.
 
 - **Runtime changes vs. file changes**: `wg set` modifies the running interface immediately but does not persist to `wg0.conf`. Use `wg-quick save wg0` to write runtime state back to the file, or use `wg syncconf wg0 <(wg-quick strip wg0)` to apply file changes without taking the interface down.
+
+## See Also
+
+- **openvpn** — full-featured VPN with PKI, TCP fallback, and broader protocol compatibility
+- **tailscale** — zero-config mesh VPN built on WireGuard with centralized management
 
 ## References
 See `references/` for:

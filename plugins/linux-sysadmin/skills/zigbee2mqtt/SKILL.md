@@ -3,12 +3,27 @@ name: zigbee2mqtt
 description: >
   Zigbee2MQTT bridge administration: coordinator setup, device pairing,
   network configuration, OTA firmware updates, MQTT integration, and
-  troubleshooting. Triggers on: zigbee2mqtt, Zigbee2MQTT, zigbee, Zigbee bridge,
-  zigbee coordinator, zigbee devices MQTT, Z2M, zigbee pairing, zigbee network,
-  CC2652, Sonoff Zigbee, ConBee, zigbee adapter, permit_join.
+  troubleshooting.
+  MUST consult when installing, configuring, or troubleshooting zigbee2mqtt.
+triggerPhrases:
+  - "zigbee2mqtt"
+  - "Zigbee2MQTT"
+  - "zigbee"
+  - "Zigbee bridge"
+  - "zigbee coordinator"
+  - "zigbee devices MQTT"
+  - "Z2M"
+  - "zigbee pairing"
+  - "zigbee network"
+  - "CC2652"
+  - "Sonoff Zigbee"
+  - "ConBee"
+  - "zigbee adapter"
+  - "permit_join"
 globs:
   - "**/zigbee2mqtt/configuration.yaml"
   - "**/zigbee2mqtt/data/configuration.yaml"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -21,10 +36,24 @@ globs:
 - **Install**: Node.js service (`git clone`, `npm ci`) or `docker run koenkk/zigbee2mqtt`
 - **User**: typically `pi`, `ubuntu`, or a dedicated `zigbee2mqtt` user; must be in `dialout` group
 
+## Quick Start
+
+```bash
+# Docker (recommended)
+docker compose pull
+docker compose up -d
+mosquitto_sub -t zigbee2mqtt/bridge/state -C 1   # expect {"state":"online"}
+# Bare-metal
+git clone https://github.com/Koenkk/zigbee2mqtt.git /opt/zigbee2mqtt
+cd /opt/zigbee2mqtt && npm ci
+# Edit data/configuration.yaml with serial port and MQTT settings
+npm start
+```
+
 ## Key Operations
 
-| Operation | Command |
-|-----------|---------|
+| Task | Command |
+|------|---------|
 | Check service status | `systemctl status zigbee2mqtt` |
 | Follow logs live | `journalctl -u zigbee2mqtt -f` |
 | Restart service | `sudo systemctl restart zigbee2mqtt` |
@@ -56,8 +85,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `Error: Failed to find serial port` or coordinator not found | Wrong serial port path or device not connected | `ls /dev/ttyUSB* /dev/ttyACM*`; use `by-id` path; check USB cable |
 | `Error: Failed to start coordinator` | Wrong `adapter` type in config or corrupt coordinator firmware | Verify `serial.adapter` matches hardware (e.g. `zstack`, `ezsp`, `deconz`); reflash coordinator firmware |
 | Device won't pair after permit_join | Device not in pairing mode, or too far from coordinator | Factory reset device; bring within 2m of coordinator; check Z2M logs for `Device joined` |
@@ -71,11 +100,17 @@ globs:
 ## Pain Points
 - **Serial path changes after reboot**: `/dev/ttyUSB0` is assigned dynamically. Use the stable path under `/dev/serial/by-id/usb-<vendor>-<product>-if00-port0` instead — it survives reboots and re-plugs.
 - **Adapter type must match hardware**: `zstack` (CC2652/CC1352), `ezsp` (ConBee II, Elelabs), `deconz` (ConBee), `zigate` (ZiGate). Wrong type causes cryptic startup failures — check the supported adapters list before configuring.
-- **Zigbee channel vs WiFi interference**: Zigbee channels 11–26 overlap with WiFi 2.4GHz. WiFi channel 1 = Zigbee 11–14, WiFi channel 6 = Zigbee 19–21, WiFi channel 11 = Zigbee 24–26. Use Zigbee channel 15, 20, or 25 to minimize overlap.
+- **Zigbee channel vs WiFi interference**: Zigbee channels 11-26 overlap with WiFi 2.4GHz. WiFi channel 1 = Zigbee 11-14, WiFi channel 6 = Zigbee 19-21, WiFi channel 11 = Zigbee 24-26. Use Zigbee channel 15, 20, or 25 to minimize overlap.
 - **Frontend is not enabled by default**: The web UI requires `frontend.enabled: true` in `configuration.yaml`. Without it, port 8080 is not open and there is no web interface.
 - **Docker USB pass-through**: Docker requires `--device /dev/ttyUSB0:/dev/ttyUSB0` (or `--device /dev/ttyACM0`). The container does NOT see host USB devices without this flag — by-id paths work here too.
 - **Some devices need factory reset to pair**: Devices previously paired to another coordinator, or purchased with a prior pairing, will not join without a factory reset. The reset procedure varies by device — check the Z2M supported devices page.
 - **`permit_join` left open is a security risk**: Any Zigbee device in range can join when `permit_join: true`. Set it to `false` in config after initial setup; use the MQTT API or frontend to open it briefly when needed.
+
+## See Also
+
+- **mosquitto** — MQTT broker required by Zigbee2MQTT for message transport
+- **zwave-js** — Z-Wave device controller, the 900MHz counterpart to Zigbee for smart home automation
+- **node-red** — flow automation tool for building rules and dashboards from Zigbee device MQTT data
 
 ## References
 See `references/` for:

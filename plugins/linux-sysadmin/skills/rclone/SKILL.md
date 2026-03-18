@@ -4,12 +4,21 @@ description: >
   rclone cloud storage management: configuring remotes, copying and syncing files
   to/from cloud providers, mounting cloud storage as a filesystem, serving cloud
   storage over HTTP/WebDAV/SFTP/S3, client-side encryption with crypt remotes,
-  bandwidth throttling, and integrity verification. Triggers on: rclone,
-  cloud backup, rclone sync, rclone S3, rclone mount, cloud storage sync,
-  Backblaze rclone, rclone remote.
+  bandwidth throttling, and integrity verification.
+  MUST consult when installing, configuring, or troubleshooting rclone.
+triggerPhrases:
+  - "rclone"
+  - "cloud backup"
+  - "rclone sync"
+  - "rclone S3"
+  - "rclone mount"
+  - "cloud storage sync"
+  - "Backblaze rclone"
+  - "rclone remote"
 globs:
   - "**/rclone.conf"
   - "**/.config/rclone/rclone.conf"
+last_verified: "unverified"
 ---
 
 ## Identity
@@ -20,35 +29,45 @@ globs:
 - **Distro install**: `apt install rclone` / `dnf install rclone` / `curl https://rclone.org/install.sh | sudo bash`
 - **Backends (70+)**: S3-compatible (AWS S3, MinIO, Wasabi, Cloudflare R2), Google Cloud Storage, Azure Blob, Backblaze B2, Dropbox, Google Drive, OneDrive, SFTP, WebDAV, FTP, local filesystem, HTTP, Mega, Box, pCloud, Jottacloud, Yandex Disk, and more
 
+## Quick Start
+
+```bash
+sudo apt install rclone
+rclone config                        # interactive wizard to add a remote
+rclone listremotes                   # verify configured remotes
+rclone lsd remote:                   # list top-level dirs on remote
+rclone copy /local/path remote:bucket/path
+```
+
 ## Key Operations
 
-| Operation | Command | Notes |
-|-----------|---------|-------|
-| Configure new remote | `rclone config` | Interactive wizard |
-| List configured remotes | `rclone listremotes` | Names only |
-| List top-level directories | `rclone lsd remote:bucket` | Dirs only, non-recursive |
-| List files (simple) | `rclone lsf remote:path` | One entry per line |
-| List files (detailed) | `rclone ls remote:path` | Size + path |
-| List files (JSON) | `rclone lsjson remote:path` | Machine-readable |
-| Copy (no delete) | `rclone copy src: dst:` | Skips identical files; never deletes destination |
-| Sync (mirror) | `rclone sync src: dst:` | Deletes destination files not in source |
-| Move | `rclone move src: dst:` | Copy then delete from source |
-| Check/verify | `rclone check src: dst:` | Compares checksums or size+modtime |
-| Mount as filesystem | `rclone mount remote:path /mnt/point` | Requires FUSE (`fuse3` package) |
-| Serve over HTTP | `rclone serve http remote:path --addr :8080` | Read-only by default |
-| Serve over WebDAV | `rclone serve webdav remote:path --addr :8080` | WebDAV-compatible clients |
-| Serve over SFTP | `rclone serve sftp remote:path --addr :2022` | Standard SFTP clients |
-| Serve as S3 | `rclone serve s3 remote:path --addr :9000` | S3-compatible API |
-| Bisync (two-way) | `rclone bisync src: dst:` | Experimental; requires `--resync` on first run |
-| Delete files | `rclone delete remote:path` | Deletes files matching filters; keeps directories |
-| Purge directory | `rclone purge remote:path` | Deletes entire directory tree including dirs |
-| Create directory | `rclone mkdir remote:path/newdir` | Creates path including parents |
-| Download and print | `rclone cat remote:path/file.txt` | Streams file to stdout |
-| Get size/count | `rclone size remote:path` | Total size and object count |
-| Encrypt/decrypt remote | `rclone config` (type=crypt) | Wraps another remote; client-side AES-256 |
-| Backend commands | `rclone backend <command> remote:` | Provider-specific operations (e.g., B2 lifecycle) |
-| Reconnect OAuth | `rclone config reconnect remote:` | Refresh expired OAuth token |
-| Config show | `rclone config show` | Print all remotes (includes credentials) |
+| Task | Command |
+|------|---------|
+| Configure new remote | `rclone config` |
+| List configured remotes | `rclone listremotes` |
+| List top-level directories | `rclone lsd remote:bucket` |
+| List files (simple) | `rclone lsf remote:path` |
+| List files (detailed) | `rclone ls remote:path` |
+| List files (JSON) | `rclone lsjson remote:path` |
+| Copy (no delete) | `rclone copy src: dst:` |
+| Sync (mirror) | `rclone sync src: dst:` |
+| Move | `rclone move src: dst:` |
+| Check/verify | `rclone check src: dst:` |
+| Mount as filesystem | `rclone mount remote:path /mnt/point` |
+| Serve over HTTP | `rclone serve http remote:path --addr :8080` |
+| Serve over WebDAV | `rclone serve webdav remote:path --addr :8080` |
+| Serve over SFTP | `rclone serve sftp remote:path --addr :2022` |
+| Serve as S3 | `rclone serve s3 remote:path --addr :9000` |
+| Bisync (two-way) | `rclone bisync src: dst:` |
+| Delete files | `rclone delete remote:path` |
+| Purge directory | `rclone purge remote:path` |
+| Create directory | `rclone mkdir remote:path/newdir` |
+| Download and print | `rclone cat remote:path/file.txt` |
+| Get size/count | `rclone size remote:path` |
+| Encrypt/decrypt remote | `rclone config` (type=crypt) |
+| Backend commands | `rclone backend <command> remote:` |
+| Reconnect OAuth | `rclone config reconnect remote:` |
+| Config show | `rclone config show` |
 
 ## Expected State
 
@@ -64,8 +83,8 @@ globs:
 
 ## Common Failures
 
-| Symptom | Likely cause | Check/Fix |
-|---------|-------------|-----------|
+| Symptom | Cause | Fix |
+|---------|-------|-----|
 | `didn't find section in config file` | Wrong remote name or typo | `rclone listremotes` to see exact names |
 | `oauth2: token expired` / `401 Unauthorized` | OAuth token expired | `rclone config reconnect remote:` |
 | `429 Too Many Requests` | Provider rate limiting | Add `--tpslimit 4 --tpslimit-burst 4`; check provider quotas |
@@ -86,6 +105,12 @@ globs:
 - **Server-side copy only works within same provider**: Copying between two S3 buckets in the same account uses server-side copy (free, fast). Copying from S3 to B2 downloads then uploads — counts against bandwidth on both sides.
 - **`rclone mount` requires FUSE**: The `fuse3` (or `fuse`) package must be installed. Non-root users also need `user_allow_other` in `/etc/fuse.conf` to use `--allow-other`.
 - **Crypt remote wraps another remote**: A `crypt` remote is a transparent encryption layer over an existing remote. Files are stored encrypted in the underlying remote; rclone handles AES-256-CTR encryption and decryption on the fly. Losing the crypt password means permanent data loss.
+
+## See Also
+
+- **rsync** — File-level synchronization for local and SSH-based backup
+- **borg** — Deduplicated encrypted backup with borgmatic automation wrapper
+- **restic** — Content-addressed deduplicating backup with S3/B2/SFTP backends
 
 ## References
 
