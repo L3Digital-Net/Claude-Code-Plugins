@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.2] - 2026-03-18
+
+### Fixed
+- Newlines in REPL arguments (notes, urls) corrupt the keepassxc-cli command stream, causing garbled entries and data loss. `_repl_quote()` now sanitizes `\n`/`\r` to spaces before quoting.
+- `deactivate_entry` constructed notes with an embedded newline (`\n[DEACTIVATED: ...]`) that split the REPL command across two lines. Uses ` | ` separator instead.
+- `run_cli` stdin_lines (passwords) now reject embedded newlines with a clear error instead of silently corrupting the stream.
+
 ## [0.5.1] - 2026-03-15
 
 ### Changed

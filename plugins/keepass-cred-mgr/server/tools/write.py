@@ -142,7 +142,8 @@ async def deactivate_entry(
             break
 
     timestamp = datetime.now(UTC).isoformat()
-    new_notes = f"{existing_notes}\n[DEACTIVATED: {timestamp}]".strip()
+    deactivated_tag = f"[DEACTIVATED: {timestamp}]"
+    new_notes = f"{existing_notes} | {deactivated_tag}".strip(" |") if existing_notes else deactivated_tag
     new_title = f"{INACTIVE_PREFIX}{title}"
 
     with _write_lock(vault):

@@ -50,7 +50,14 @@ def _repl_quote(arg: str) -> str:
     Qt's argument parser recognises double-quoted strings but not single-quoted
     strings.  shlex.quote() prefers single quotes, which silently pass through
     the REPL as literal characters — breaking any argument that contains spaces.
+
+    Newlines and carriage returns are replaced with spaces before quoting.
+    The REPL is line-based: a literal newline inside an argument splits the
+    command across two lines, permanently corrupting the REPL stream.
     """
+    if "\n" in arg or "\r" in arg:
+        log.warning("repl_quote_newline_sanitized", original_length=len(arg))
+        arg = arg.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
     if not arg or any(c in _REPL_NEEDS_QUOTING for c in arg):
         return '"' + arg.replace("\\", "\\\\").replace('"', '\\"') + '"'
     return arg
@@ -253,6 +260,11 @@ class Vault:
             self._repl_proc.stdin.write(cmd_bytes)
             if stdin_lines:
                 for line in stdin_lines:
+                    if "\n" in line or "\r" in line:
+                        raise KeePassCLIError(
+                            f"keepassxc-cli {args[0]} failed: stdin value contains "
+                            "embedded newlines which would corrupt the REPL stream"
+                        )
                     self._repl_proc.stdin.write((line + "\n").encode())
             await self._repl_proc.stdin.drain()
 
