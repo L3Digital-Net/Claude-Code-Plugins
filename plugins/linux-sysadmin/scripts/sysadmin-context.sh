@@ -25,6 +25,6 @@ fi
 if [[ "$is_sysadmin_dir" == "true" ]]; then
   # Emit context that gets injected into the AI's conversation
   cat <<'CONTEXT'
-[linux-sysadmin] Sysadmin working directory detected. Before installing, configuring, or troubleshooting any Linux service, you MUST invoke the matching linux-sysadmin skill (e.g. Skill("linux-sysadmin:postgresql"), Skill("linux-sysadmin:nginx"), Skill("linux-sysadmin:systemd")). These skills contain version-specific configuration, security hardening, and best practices that training knowledge alone will miss. The full list of 137 service skills is in the available skills section.
+[linux-sysadmin] Sysadmin working directory detected. Before installing, configuring, or troubleshooting any Linux service, invoke Skill("linux-sysadmin:sysadmin"). It contains a topic index of 137 service guides and will load the right one.
 CONTEXT
 fi
