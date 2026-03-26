@@ -4,9 +4,9 @@ Linux system administration knowledge base: per-service skills with annotated co
 
 ## Summary
 
-When debugging nginx, setting up WireGuard, or tuning ZFS, the hard part isn't running commands; it's knowing *which* commands, *what the output means*, and *what the gotchas are*. This plugin gives Claude that domain knowledge as skills: one per service, tool, or filesystem.
+When debugging nginx, setting up WireGuard, or tuning ZFS, the hard part isn't running commands; it's knowing *which* commands, *what the output means*, and *what the gotchas are*. This plugin gives Claude that domain knowledge through a single dispatcher skill backed by 137 per-service guide files.
 
-Each skill contains the config paths, expected ports, health checks, common failure modes, and pain points for its service. Reference files provide full annotated configs (every directive commented), invocation cheatsheets, and upstream doc links. Claude loads only the relevant skill when you mention a service, then uses its own Bash tool to act on it.
+A single `sysadmin` skill triggers on service-related queries and contains a topic index. When a topic matches, Claude reads the corresponding guide file, which contains config paths, expected ports, health checks, common failure modes, and pain points. Reference files provide full annotated configs (every directive commented), invocation cheatsheets, and upstream doc links.
 
 The `/sysadmin` command takes a different approach: it runs an interactive interview to understand your needs, then recommends a complete server stack with setup order.
 
@@ -16,7 +16,7 @@ Design decisions in this plugin are evaluated against these principles.
 
 **[P1] Knowledge Over Tooling**: Provide information Claude needs to reason, not tools that replace reasoning. A skill that teaches Claude what sshd_config options mean is more valuable than an MCP tool that wraps `systemctl status sshd`.
 
-**[P2] One Skill, One Service**: Each service gets its own skill file. No categories, no bundling. The discovery skill handles cross-cutting "what should I use?" queries.
+**[P2] One Guide, One Service**: Each service gets its own guide file. No categories, no bundling. The `linux-overview` guide handles cross-cutting "what should I use?" queries.
 
 **[P3] Complete Config References**: Annotated config files document *every* directive with its default, recommended value, and when to change it. Partial references force Claude to guess or search the internet.
 
@@ -47,17 +47,16 @@ No post-install steps required.
 
 ```mermaid
 flowchart TD
-    User([User]) -->|"mentions a service<br/>or tool by name"| Trigger{Skill triggers?}
-    Trigger -->|"specific service"| ServiceSkill[Service Skill loads<br/>nginx, sshd, ZFS, etc.]
-    Trigger -->|"broad query"| Discovery[linux-overview<br/>discovery skill loads]
-    Discovery -->|"user picks a service"| ServiceSkill
-    ServiceSkill --> Knowledge[Claude has: config paths,<br/>ports, health checks,<br/>failure modes, gotchas]
-    Knowledge --> Action[Claude runs Bash<br/>commands informed<br/>by skill knowledge]
+    User([User]) -->|"mentions a service<br/>or tool by name"| Trigger{Sysadmin skill<br/>triggers}
+    Trigger --> Index[Topic index matched]
+    Index --> ReadGuide[Claude reads<br/>guides/topic/guide.md]
+    ReadGuide --> Knowledge[Claude has: config paths,<br/>ports, health checks,<br/>failure modes, gotchas]
+    Knowledge --> Action[Claude runs Bash<br/>commands informed<br/>by guide knowledge]
     Action --> Result((Informed<br/>diagnosis or setup))
 
     User2([User]) -->|"/sysadmin"| Interview[Guided interview:<br/>purpose, workloads,<br/>constraints, experience]
     Interview --> Recommend[Stack recommendation<br/>with setup order]
-    Recommend -->|"user picks a component"| ServiceSkill
+    Recommend -->|"user picks a component"| ReadGuide
 ```
 
 ## Usage
@@ -93,14 +92,9 @@ The `/sysadmin` command walks through:
 
 | Skill | Loaded when |
 |-------|-------------|
-| `linux-overview` | Broad queries: "web server", "database", "what should I use for..." |
-| Per-service skills (136) | Mentioned by name: "nginx", "ZFS", "nmap", "fail2ban", "tmux", etc. |
+| `sysadmin` | Any Linux service, tool, or filesystem query. Contains a topic index of 137 guides covering web/proxy, containers, DNS, security, databases, monitoring, system services, storage, filesystems, backup, mail, self-hosted apps, IoT, certificates, CLI tools, and more. |
 
-**Service categories covered:**
-
-Web/Proxy, Containers/Virtualization, DNS, Security/Firewall, Databases, Monitoring, System Services, Storage/Backup, Filesystems, Network Services, Mail, Self-Hosted Apps, IoT/Home Automation, Certificates, CLI Monitoring Tools, Network Diagnostics, Disk Tools, Process/Debug, Text/Data, Misc Utilities.
-
-See the [design document](../../docs/plans/2026-03-01-linux-sysadmin-design.md) for the full service inventory.
+Each guide lives in `guides/{topic}/guide.md` with an optional `references/` subdirectory for annotated configs, cheatsheets, and documentation links.
 
 ## Design Decisions
 
@@ -113,9 +107,7 @@ See [`skill-inventory-and-gaps.md`](docs/skill-inventory-and-gaps.md) for the fu
 
 ## Known Issues
 
-- **[P2] tension**: `awk-sed` and `curl-wget` bundle two tools each. These pairs are always used interchangeably in practice, so splitting would reduce usability. The principle is aspirational for single-binary tools; paired-tool skills are an accepted exception.
-- **`linux-overview` trigger breadth**: The discovery skill triggers on generic vocabulary ("web server", "recommend") that appears in many sysadmin queries. When it fires, its full 200-line category index loads into context. This is a known trade-off of the skill-routing architecture — the skill system has no partial-load mechanism.
-- **`## Health Checks` coverage**: CLI tool skills (awk, sed, curl, tmux, jq, etc.) lack a Health Checks section — the concept doesn't translate well to stateless tools with no daemon to verify. Daemon skills all include Health Checks.
+- **`## Health Checks` coverage**: CLI tool guides (awk, sed, curl, tmux, jq, etc.) lack a Health Checks section; the concept doesn't translate to stateless tools with no daemon to verify. Daemon guides all include Health Checks.
 
 ## Links
 

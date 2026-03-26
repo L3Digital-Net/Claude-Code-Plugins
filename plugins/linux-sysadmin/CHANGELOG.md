@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.0.0] - 2026-03-26
+
+### Changed
+- **Architecture: single dispatcher skill replaces 137 individual skills.** The `sysadmin` skill contains a topic index of all 137 services and loads the right guide file on demand. This eliminates skill list pollution while preserving all service knowledge.
+- Skill content moved to `guides/{topic}/guide.md` (YAML frontmatter stripped, content preserved verbatim)
+- SessionStart hook now references the single `linux-sysadmin:sysadmin` skill
+- README updated to reflect new architecture
+
+### Removed
+- 137 individual per-service skills (replaced by guide files under `guides/`)
+
 ## [1.2.0] - 2026-03-18
 
 ### Added
