@@ -59,8 +59,8 @@ flowchart TD
     User -->|"Error or crash"| DebugAgent["qt-debugger agent"]
     User -->|"Code written"| ReviewAgent["qt-app-reviewer agent"]
     User -->|"UI design review"| UXAgent["qt-ux-advisor agent"]
-    DevAgent --> Skills["Domain skills (16 total)"]
-    ReviewAgent --> Skills
+    DevAgent --> Refs["Domain references (16 files)"]
+    ReviewAgent --> Refs
     User -->|"/qt-suite:generate"| Gen["test-generator agent"]
     User -->|"/qt-suite:run"| Run["Auto-detect Python/C++ runner"]
     User -->|"/qt-suite:coverage"| Cov["Coverage + gap report"]
@@ -83,26 +83,28 @@ Run `/qt-suite:scaffold <app-name>` to initialize a new project with the standar
 | `/qt-suite:coverage` | Run coverage analysis, generate HTML report, identify gaps |
 | `/qt-suite:visual` | Launch app headlessly and run visual GUI tests via Qt Pilot |
 
-## Skills
+## References
 
-| Skill | Binding | Loaded when |
-|-------|---------|-------------|
-| `qt-architecture` | Both | Structuring a Qt app, QApplication setup, project layout |
-| `qt-signals-slots` | Both | Connecting signals, defining custom signals, cross-thread communication |
-| `qt-layouts` | Both | Arranging widgets, resize behavior, QSplitter, layout debugging |
-| `qt-model-view` | Both | QAbstractTableModel, QTableView, QSortFilterProxyModel, delegates |
-| `qt-threading` | Both | QThread, QRunnable, thread safety, keeping UI responsive |
-| `qt-styling` | Both | QSS stylesheets, theming, dark/light mode, QPalette |
-| `qt-resources` | Both | .qrc files, pyrcc6, embedding icons and assets |
-| `qt-dialogs` | Both | QDialog, QMessageBox, QFileDialog, custom dialogs |
-| `qt-packaging` | Python | PyInstaller, Briefcase, platform deployment, CI builds |
-| `qt-debugging` | Both | Qt crashes, widget visibility, event loop, threading issues |
-| `qt-qml` | Both | QML/Qt Quick, QQmlApplicationEngine, exposing Python to QML |
-| `qt-settings` | Both | QSettings, persistent preferences, window geometry, recent files |
-| `qt-bindings` | Python | PySide6 vs PyQt6 differences, PyQt5 migration guide |
-| `qtest-patterns` | Both | Writing QTest (C++), pytest-qt (Python), or QML TestCase tests |
-| `qt-coverage-workflow` | Both | Working with coverage gaps, gcov, lcov, or coverage.py |
-| `qt-pilot-usage` | Python | Headless GUI testing, widget interaction, Qt Pilot MCP usage |
+Domain knowledge loaded on demand by agents. These files are never auto-loaded into context; they enter the conversation only when an agent or the user explicitly reads them.
+
+| Reference | Binding | Purpose |
+|-----------|---------|---------|
+| `qt-architecture.md` | Both | Structuring a Qt app, QApplication setup, project layout |
+| `qt-signals-slots.md` | Both | Connecting signals, defining custom signals, cross-thread communication |
+| `qt-layouts.md` | Both | Arranging widgets, resize behavior, QSplitter, layout debugging |
+| `qt-model-view.md` | Both | QAbstractTableModel, QTableView, QSortFilterProxyModel, delegates |
+| `qt-threading.md` | Both | QThread, QRunnable, thread safety, keeping UI responsive |
+| `qt-styling.md` | Both | QSS stylesheets, theming, dark/light mode, QPalette |
+| `qt-resources.md` | Both | .qrc files, pyrcc6, embedding icons and assets |
+| `qt-dialogs.md` | Both | QDialog, QMessageBox, QFileDialog, custom dialogs |
+| `qt-packaging.md` | Python | PyInstaller, Briefcase, platform deployment, CI builds |
+| `qt-debugging.md` | Both | Qt crashes, widget visibility, event loop, threading issues |
+| `qt-qml.md` | Both | QML/Qt Quick, QQmlApplicationEngine, exposing Python to QML |
+| `qt-settings.md` | Both | QSettings, persistent preferences, window geometry, recent files |
+| `qt-bindings.md` | Python | PySide6 vs PyQt6 differences, PyQt5 migration guide |
+| `qtest-patterns.md` | Both | Writing QTest (C++), pytest-qt (Python), or QML TestCase tests |
+| `qt-coverage-workflow.md` | Both | Working with coverage gaps, gcov, lcov, or coverage.py |
+| `qt-pilot-usage.md` | Python | Headless GUI testing, widget interaction, Qt Pilot MCP usage |
 
 ## Agents
 
@@ -140,12 +142,12 @@ Coverage threshold for this machine: 70%.
 
 ## CI Integration
 
-Copy `skills/qt-coverage-workflow/templates/qt-coverage.yml` to `.github/workflows/` for automated coverage on every push.
+Copy `references/qt-coverage-workflow/qt-coverage.yml` to `.github/workflows/` for automated coverage on every push.
 
 Or use the portable shell script:
 
 ```bash
-bash skills/qt-coverage-workflow/templates/run-coverage.sh --python --threshold 80
+bash references/qt-coverage-workflow/run-coverage.sh --python --threshold 80
 ```
 
 ## Planned Features

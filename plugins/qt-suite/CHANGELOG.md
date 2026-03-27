@@ -5,6 +5,16 @@ All notable changes to the qt-suite plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-03-27
+
+### Changed
+- Converted 16 skills to on-demand references loaded by agents, following the nominal plugin's architecture pattern
+- Replaced `skills:` frontmatter in 4 agents with explicit Read pointers to `references/`
+- Skill sub-files (examples, templates, reference docs) preserved in `references/` subdirectories
+
+### Removed
+- Deleted all 16 skills; the `skills/` directory no longer exists
+
 ## [0.2.1] - 2026-03-04
 
 ### Changed
