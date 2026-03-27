@@ -2,13 +2,23 @@
 
 All notable changes to the github-repo-manager plugin are documented here.
 
+## [Unreleased]
+
+## [0.4.0] - 2026-03-27
+
+### Changed
+- Converted 14 skills to on-demand references loaded by the command, following the nominal plugin's architecture pattern
+- Rewrote `/repo-manager` command as a thin orchestrator that reads `references/` files at the right moment instead of relying on skill auto-loading
+- Organized references into top-level orchestration files and `modules/` subdirectory for the 9 assessment modules
+
+### Removed
+- Deleted all 15 skills (14 moved to references, 1 self-test deleted)
+- The `skills/` directory no longer exists
+
 ## [0.3.1] - 2026-03-04
 
 ### Fixed
 - apply audit findings — plugin.json, CHANGELOG, skills
-
-
-## [Unreleased]
 
 ## [0.3.0] - 2026-03-04
 
