@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-# Fake ykman for PTH testing.
-# RealYubiKey.is_present() calls `ykman list` and checks for non-empty stdout.
-echo "YubiKey 5 NFC (Serial: 12345678)"

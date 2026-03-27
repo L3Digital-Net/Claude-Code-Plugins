@@ -6,18 +6,7 @@
     "url": "https://github.com/L3DigitalNet"
   },
   "plugins": [
-    {
-      "name": "agent-orchestrator",
-      "description": "General-purpose agent team orchestration with automatic context management, file isolation via git worktrees, and mechanical enforcement hooks",
-      "version": "1.0.5",
-      "author": {
-        "name": "L3DigitalNet",
-        "url": "https://github.com/L3DigitalNet"
-      },
-      "homepage": "https://github.com/L3DigitalNet/Claude-Code-Plugins/tree/main/plugins/agent-orchestrator",
-      "source": "./plugins/agent-orchestrator"
-    },
-    {
+{
       "name": "home-assistant-dev",
       "description": "Comprehensive Home Assistant integration development toolkit with 27 skills, MCP server for live HA connection, automated validation, example integrations, and project templates",
       "version": "2.2.4",
@@ -83,18 +72,7 @@
       "source": "./plugins/plugin-test-harness",
       "homepage": "https://github.com/L3DigitalNet/Claude-Code-Plugins/tree/main/plugins/plugin-test-harness"
     },
-    {
-      "name": "plugin-review",
-      "description": "Comprehensive plugin review covering principles alignment, terminal UX quality, and documentation freshness via orchestrator-subagent architecture.",
-      "version": "0.5.1",
-      "author": {
-        "name": "L3DigitalNet",
-        "url": "https://github.com/L3DigitalNet"
-      },
-      "source": "./plugins/plugin-review",
-      "homepage": "https://github.com/L3DigitalNet/Claude-Code-Plugins/tree/main/plugins/plugin-review"
-    },
-    {
+{
       "name": "docs-manager",
       "description": "Documentation lifecycle management \u2014 detects changes, queues tasks silently, surfaces them for batch review at session boundaries.",
       "version": "0.2.2",
@@ -115,28 +93,6 @@
       },
       "source": "./plugins/repo-hygiene",
       "homepage": "https://github.com/L3DigitalNet/Claude-Code-Plugins/tree/main/plugins/repo-hygiene"
-    },
-    {
-      "name": "autonomous-refactor",
-      "description": "Test-driven autonomous refactoring against project design principles. Snapshots a green test baseline, audits code against README.md principles, applies changes in git worktree isolation, and reverts on test failure \u2014 entirely without human input in the loop.",
-      "version": "0.2.1",
-      "author": {
-        "name": "L3DigitalNet",
-        "url": "https://github.com/L3DigitalNet"
-      },
-      "source": "./plugins/autonomous-refactor",
-      "homepage": "https://github.com/L3DigitalNet/Claude-Code-Plugins/tree/main/plugins/autonomous-refactor"
-    },
-    {
-      "name": "keepass-cred-mgr",
-      "description": "MCP server for secure KeePass vault access from Claude Code via YubiKey authentication. Exposes 10 tools for vault unlock, listing, searching, reading, writing, and bulk-importing KeePass entries with audit logging.",
-      "version": "0.5.2",
-      "author": {
-        "name": "L3DigitalNet",
-        "url": "https://github.com/L3DigitalNet"
-      },
-      "homepage": "https://github.com/L3DigitalNet/Claude-Code-Plugins/tree/main/plugins/keepass-cred-mgr",
-      "source": "./plugins/keepass-cred-mgr"
     },
     {
       "name": "qt-suite",
