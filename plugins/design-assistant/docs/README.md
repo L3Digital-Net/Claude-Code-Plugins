@@ -188,11 +188,16 @@ plugins/design-assistant/
 ├── commands/
 │   ├── design-draft.md     ← /design-draft
 │   └── design-review.md    ← /design-review
-├── skills/
-│   ├── design-draft/
-│   │   └── SKILL.md
-│   └── design-review/
-│       └── SKILL.md
+├── references/
+│   ├── interaction-conventions.md
+│   ├── session-state.md
+│   ├── ux-templates.md
+│   ├── pause-resume.md
+│   ├── operational-commands.md
+│   ├── handoff-contract.md
+│   └── interview-rules.md
+├── hooks/
+│   └── hooks.json
 ├── tests/
 │   ├── draft/
 │   ├── review/
