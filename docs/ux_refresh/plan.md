@@ -70,13 +70,13 @@ Supporting elements: UX templates in references ensure consistent, polished outp
 **Problem:** Stack profiles are pure reference data. Workflow skills (gap-analysis, convergence-loop) are only used by commands.
 
 **Plan:**
-- [ ] Move 5 stack profiles to `references/profiles/`
-- [ ] Move gap-analysis, convergence-loop, test-design, test-status to `references/`
-- [ ] Keep `testing-mindset` as the sole skill (68 lines, always-on by design)
-- [ ] Update commands to read references
-- [ ] Delete converted skills
-- [ ] Update README.md
-- [ ] Bump version
+- [x] Move 5 stack profiles to `references/profiles/`
+- [x] Move gap-analysis, convergence-loop, test-design, test-status to `references/`
+- [x] Keep `testing-mindset` as the sole skill (68 lines, always-on by design)
+- [x] Update commands to read references
+- [x] Delete converted skills
+- [x] Update README.md
+- [x] Bump version
 
 ---
 
@@ -130,3 +130,4 @@ Supporting elements: UX templates in references ensure consistent, polished outp
 | 2026-03-27 | github-repo-manager | Complete | 15 skills → 14 references, self-test deleted, command rewritten as thin orchestrator, v0.4.0 |
 | 2026-03-27 | design-assistant | Complete | 7 shared references + 37 UX templates extracted, both commands slimmed ~36%, stubs deleted, v0.4.0 |
 | 2026-03-27 | qt-suite | Complete | 16 skills → 16 references, 4 agents updated from skills: to Read pointers, sub-files preserved, v0.3.0 |
+| 2026-03-27 | test-driver | Complete | 9 skills → 9 references, testing-mindset kept as sole skill, commands updated, v0.3.0 |

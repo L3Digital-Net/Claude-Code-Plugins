@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.0] - 2026-03-27
+
+### Changed
+- Converted 9 skills to on-demand references; testing-mindset kept as sole always-on skill
+- Stack profiles moved to `references/profiles/`
+- Commands updated to read references instead of consulting skills
+
+### Removed
+- Deleted 9 skill directories (4 core + 5 profiles); content preserved in `references/`
+
 ## [0.2.0] - 2026-03-16
 
 ### Added

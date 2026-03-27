@@ -86,15 +86,22 @@ When working on code changes, always consult the `test-driver:testing-mindset` s
 | Skill | Loaded when |
 |-------|-------------|
 | `testing-mindset` | Always, via broad description matching. Drives when to suggest testing. |
-| `gap-analysis` | On `/test-driver:analyze` or when Claude decides a gap analysis is warranted. |
-| `convergence-loop` | During test generation loops after gap analysis identifies missing tests. |
-| `test-status` | When reading or writing `docs/testing/TEST_STATUS.json`. |
-| `test-design` | When writing tests; provides universal design principles. |
-| `profiles/python-fastapi` | When project uses FastAPI or Starlette. |
-| `profiles/python-pyside6` | When project uses PySide6 or PyQt6. |
-| `profiles/python-django` | When project uses Django. |
-| `profiles/home-assistant` | When project is an HA custom integration. |
-| `profiles/swift-swiftui` | When project uses Swift Package Manager or Xcode. |
+
+## References
+
+Domain knowledge loaded on demand by the commands. These files are never auto-loaded into context.
+
+| Reference | Purpose |
+|-----------|---------|
+| `gap-analysis.md` | Full gap detection methodology across six test categories |
+| `convergence-loop.md` | Iterative test generation and fix engine with oscillation detection |
+| `test-design.md` | Universal test design principles (isolation, boundaries, assertions) |
+| `test-status.md` | TEST_STATUS.json schema, read/write rules, staleness detection |
+| `profiles/python-fastapi.md` | Stack profile for FastAPI/Starlette projects |
+| `profiles/python-pyside6.md` | Stack profile for PySide6/PyQt6 projects |
+| `profiles/python-django.md` | Stack profile for Django projects |
+| `profiles/home-assistant.md` | Stack profile for HA custom integrations |
+| `profiles/swift-swiftui.md` | Stack profile for Swift/SwiftUI projects |
 
 ## Design Decisions
 
