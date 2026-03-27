@@ -6,7 +6,7 @@
     "url": "https://github.com/L3DigitalNet"
   },
   "plugins": [
-{
+    {
       "name": "home-assistant-dev",
       "description": "Comprehensive Home Assistant integration development toolkit with 27 skills, MCP server for live HA connection, automated validation, example integrations, and project templates",
       "version": "2.2.4",
@@ -72,7 +72,7 @@
       "source": "./plugins/plugin-test-harness",
       "homepage": "https://github.com/L3DigitalNet/Claude-Code-Plugins/tree/main/plugins/plugin-test-harness"
     },
-{
+    {
       "name": "docs-manager",
       "description": "Documentation lifecycle management \u2014 detects changes, queues tasks silently, surfaces them for batch review at session boundaries.",
       "version": "0.2.2",

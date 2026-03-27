@@ -6,6 +6,9 @@ All notable changes to the github-repo-manager plugin are documented here.
 
 ## [0.4.0] - 2026-03-27
 
+### Added
+- UX templates reference (`references/ux-templates.md`) with 9 output templates for consistent formatting
+
 ### Changed
 - Converted 14 skills to on-demand references loaded by the command, following the nominal plugin's architecture pattern
 - Rewrote `/repo-manager` command as a thin orchestrator that reads `references/` files at the right moment instead of relying on skill auto-loading

@@ -4,7 +4,7 @@
 
 **Author:** Chris
 **Date:** February 17, 2026
-**Status:** Implemented — v0.2.2 (Feb 2026)
+**Status:** Implemented — v0.4.0 (Mar 2026)
 
 ---
 
