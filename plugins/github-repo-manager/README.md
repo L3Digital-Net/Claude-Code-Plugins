@@ -62,18 +62,20 @@ claude --plugin-dir ./plugins/github-repo-manager
 
 ```mermaid
 flowchart TD
-    User([User]) -->|/repo-manager| CMD[Command loads core skill]
+    User([User]) -->|/repo-manager| CMD[Command: thin orchestrator]
     CMD --> DEPS[ensure-deps.sh: verify Node + npm deps]
-    DEPS --> PAT{PAT valid?}
+    DEPS --> SESSION[Read references/session.md]
+    SESSION --> PAT{PAT valid?}
     PAT -->|No| ONBOARD[Onboarding: explain PAT, prompt to set]
     PAT -->|Yes| SCOPE{Scope?}
     ONBOARD --> PAT
     SCOPE -->|Single repo| TIER[repos classify: detect Tier 1-4]
-    SCOPE -->|Cross-repo| CROSS[Cross-repo orchestration]
-    TIER --> CONFIG[Read .github-repo-manager.yml if present]
+    SCOPE -->|Cross-repo| CROSS[Read references/cross-repo.md]
+    TIER --> CONFIG[Read references/config.md if needed]
     CONFIG --> LABELS[Bootstrap maintenance labels if missing]
-    LABELS --> ASSESS[Run 9 assessment modules in order]
-    ASSESS --> UNIFIED((Unified findings view))
+    LABELS --> ASSESS[Read references/assessment.md]
+    ASSESS --> MODULES[Read each references/modules/*.md in order]
+    MODULES --> UNIFIED((Unified findings view))
     UNIFIED --> ACTIONS[Propose actions, await approval]
     ACTIONS --> EXEC[Execute via gh-manager helper]
     EXEC --> WRAP((Session wrap-up + optional report))
@@ -106,25 +108,26 @@ The plugin exits cleanly when you change topic or say you're done.
 |---------|-------------|
 | `/repo-manager` | Activate a GitHub repository management session |
 
-## Skills
+## References
 
-| Skill | Description |
-|-------|-------------|
-| `repo-manager` | Core session orchestrator: onboarding, tier detection, communication style, and session lifecycle |
-| `repo-manager-assessment` | Full multi-module assessment orchestration: module sequencing, cross-module deduplication, and unified findings presentation |
-| `repo-manager-reference` | `gh-manager` helper command reference: all available CLI commands and their options |
-| `security` | Audit repository security posture: Dependabot alerts, code scanning, secret scanning, advisories, and branch protection rules |
-| `release-health` | Audit release health: unreleased commits, CHANGELOG drift, release cadence, and draft releases |
-| `community-health` | Audit and manage GitHub community health files (README, LICENSE, CODE_OF_CONDUCT, CONTRIBUTING, SECURITY, issue/PR templates) |
-| `pr-management` | Manage pull requests: triage, staleness detection, label management, review requests, and merge workflow |
-| `issue-triage` | Triage GitHub issues: label, categorize, detect linked PRs, identify stale issues, and close resolved ones |
-| `dependency-audit` | Audit dependency health via dependency graph and Dependabot PRs |
-| `notifications` | Process GitHub notifications with priority classification |
-| `discussions` | Manage GitHub Discussions: find unanswered questions, stale threads, and close resolved discussions |
-| `wiki-sync` | Synchronize GitHub wiki content: clone, diff, generate, and push wiki pages |
-| `cross-repo` | Cross-repository operations: scope inference, batch mutations, and portfolio scanning |
-| `repo-config` | Configuration system: per-repo and portfolio config files, precedence rules, and validation |
-| `self-test` | Run the plugin self-test suite to validate helper installation and API connectivity |
+Domain knowledge loaded on demand by the command. These files are never auto-loaded into context; they enter the conversation only when the command explicitly reads them.
+
+| Reference | Purpose |
+|-----------|---------|
+| `session.md` | Session flow, tier system, communication style, error handling |
+| `assessment.md` | Module execution order, cross-module deduplication, unified findings format |
+| `command-reference.md` | `gh-manager` helper CLI syntax and available commands |
+| `config.md` | Per-repo and portfolio configuration system |
+| `cross-repo.md` | Cross-repository scope inference, batch mutations, portfolio scanning |
+| `modules/security.md` | Security posture audit: Dependabot, code scanning, secret scanning, branch protection |
+| `modules/release-health.md` | Release health: unreleased commits, CHANGELOG drift, release cadence |
+| `modules/community-health.md` | Community health files: README, LICENSE, CODE_OF_CONDUCT, CONTRIBUTING, templates |
+| `modules/pr-management.md` | PR triage: staleness, conflicts, review status, merge workflow |
+| `modules/issue-triage.md` | Issue triage: labeling, linked PRs, stale issues |
+| `modules/dependency-audit.md` | Dependency health via dependency graph and Dependabot PRs |
+| `modules/notifications.md` | Notification processing with priority classification |
+| `modules/discussions.md` | GitHub Discussions: unanswered questions, stale threads |
+| `modules/wiki-sync.md` | Wiki content synchronization: clone, diff, generate, push |
 
 ## Hooks
 
