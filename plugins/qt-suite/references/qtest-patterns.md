@@ -18,7 +18,7 @@ Qt testing spans three ecosystems: **C++ QTest** (native, zero dependencies), **
 
 ## Python / PySide6 with pytest-qt
 
-**Complete pytest-qt patterns** — see [references/python-pytest-qt.md](references/python-pytest-qt.md) for the full `qtbot` fixture API, signal waiting, conftest patterns, model testing, parametrize, async tests, and common gotchas.
+**Complete pytest-qt patterns** — see [qtest-patterns/python-pytest-qt.md](qtest-patterns/python-pytest-qt.md) for the full `qtbot` fixture API, signal waiting, conftest patterns, model testing, parametrize, async tests, and common gotchas.
 
 Key config:
 ```ini
@@ -30,23 +30,23 @@ qt_api = pyside6
 
 ## C++ QTest
 
-**Complete C++ QTest patterns** — see [references/cpp-qtest.md](references/cpp-qtest.md) for the full macro reference, `QSignalSpy`, GUI/input simulation, benchmark macros, output formats, CMake patterns, and troubleshooting.
+**Complete C++ QTest patterns** — see [qtest-patterns/cpp-qtest.md](qtest-patterns/cpp-qtest.md) for the full macro reference, `QSignalSpy`, GUI/input simulation, benchmark macros, output formats, CMake patterns, and troubleshooting.
 
 Key structure: each test class is a `QObject` subclass; private slots are test functions; `QTEST_MAIN(ClassName)` + `#include "test_name.moc"` at the end of the file.
 
 ## QML TestCase
 
-**Complete QML TestCase patterns** — see [references/qml-testcase.md](references/qml-testcase.md) for the full assertion API, component creation, `SignalSpy`, async/timer testing, CMake setup, and common issues.
+**Complete QML TestCase patterns** — see [qtest-patterns/qml-testcase.md](qtest-patterns/qml-testcase.md) for the full assertion API, component creation, `SignalSpy`, async/timer testing, CMake setup, and common issues.
 
 Key structure: `TestCase` QML item; test functions must start with `test_`; always call `obj.destroy()` to prevent leaks.
 
 ## Additional Resources
 
-Consult reference files in this skill's `references/` directory for detailed patterns:
+Consult reference files in this directory for detailed patterns:
 
-- **`references/cpp-qtest.md`** — Full QTest macro reference, `QSignalSpy`, benchmark macros, output formats
-- **`references/python-pytest-qt.md`** — Complete pytest-qt fixture API, async patterns, model testing, common gotchas
-- **`references/qml-testcase.md`** — QML TestCase full API, async signal testing, component creation patterns
+- **`qtest-patterns/cpp-qtest.md`** — Full QTest macro reference, `QSignalSpy`, benchmark macros, output formats
+- **`qtest-patterns/python-pytest-qt.md`** — Complete pytest-qt fixture API, async patterns, model testing, common gotchas
+- **`qtest-patterns/qml-testcase.md`** — QML TestCase full API, async signal testing, component creation patterns
 
 Working examples:
 - **`examples/test_calculator.py`** — Complete pytest-qt example with fixtures

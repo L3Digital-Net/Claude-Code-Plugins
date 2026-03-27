@@ -27,7 +27,7 @@ Use `/qt:coverage` to execute this loop. The `test-generator` agent activates au
 
 ## Python Projects (coverage.py)
 
-**Full Python coverage walkthrough** — see [references/python-coverage-workflow.md](references/python-coverage-workflow.md) for installation, all report formats, branch coverage, CI integration, and agent-handoff parsing patterns.
+**Full Python coverage walkthrough** — see [qt-coverage-workflow/python-coverage-workflow.md](qt-coverage-workflow/python-coverage-workflow.md) for installation, all report formats, branch coverage, CI integration, and agent-handoff parsing patterns.
 
 Key CI step pattern:
 ```yaml
@@ -37,7 +37,7 @@ Key CI step pattern:
 
 ## C++ Projects (gcov + lcov)
 
-**Full gcov/lcov walkthrough** — see [references/gcov-lcov-workflow.md](references/gcov-lcov-workflow.md) for CMake presets, the complete lcov command sequence, Clang/LLVM alternative, gap parsing, and troubleshooting.
+**Full gcov/lcov walkthrough** — see [qt-coverage-workflow/gcov-lcov-workflow.md](qt-coverage-workflow/gcov-lcov-workflow.md) for CMake presets, the complete lcov command sequence, Clang/LLVM alternative, gap parsing, and troubleshooting.
 
 ## Coverage Thresholds
 
@@ -82,7 +82,7 @@ The `test-generator` agent activates automatically after `/qt:coverage` complete
 
 ## Additional Resources
 
-- **`references/gcov-lcov-workflow.md`** — Full gcov/lcov command reference, CMake preset patterns, troubleshooting
-- **`references/python-coverage-workflow.md`** — coverage.py configuration, branch coverage, parallel test runs
-- **`templates/qt-coverage.yml`** — Ready-to-use GitHub Actions workflow (Python + C++ variants)
-- **`templates/run-coverage.sh`** — Portable shell script for local and generic CI use
+- **`qt-coverage-workflow/gcov-lcov-workflow.md`** — Full gcov/lcov command reference, CMake preset patterns, troubleshooting
+- **`qt-coverage-workflow/python-coverage-workflow.md`** — coverage.py configuration, branch coverage, parallel test runs
+- **`qt-coverage-workflow/qt-coverage.yml`** — Ready-to-use GitHub Actions workflow (Python + C++ variants)
+- **`qt-coverage-workflow/run-coverage.sh`** — Portable shell script for local and generic CI use

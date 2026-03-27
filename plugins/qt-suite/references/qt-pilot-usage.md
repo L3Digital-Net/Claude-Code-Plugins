@@ -53,7 +53,7 @@ btn->setObjectName("calculate_btn");
 
 ## Available MCP Tools (15 total)
 
-**Full argument types, return schemas, and error handling** — see [references/mcp-tools-reference.md](references/mcp-tools-reference.md).
+**Full argument types, return schemas, and error handling** — see [qt-pilot-usage/mcp-tools-reference.md](qt-pilot-usage/mcp-tools-reference.md).
 
 Quick reference by category:
 - **App lifecycle**: `launch_app`, `get_app_status`, `wait_for_idle`, `close_app`
@@ -139,11 +139,11 @@ close_app()
 
 The `gui-tester` agent saves reports to `tests/reports/gui-YYYY-MM-DD-HH-MM.md`.
 
-**Full report format and template** — see [references/test-report-template.md](references/test-report-template.md).
+**Full report format and template** — see [qt-pilot-usage/test-report-template.md](qt-pilot-usage/test-report-template.md).
 
 ## Additional Resources
 
-- **`references/mcp-tools-reference.md`** — Full argument types, return schemas, and error handling for all 15 MCP tools
+- **`qt-pilot-usage/mcp-tools-reference.md`** — Full argument types, return schemas, and error handling for all 15 MCP tools
 
 ## Examples
 

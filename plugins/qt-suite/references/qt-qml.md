@@ -16,7 +16,7 @@ version: 1.0.0
 
 For new Python/PySide6 desktop applications, QML offers better visual results with less code. For data-heavy enterprise tools, widgets remain the pragmatic choice.
 
-**Bootstrap and architecture** — see [references/qml-architecture.md](references/qml-architecture.md)
+**Bootstrap and architecture** — see [qt-qml/qml-architecture.md](qt-qml/qml-architecture.md)
 
 ### Official Best Practices (Qt Quick)
 
@@ -87,12 +87,12 @@ Three methods: Required Properties (preferred), Context Property, Registered QML
 
 **Key rule: `@Slot` is mandatory for any Python method callable from QML.** Missing it causes `TypeError` at runtime.
 
-**Full patterns** — see [references/qml-pyside6.md](references/qml-pyside6.md)
+**Full patterns** — see [qt-qml/qml-pyside6.md](qt-qml/qml-pyside6.md)
 
 ### QML Signals and Connections
 
-**Full patterns** — see [references/qml-signals-properties.md](references/qml-signals-properties.md)
+**Full patterns** — see [qt-qml/qml-signals-properties.md](qt-qml/qml-signals-properties.md)
 
 ### Common QtQuick.Controls Components
 
-**Full component reference** — see [references/qml-components.md](references/qml-components.md)
+**Full component reference** — see [qt-qml/qml-components.md](qt-qml/qml-components.md)
