@@ -1,8 +1,3 @@
----
-name: python-django
-description: >
-  Stack profile for Django web applications. Activated when test-driver detects django in
-  pyproject.toml dependencies. Defines applicable test categories, discovery conventions,
   execution commands, coverage tools, and UI testing via Charlotte or Playwright.
 ---
 

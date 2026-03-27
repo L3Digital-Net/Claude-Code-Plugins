@@ -18,22 +18,22 @@ Run a full test gap analysis on the current project. Optionally enter a converge
 
 ## Step 1: Detect and Load Profile
 
-Consult the `gap-analysis` skill for the full detection methodology.
+Read `${CLAUDE_PLUGIN_ROOT}/references/gap-analysis.md` for the full detection methodology.
 
 1. If an argument was provided (e.g., `/test-driver:analyze src/api/`), scope the analysis to that directory.
 2. Scan for marker files to detect the project type.
-3. Load the matching stack profile skill.
-4. If no profile matches, offer to create one (see gap-analysis skill, "No Profile Match" section).
+3. Load the matching stack profile from `${CLAUDE_PLUGIN_ROOT}/references/profiles/`.
+4. If no profile matches, offer to create one (see gap-analysis reference, "No Profile Match" section).
 
 ## Step 2: Read Prior State
 
 Check if `docs/testing/TEST_STATUS.json` exists:
-- If present: read it. Note last analysis date, known gaps, current coverage. Consult the `test-status` skill for schema details.
+- If present: read it. Note last analysis date, known gaps, current coverage. Read `${CLAUDE_PLUGIN_ROOT}/references/test-status.md` for schema details.
 - If missing: this is the first analysis. The file will be created at the end.
 
 ## Step 3: Run Gap Analysis
 
-Follow the full gap-analysis methodology (consult the `gap-analysis` skill):
+Follow the full gap-analysis methodology (from the gap-analysis reference):
 
 1. Determine applicable test categories from the stack profile
 2. Inventory existing tests (Glob for test files, categorize by type)
@@ -72,5 +72,5 @@ Then ask via `AskUserQuestion`:
 
 After the convergence loop completes (or if the user chose "Record gaps only"):
 
-1. Update `docs/testing/TEST_STATUS.json` per the `test-status` skill's update rules.
+1. Update `docs/testing/TEST_STATUS.json` per the test-status reference's update rules.
 2. Present a compact summary: gaps found, gaps filled, gaps deferred, coverage status, any source bugs fixed.

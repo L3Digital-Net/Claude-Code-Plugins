@@ -1,8 +1,3 @@
----
-name: test-status
-description: >
-  Persistent test status file management. Governs reading and writing docs/testing/TEST_STATUS.json,
-  the persistent record of a project's testing posture. Use when checking test status, updating
   test results, reading TEST_STATUS.json, writing test reports, tracking test history, or
   managing deferred test gaps.
 ---

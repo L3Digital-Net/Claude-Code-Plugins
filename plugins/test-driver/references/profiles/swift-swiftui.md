@@ -1,8 +1,3 @@
----
-name: swift-swiftui
-description: >
-  Stack profile for Swift and SwiftUI iOS/macOS applications. Activated when test-driver
-  detects Package.swift or .xcodeproj in the project. Defines applicable test categories,
   discovery conventions, execution commands, coverage tools, and UI testing via XCUITest.
 ---
 

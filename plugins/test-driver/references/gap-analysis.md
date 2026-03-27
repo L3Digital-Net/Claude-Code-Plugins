@@ -1,8 +1,3 @@
----
-name: gap-analysis
-description: >
-  Test gap analysis methodology for finding missing tests across six categories (unit,
-  integration, e2e, UI, contract, security). Use when conducting a gap analysis, auditing
   test coverage, identifying untested code, inventorying tests, or when /test-driver:analyze
   is invoked. Provides the step-by-step process for detecting project type, loading stack
   profiles, and producing a prioritized gap report.

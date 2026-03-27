@@ -1,8 +1,3 @@
----
-name: python-fastapi
-description: >
-  Stack profile for FastAPI and Starlette projects. Activated when test-driver detects fastapi
-  or starlette in pyproject.toml dependencies. Defines applicable test categories, discovery
   conventions, execution commands, coverage tools, and key testing patterns for FastAPI APIs.
 ---
 

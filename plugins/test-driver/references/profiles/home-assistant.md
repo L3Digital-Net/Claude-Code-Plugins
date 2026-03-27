@@ -1,8 +1,3 @@
----
-name: home-assistant
-description: >
-  Stack profile for Home Assistant custom integrations. Activated when test-driver detects
-  manifest.json with a "domain" key and a custom_components/ directory. Defines applicable
   test categories, discovery conventions, execution commands, and coverage tools for HA
   custom components.
 ---

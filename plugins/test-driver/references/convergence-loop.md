@@ -1,8 +1,3 @@
----
-name: convergence-loop
-description: >
-  Iterative test generation and fix engine. Use when filling test gaps identified by gap-analysis:
-  generates tests in batches, runs them, fixes failures, and iterates until all pass or exit
   criteria are met. Includes oscillation detection, bug fix boundaries, and convergence reporting.
   Triggers on: convergence loop, test loop, generate and fix tests, iterate tests, fill test gaps,
   run tests until green, test convergence.

@@ -1,8 +1,3 @@
----
-name: python-pyside6
-description: >
-  Stack profile for PySide6 and PyQt6 desktop applications. Activated when test-driver detects
-  PySide6 or PyQt6 in pyproject.toml dependencies. Defines applicable test categories, discovery
   conventions, execution commands, coverage tools, and UI testing via pytest-qt and Qt Pilot.
 ---
 

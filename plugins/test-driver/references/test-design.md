@@ -1,8 +1,3 @@
----
-name: test-design
-description: >
-  Universal test design principles for writing effective tests regardless of framework.
-  Use when writing tests, reviewing test quality, designing test structure, choosing what
   to test, or applying test patterns. Covers isolation, boundary testing, error paths,
   Arrange-Act-Assert, naming, mock boundaries, and meaningful assertions.
 ---
