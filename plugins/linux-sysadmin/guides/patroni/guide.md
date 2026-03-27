@@ -1,5 +1,7 @@
 # patroni
 
+> **Based on:** patroni 4.1.0 | **Updated:** 2026-03-27
+
 ## Identity
 - **Binary**: `patroni` (Python, installed via pip)
 - **Version**: 4.1.0 (supports PostgreSQL 9.3 through 18)

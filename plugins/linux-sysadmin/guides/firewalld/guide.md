@@ -1,5 +1,7 @@
 # firewalld
 
+> **Based on:** firewalld 2.3.x | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `firewalld.service`
 - **Config**: `/etc/firewalld/` (zones, services, rich rules — user overrides)

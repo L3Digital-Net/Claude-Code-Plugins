@@ -1,5 +1,7 @@
 # fail2ban
 
+> **Based on:** fail2ban 1.1.0 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `fail2ban.service`
 - **Config**: `/etc/fail2ban/jail.local` (local overrides — never edit `jail.conf`)

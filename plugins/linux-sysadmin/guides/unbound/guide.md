@@ -1,5 +1,7 @@
 # unbound
 
+> **Based on:** unbound 1.24.2 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `unbound.service`
 - **Config**: `/etc/unbound/unbound.conf`, `/etc/unbound/unbound.conf.d/`

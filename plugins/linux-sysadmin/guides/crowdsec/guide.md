@@ -1,5 +1,7 @@
 # crowdsec
 
+> **Based on:** crowdsec 1.7.6 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `crowdsec.service`
 - **Config**: `/etc/crowdsec/config.yaml` (main), `/etc/crowdsec/acquis.yaml` (log sources), `/etc/crowdsec/profiles.yaml` (decision profiles)

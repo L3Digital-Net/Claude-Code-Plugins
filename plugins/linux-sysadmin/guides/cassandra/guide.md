@@ -1,5 +1,7 @@
 # cassandra
 
+> **Based on:** cassandra 5.0.7 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Binary**: `cassandra` (server), `cqlsh` (CQL shell), `nodetool` (admin CLI)

@@ -1,5 +1,7 @@
 # traefik
 
+> **Based on:** traefik 3.6.12 | **Updated:** 2026-03-27
+
 ## Identity
 - **Docker image**: `traefik:v3` (current stable; `traefik:latest` tracks major version)
 - **Binary install**: `/usr/local/bin/traefik` (when running outside Docker)

@@ -1,5 +1,7 @@
 # avahi
 
+> **Based on:** avahi 0.8 | **Updated:** 2026-03-27
+
 ## Identity
 - **Daemon**: `avahi-daemon`
 - **Unit**: `avahi-daemon.service`

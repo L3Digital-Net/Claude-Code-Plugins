@@ -1,5 +1,7 @@
 # rsync
 
+> **Based on:** rsync 3.4.1 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Binary**: `rsync`

@@ -1,5 +1,7 @@
 # ripgrep
 
+> **Based on:** ripgrep 15.0.1 | **Updated:** 2026-03-27
+
 ## Identity
 
 | Property | Value |

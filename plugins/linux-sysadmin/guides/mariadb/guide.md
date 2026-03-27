@@ -1,5 +1,7 @@
 # mariadb
 
+> **Based on:** mariadb 11.8.6 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `mariadb.service` (Debian/Ubuntu) or `mysqld.service` (RHEL/Fedora)
 - **Config**: `/etc/mysql/my.cnf`, `/etc/mysql/mariadb.conf.d/` (Debian/Ubuntu); `/etc/my.cnf`, `/etc/my.cnf.d/` (RHEL/Fedora)

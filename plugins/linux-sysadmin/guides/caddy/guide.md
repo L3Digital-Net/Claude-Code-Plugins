@@ -1,5 +1,7 @@
 # caddy
 
+> **Based on:** caddy 2.11.2 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `caddy.service`
 - **Config**: `/etc/caddy/Caddyfile`

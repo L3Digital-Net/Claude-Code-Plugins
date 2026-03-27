@@ -1,5 +1,7 @@
 # container-registry
 
+> **Based on:** container-registry 2.8.x | **Updated:** 2026-03-27
+
 ## Identity
 
 ### Distribution Registry (CNCF)

@@ -1,5 +1,7 @@
 # kubernetes-stack
 
+> **Updated:** 2026-03-27
+
 ## Overview
 
 A self-managed Kubernetes platform combines five components. Each handles a distinct layer of the platform; together they provide cluster orchestration, package management, GitOps-driven delivery, and image distribution.

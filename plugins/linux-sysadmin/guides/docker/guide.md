@@ -1,5 +1,7 @@
 # docker
 
+> **Based on:** docker 29.3.1 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `docker.service` (and `docker.socket`)
 - **Config**: `/etc/docker/daemon.json`

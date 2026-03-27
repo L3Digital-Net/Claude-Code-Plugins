@@ -1,5 +1,7 @@
 # node-red
 
+> **Based on:** node-red 4.1.8 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `nodered.service` (systemd) or PM2 process (`pm2 list`) or Docker container
 - **Port**: 1880/tcp (web UI and API)

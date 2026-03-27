@@ -1,5 +1,7 @@
 # mail-stack
 
+> **Updated:** 2026-03-27
+
 ## Overview
 
 This is a **composite stack skill**. Each component has its own per-tool skill with full configuration reference and troubleshooting. This skill covers the glue: how the pieces integrate, the DNS records that tie everything together, and a working end-to-end deployment.

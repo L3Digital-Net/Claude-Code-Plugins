@@ -1,5 +1,7 @@
 # keycloak
 
+> **Based on:** keycloak 26.5.6 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Service**: Keycloak (Quarkus-based, v20+). Current release: 26.5.5 (March 2026)

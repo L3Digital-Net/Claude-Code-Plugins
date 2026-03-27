@@ -1,5 +1,7 @@
 # envoy
 
+> **Based on:** envoy 1.37.1 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Binary**: `envoy`

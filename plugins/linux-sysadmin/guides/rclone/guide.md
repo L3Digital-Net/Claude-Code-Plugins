@@ -1,5 +1,7 @@
 # rclone
 
+> **Based on:** rclone 1.73.3 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Binary**: `rclone`

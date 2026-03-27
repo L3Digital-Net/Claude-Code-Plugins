@@ -1,7 +1,7 @@
 ---
 name: sysadmin
 description: >
-  Linux system administration knowledge base: 137 per-service guides covering
+  Linux system administration knowledge base: 163 per-service guides covering
   daemons, CLI tools, filesystems, containers, networking, security, databases,
   monitoring, backup, and self-hosted applications. MUST consult when installing,
   configuring, troubleshooting, or administering any Linux service or tool.
@@ -19,7 +19,10 @@ triggerPhrases:
   - "docker"
   - "docker compose"
   - "podman"
+  - "containerd"
+  - "skopeo"
   - "kubernetes"
+  - "k3s"
   - "helm"
   - "argocd"
   - "buildah"
@@ -34,8 +37,17 @@ triggerPhrases:
   # Security & Firewall
   - "ufw"
   - "firewalld"
+  - "nftables"
+  - "iptables"
   - "fail2ban"
   - "crowdsec"
+  - "aide"
+  - "lynis"
+  - "rkhunter"
+  - "clamav"
+  - "apparmor"
+  - "selinux"
+  - "pam"
   - "wireguard"
   - "openvpn"
   - "tailscale"
@@ -44,6 +56,7 @@ triggerPhrases:
   - "trivy"
   - "vault"
   - "certbot"
+  - "acme.sh"
   - "openssl"
   # Databases
   - "postgresql"
@@ -62,12 +75,32 @@ triggerPhrases:
   - "node exporter"
   - "elk"
   - "elasticsearch"
+  - "uptime kuma"
+  - "clickhouse"
   # System Services
   - "systemd"
   - "journald"
   - "cron"
   - "logrotate"
   - "supervisor"
+  - "rsyslog"
+  - "sysctl"
+  - "lldpd"
+  - "nut"
+  - "ups"
+  - "cockpit"
+  - "unattended-upgrades"
+  # Networking
+  - "iproute2"
+  - "ip addr"
+  - "ip route"
+  - "ip link"
+  - "networkmanager"
+  - "nmcli"
+  - "socat"
+  - "netcat"
+  # Infrastructure Management
+  - "netbox"
   # Storage & Filesystems
   - "zfs"
   - "btrfs"
@@ -91,6 +124,7 @@ triggerPhrases:
   - "immich"
   - "vaultwarden"
   - "keycloak"
+  - "authentik"
   # CLI Tools
   - "tmux"
   - "jq"
@@ -144,10 +178,14 @@ For broad "what should I use?" queries, read the `linux-overview` guide first.
 
 | Topic | Description |
 |-------|-------------|
+| acme-sh | acme.sh ACME client for TLS certificates |
 | age | File encryption with age/rage |
+| aide | AIDE file integrity monitoring |
 | ansible | Agentless automation and config management |
 | apache | Apache HTTP Server |
+| apparmor | AppArmor mandatory access control (Debian/Ubuntu) |
 | argocd | Argo CD GitOps for Kubernetes |
+| authentik | Authentik identity provider (OAuth2, SAML, LDAP) |
 | auditd | Linux Audit Framework |
 | avahi | mDNS/zeroconf daemon |
 | awk-sed | awk and sed stream editors |
@@ -162,7 +200,11 @@ For broad "what should I use?" queries, read the `linux-overview` guide first.
 | ceph | Ceph distributed storage |
 | certbot | Let's Encrypt certificate management |
 | chrony | NTP time synchronization |
+| clamav | ClamAV antivirus scanner |
+| clickhouse | ClickHouse columnar analytics database |
 | cloud-cli | AWS CLI, Azure CLI, gcloud |
+| cockpit | Cockpit web-based server management |
+| containerd | containerd container runtime |
 | consul | HashiCorp Consul service discovery |
 | container-registry | Docker Registry and Harbor |
 | coredns | CoreDNS server |
@@ -196,12 +238,15 @@ For broad "what should I use?" queries, read the `linux-overview` guide first.
 | htop | Interactive process viewer |
 | immich | Self-hosted photo/video management |
 | influxdb | InfluxDB time series database |
+| iproute2 | ip command networking toolkit (addr, route, link, neigh) |
+| iptables | iptables legacy packet filter |
 | iostat | CPU and disk I/O statistics |
 | iotop | Per-process disk I/O monitor |
 | iperf3 | Network throughput measurement |
 | jellyfin | Jellyfin media server |
 | journald | systemd journal log management |
 | jq | JSON processor |
+| k3s | K3s lightweight Kubernetes distribution |
 | kafka | Apache Kafka event streaming |
 | keycloak | Keycloak identity management |
 | kong | Kong API Gateway |
@@ -209,12 +254,14 @@ For broad "what should I use?" queries, read the `linux-overview` guide first.
 | kubernetes-stack | Production Kubernetes platform |
 | kvm-libvirt | KVM/libvirt virtualization |
 | linux-overview | Service and tool discovery index |
+| lldpd | LLDP network topology discovery daemon |
 | logrotate | Log file rotation |
 | loki | Grafana Loki log aggregation |
 | lsblk | Block device listing |
 | lsof | Open file descriptor listing |
 | lvm | Logical Volume Manager |
 | lxc-lxd | LXC/LXD system containers |
+| lynis | Lynis security auditing tool |
 | mail-stack | Complete mail server deployment |
 | mariadb | MariaDB/MySQL database |
 | mdadm | Linux software RAID |
@@ -223,12 +270,16 @@ For broad "what should I use?" queries, read the `linux-overview` guide first.
 | mosquitto | Eclipse Mosquitto MQTT broker |
 | mtr | Combined traceroute and ping |
 | ncdu | Interactive disk usage explorer |
+| netbox | NetBox IPAM and datacenter infrastructure management |
 | netdata | Real-time monitoring agent |
+| networkmanager | NetworkManager network configuration daemon |
 | nextcloud | Self-hosted cloud storage |
 | nfs | NFS server and client |
+| nftables | nftables packet filter framework |
 | nginx | nginx web server and reverse proxy |
 | nmap | Network scanner |
 | node-exporter | Prometheus Node Exporter |
+| nut | Network UPS Tools (UPS monitoring and shutdown) |
 | node-red | Node-RED flow automation |
 | node-runtime | Node.js runtime management |
 | observability-stack | Prometheus + Grafana + Loki stack |
@@ -238,6 +289,7 @@ For broad "what should I use?" queries, read the `linux-overview` guide first.
 | osquery | SQL-based endpoint monitoring |
 | package-managers | apt, dnf, pacman, apk |
 | packer | HashiCorp Packer image automation |
+| pam | PAM Pluggable Authentication Modules |
 | patroni | Patroni PostgreSQL HA clusters |
 | perf | Linux kernel performance profiling |
 | pihole | Pi-hole DNS ad blocker |
@@ -251,11 +303,16 @@ For broad "what should I use?" queries, read the `linux-overview` guide first.
 | rclone | Cloud storage management |
 | redis | Redis in-memory data store |
 | restic | restic backup tool |
+| rkhunter | Rootkit Hunter rootkit and backdoor scanner |
 | ripgrep | ripgrep fast recursive search |
+| rsyslog | rsyslog centralized logging daemon |
 | rsync | File synchronization and backup |
 | rust-runtime | Rust runtime management |
 | samba | Samba file server |
+| selinux | SELinux mandatory access control (RHEL/Fedora) |
+| skopeo | Skopeo container image inspection and transport |
 | smartctl | SMART disk health monitoring |
+| socat | socat multipurpose network relay |
 | sqlite | SQLite embedded database |
 | ss | Socket statistics (replaces netstat) |
 | ssh-keygen | SSH key management |
@@ -263,6 +320,7 @@ For broad "what should I use?" queries, read the `linux-overview` guide first.
 | step-ca | Smallstep private CA |
 | strace | System call tracing |
 | supervisor | Supervisor process manager |
+| sysctl | sysctl kernel parameter tuning |
 | systemd | systemd init and service manager |
 | tailscale | Tailscale mesh VPN |
 | tc | Linux traffic control / shaping |
@@ -272,7 +330,9 @@ For broad "what should I use?" queries, read the `linux-overview` guide first.
 | traefik | Traefik reverse proxy |
 | trivy | Container vulnerability scanner |
 | ufw | Uncomplicated Firewall |
+| unattended-upgrades | Automated security updates (Debian/Ubuntu) |
 | unbound | Unbound recursive DNS resolver |
+| uptime-kuma | Uptime Kuma self-hosted uptime monitoring |
 | vault | HashiCorp Vault secrets management |
 | vaultwarden | Vaultwarden credential manager |
 | vmstat | Virtual memory statistics |

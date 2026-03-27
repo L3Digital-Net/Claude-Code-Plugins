@@ -1,5 +1,7 @@
 # vault
 
+> **Based on:** vault 1.21.4 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Unit**: `vault.service`

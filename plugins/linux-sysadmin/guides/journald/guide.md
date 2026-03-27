@@ -1,5 +1,7 @@
 # journald
 
+> **Based on:** distro-packaged (no independent version) | **Updated:** 2026-03-27
+
 ## Identity
 - **Service**: `systemd-journald`
 - **Unit**: `systemd-journald.service`

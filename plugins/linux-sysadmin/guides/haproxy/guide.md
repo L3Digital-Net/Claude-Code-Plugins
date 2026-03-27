@@ -1,5 +1,7 @@
 # haproxy
 
+> **Based on:** haproxy 3.3.6 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `haproxy.service`
 - **Config**: `/etc/haproxy/haproxy.cfg`

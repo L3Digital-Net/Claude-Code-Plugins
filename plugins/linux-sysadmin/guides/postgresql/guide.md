@@ -1,5 +1,7 @@
 # postgresql
 
+> **Based on:** postgresql 18.3 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `postgresql@16-main.service` (Debian/Ubuntu), `postgresql-16.service` (RHEL/Fedora)
 - **Config (Debian)**: `/etc/postgresql/16/main/postgresql.conf`, `/etc/postgresql/16/main/pg_hba.conf`

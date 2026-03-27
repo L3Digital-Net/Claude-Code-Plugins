@@ -1,5 +1,7 @@
 # redis
 
+> **Based on:** redis 8.6.0 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `redis-server.service`
 - **Config**: `/etc/redis/redis.conf`

@@ -1,5 +1,7 @@
 # zwave-js
 
+> **Based on:** zwave-js 15.20.1 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Service name**: `zwavejs2mqtt` (systemd) or Docker container `zwavejs2mqtt` / `zwave-js-ui`

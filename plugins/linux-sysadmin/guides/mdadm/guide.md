@@ -1,5 +1,7 @@
 # mdadm
 
+> **Based on:** distro-packaged (no independent version) | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Kernel modules**: `md_mod`, `raid0`, `raid1`, `raid456`, `raid10` (auto-loaded on array use)

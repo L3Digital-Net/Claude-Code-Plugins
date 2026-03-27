@@ -1,5 +1,7 @@
 # rust-runtime
 
+> **Based on:** rust-runtime 1.85.x | **Updated:** 2026-03-27
+
 ## Identity
 
 | Field | Value |

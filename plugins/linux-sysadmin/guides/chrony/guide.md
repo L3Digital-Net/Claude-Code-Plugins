@@ -1,5 +1,7 @@
 # chrony
 
+> **Based on:** chrony 4.8 | **Updated:** 2026-03-27
+
 ## Identity
 - **Daemon**: `chronyd`
 - **Client tool**: `chronyc`

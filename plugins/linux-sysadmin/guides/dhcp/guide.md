@@ -1,5 +1,7 @@
 # dhcp
 
+> **Based on:** distro-packaged (no independent version) | **Updated:** 2026-03-27
+
 > **EOL Notice**: ISC DHCP (isc-dhcp-server) reached end-of-life on 31 December
 > 2022. ISC no longer releases security patches. For new deployments, use
 > **Kea DHCP** instead. This skill covers both: isc-dhcp-server because it

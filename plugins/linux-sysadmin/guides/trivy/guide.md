@@ -1,5 +1,7 @@
 # trivy
 
+> **Based on:** trivy 0.69.3 | **Updated:** 2026-03-27
+
 ## Identity
 
 | Field | Value |

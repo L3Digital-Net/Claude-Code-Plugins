@@ -1,5 +1,7 @@
 # lxc-lxd
 
+> **Based on:** distro-packaged (no independent version) | **Updated:** 2026-03-27
+
 ## Identity
 
 - **LXC**: low-level Linux container tooling (cgroups + namespaces + bind mounts); CLI is `lxc-*` (lxc-start, lxc-ls, etc.)

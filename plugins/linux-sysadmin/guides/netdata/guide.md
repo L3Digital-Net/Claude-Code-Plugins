@@ -1,5 +1,7 @@
 # netdata
 
+> **Based on:** netdata 2.9.0 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `netdata.service`
 - **Config**: `/etc/netdata/netdata.conf`, override dir `/etc/netdata/`

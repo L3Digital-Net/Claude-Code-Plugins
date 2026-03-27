@@ -1,5 +1,7 @@
 # dovecot
 
+> **Based on:** dovecot 2.4.2 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `dovecot.service`
 - **Config**: `/etc/dovecot/dovecot.conf`, `/etc/dovecot/conf.d/` (include-based)

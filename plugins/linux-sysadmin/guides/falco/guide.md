@@ -1,5 +1,7 @@
 # falco
 
+> **Based on:** falco 0.43.0 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `falco-modern-bpf.service` (default), `falco-bpf.service` (legacy eBPF), `falco-kmod.service` (kernel module)
 - **Config**: `/etc/falco/falco.yaml` (main), `/etc/falco/config.d/` (drop-in overrides)

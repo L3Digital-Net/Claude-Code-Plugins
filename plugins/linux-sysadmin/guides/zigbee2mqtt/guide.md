@@ -1,5 +1,7 @@
 # zigbee2mqtt
 
+> **Based on:** zigbee2mqtt 2.9.1 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `zigbee2mqtt.service` (systemd) or Docker container `zigbee2mqtt`
 - **Config**: `/opt/zigbee2mqtt/data/configuration.yaml` (bare metal) or `./data/configuration.yaml` (Docker volume)

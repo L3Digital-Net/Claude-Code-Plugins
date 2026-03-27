@@ -1,5 +1,7 @@
 # docker-compose
 
+> **Based on:** docker-compose 5.1.1 | **Updated:** 2026-03-27
+
 ## Identity
 
 | Property | Value |

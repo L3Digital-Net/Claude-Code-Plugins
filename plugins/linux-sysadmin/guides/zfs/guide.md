@@ -1,5 +1,7 @@
 # zfs
 
+> **Based on:** zfs 2.3.x | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Kernel module**: `zfs.ko` (loaded via `modprobe zfs`; auto-loaded on most distros)

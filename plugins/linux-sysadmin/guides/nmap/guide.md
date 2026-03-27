@@ -1,5 +1,7 @@
 # nmap
 
+> **Based on:** nmap 7.98 | **Updated:** 2026-03-27
+
 ## Identity
 
 | Property | Value |

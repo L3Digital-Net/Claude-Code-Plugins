@@ -1,5 +1,7 @@
 # btop
 
+> **Based on:** btop 1.4.6 | **Updated:** 2026-03-27
+
 ## Identity
 
 | Property | Value |

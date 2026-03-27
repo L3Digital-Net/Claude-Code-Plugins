@@ -1,5 +1,7 @@
 # cloud-cli
 
+> **Based on:** distro-packaged (no independent version) | **Updated:** 2026-03-27
+
 ## Identity
 
 | Property | AWS CLI | Azure CLI | Google Cloud CLI |

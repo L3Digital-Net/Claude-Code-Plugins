@@ -1,5 +1,7 @@
 # supervisor
 
+> **Based on:** supervisor 4.3.0 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `supervisor.service` (Debian/Ubuntu), `supervisord.service` (RHEL/pip install)
 - **Daemon**: `supervisord`

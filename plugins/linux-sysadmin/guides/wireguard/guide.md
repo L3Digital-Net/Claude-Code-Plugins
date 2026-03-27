@@ -1,5 +1,7 @@
 # wireguard
 
+> **Based on:** distro-packaged (no independent version) | **Updated:** 2026-03-27
+
 ## Identity
 - **Kernel module**: `wireguard` (built into kernel 5.6+; backported to 5.4 via DKMS)
 - **Config**: `/etc/wireguard/wg0.conf` (interface name matches filename: `wg0`)

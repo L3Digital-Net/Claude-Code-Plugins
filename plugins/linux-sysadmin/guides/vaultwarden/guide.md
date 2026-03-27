@@ -1,5 +1,7 @@
 # vaultwarden
 
+> **Based on:** vaultwarden 1.35.4 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Image**: `vaultwarden/server` (Docker Hub)

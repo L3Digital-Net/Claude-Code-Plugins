@@ -1,5 +1,7 @@
 # kubernetes
 
+> **Based on:** kubernetes 1.35.3 | **Updated:** 2026-03-27
+
 ## Identity
 
 ### Control Plane Components

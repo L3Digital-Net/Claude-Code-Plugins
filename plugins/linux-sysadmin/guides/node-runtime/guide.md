@@ -1,5 +1,7 @@
 # node-runtime
 
+> **Based on:** node-runtime 22.x LTS | **Updated:** 2026-03-27
+
 ## Identity
 
 | Item | Value |

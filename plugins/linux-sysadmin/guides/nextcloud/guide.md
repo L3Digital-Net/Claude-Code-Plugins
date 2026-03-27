@@ -1,5 +1,7 @@
 # nextcloud
 
+> **Based on:** nextcloud 33.0.1 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Process model**: PHP web application — no single daemon. Runs under the web server's PHP-FPM worker pool. There is no `nextcloud.service` to restart.

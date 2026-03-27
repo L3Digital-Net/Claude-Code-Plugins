@@ -1,5 +1,7 @@
 # consul
 
+> **Based on:** consul 1.22.5 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Unit**: `consul.service`

@@ -1,5 +1,7 @@
 # ceph
 
+> **Based on:** ceph 20.2.0 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Daemons**: `ceph-mon` (monitor), `ceph-osd` (object storage), `ceph-mds` (metadata for CephFS), `ceph-mgr` (manager/dashboard), `radosgw` (S3/Swift gateway)

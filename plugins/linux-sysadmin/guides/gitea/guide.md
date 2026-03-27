@@ -1,5 +1,7 @@
 # gitea
 
+> **Based on:** gitea 1.25.5 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Deployment**: single binary (native) or Docker image (`gitea/gitea`, `codeberg.org/forgejo/forgejo`)

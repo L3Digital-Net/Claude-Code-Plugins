@@ -1,5 +1,7 @@
 # node-exporter
 
+> **Based on:** node-exporter 1.10.2 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `prometheus-node-exporter.service` (Debian/Ubuntu), `node_exporter.service` (RHEL/Fedora, manual install)
 - **Binary**: `/usr/bin/prometheus-node-exporter` (package) or `/usr/local/bin/node_exporter` (manual)

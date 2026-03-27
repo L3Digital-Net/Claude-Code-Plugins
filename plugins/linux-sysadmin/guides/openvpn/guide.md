@@ -1,5 +1,7 @@
 # openvpn
 
+> **Based on:** openvpn 2.7.0 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `openvpn@server.service` (the "server" part matches the config filename, e.g. `/etc/openvpn/server/server.conf` → `openvpn@server`)
 - **Config**: `/etc/openvpn/server/server.conf` (server), `/etc/openvpn/client/` (client configs)

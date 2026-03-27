@@ -1,5 +1,7 @@
 # htop
 
+> **Based on:** htop 3.4.1 | **Updated:** 2026-03-27
+
 ## Identity
 
 | Property | Value |

@@ -1,5 +1,7 @@
 # kvm-libvirt
 
+> **Based on:** distro-packaged (no independent version) | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `libvirtd.service` (monolithic) or `virtqemud.service` + `virtnetworkd.service` + `virtstoraged.service` (modular daemons, preferred since libvirt 9.0+)
 - **Config**: `/etc/libvirt/libvirtd.conf` (daemon), `/etc/libvirt/qemu.conf` (QEMU driver), `/etc/libvirt/qemu/*.xml` (per-VM domain definitions)

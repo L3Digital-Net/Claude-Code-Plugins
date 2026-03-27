@@ -1,5 +1,7 @@
 # lvm
 
+> **Based on:** distro-packaged (no independent version) | **Updated:** 2026-03-27
+
 ## Identity
 - **Kernel modules**: `dm-mod` (device mapper core), `dm-thin-pool` (thin provisioning)
 - **CLI tools**: `pvcreate`, `pvdisplay`, `pvs`, `pvremove`, `pvmove`; `vgcreate`, `vgdisplay`, `vgs`, `vgextend`, `vgreduce`, `vgrename`, `vgchange`, `vgscan`; `lvcreate`, `lvdisplay`, `lvs`, `lvextend`, `lvreduce`, `lvresize`, `lvrename`, `lvchange`, `lvscan`, `lvremove`; `lvmconfig`, `lvm`

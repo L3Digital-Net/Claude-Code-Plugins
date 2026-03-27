@@ -1,5 +1,7 @@
 # glusterfs
 
+> **Based on:** glusterfs 11.2 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Daemon**: `glusterd` (management), `glusterfsd` (brick process per brick)

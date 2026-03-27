@@ -1,5 +1,7 @@
 # argocd
 
+> **Based on:** argocd 3.3.5 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Binary**: `argocd` (CLI)

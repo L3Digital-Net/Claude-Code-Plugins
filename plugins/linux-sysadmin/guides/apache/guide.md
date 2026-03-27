@@ -1,5 +1,7 @@
 # apache
 
+> **Based on:** apache 2.4.66 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `apache2.service` (Debian/Ubuntu), `httpd.service` (RHEL/Fedora/CentOS)
 - **Config (Debian)**: `/etc/apache2/apache2.conf`, `/etc/apache2/sites-available/`, `/etc/apache2/sites-enabled/`, `/etc/apache2/mods-available/`, `/etc/apache2/mods-enabled/`, `/etc/apache2/conf-available/`

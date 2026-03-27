@@ -1,5 +1,7 @@
 # ha-postgresql
 
+> **Updated:** 2026-03-27
+
 ## Overview
 
 A production HA PostgreSQL cluster requires four cooperating components. Each handles one concern; together they provide automatic failover, connection routing, and data durability.

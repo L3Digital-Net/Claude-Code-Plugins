@@ -1,5 +1,7 @@
 # packer
 
+> **Based on:** packer 1.10.3 | **Updated:** 2026-03-27
+
 ## Identity
 
 | Field | Value |

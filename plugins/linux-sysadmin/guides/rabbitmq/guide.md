@@ -1,5 +1,7 @@
 # rabbitmq
 
+> **Based on:** rabbitmq 4.2.5 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `rabbitmq-server.service`
 - **Config**: `/etc/rabbitmq/rabbitmq.conf` (sysctl format), `/etc/rabbitmq/advanced.config` (Erlang term format)

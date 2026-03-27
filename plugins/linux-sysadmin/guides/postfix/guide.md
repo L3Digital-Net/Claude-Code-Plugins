@@ -1,5 +1,7 @@
 # postfix
 
+> **Based on:** postfix 3.11.1 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `postfix.service` (systemd); master process is `/usr/lib/postfix/sbin/master`
 - **Config**: `/etc/postfix/main.cf` (main parameters), `/etc/postfix/master.cf` (daemon table)

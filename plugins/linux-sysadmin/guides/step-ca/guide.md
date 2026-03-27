@@ -1,5 +1,7 @@
 # step-ca
 
+> **Based on:** step-ca 0.30.2 | **Updated:** 2026-03-27
+
 ## Identity
 - **Binary**: `step-ca` (the CA server), `step` (the CLI client)
 - **Config**: `$(step path)/config/ca.json` — typically `~/.step/config/ca.json` or `/etc/step-ca/config/ca.json` when running as a service

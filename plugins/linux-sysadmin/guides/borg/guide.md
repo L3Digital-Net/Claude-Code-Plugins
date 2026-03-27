@@ -1,5 +1,7 @@
 # borg
 
+> **Based on:** borg 1.4.4 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Binary**: `borg` (borgbackup package)

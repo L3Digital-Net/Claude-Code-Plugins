@@ -1,5 +1,7 @@
 # ansible
 
+> **Based on:** ansible 2.19.8 | **Updated:** 2026-03-27
+
 ## Identity
 
 | Property | Value |

@@ -1,5 +1,7 @@
 # lsblk
 
+> **Based on:** distro-packaged (no independent version) | **Updated:** 2026-03-27
+
 ## Identity
 
 | Property | Value |

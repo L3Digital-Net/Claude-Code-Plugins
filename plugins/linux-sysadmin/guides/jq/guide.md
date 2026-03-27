@@ -1,5 +1,7 @@
 # jq
 
+> **Based on:** jq 1.8.1 | **Updated:** 2026-03-27
+
 ## Identity
 
 | Property | Value |

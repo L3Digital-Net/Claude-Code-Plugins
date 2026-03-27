@@ -1,5 +1,7 @@
 # minio
 
+> **Based on:** minio 2025-03-x | **Updated:** 2026-03-27
+
 ## Identity
 - **Binary**: `minio` (server), `mc` (client CLI)
 - **License**: GNU AGPLv3 -- all usage requires compliance with AGPL obligations including release of modified source code

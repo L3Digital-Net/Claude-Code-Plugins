@@ -1,5 +1,7 @@
 # immich
 
+> **Based on:** immich 2.6.1 | **Updated:** 2026-03-27
+
 ## Identity
 - **Stack**: multi-container Docker Compose application — 5 services minimum
   - `immich-server` — API, web UI, upload handling (port 2283)

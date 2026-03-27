@@ -1,5 +1,7 @@
 # nginx
 
+> **Based on:** nginx 1.28.3 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `nginx.service`
 - **Config**: `/etc/nginx/nginx.conf`, `/etc/nginx/sites-enabled/`, `/etc/nginx/conf.d/`

@@ -1,5 +1,7 @@
 # tailscale
 
+> **Based on:** tailscale 1.96.3 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `tailscaled.service`
 - **CLI**: `tailscale` (client commands) + `tailscaled` (daemon)

@@ -1,5 +1,7 @@
 # prometheus
 
+> **Based on:** prometheus 3.10.0 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Binary**: `prometheus`

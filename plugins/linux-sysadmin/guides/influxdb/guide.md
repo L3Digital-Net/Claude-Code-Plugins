@@ -1,5 +1,7 @@
 # influxdb
 
+> **Based on:** influxdb 3.8.0 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Binary**: `influxdb3` (CLI and server combined)

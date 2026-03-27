@@ -1,5 +1,7 @@
 # etcd
 
+> **Based on:** etcd 3.5.x | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Unit**: `etcd.service`

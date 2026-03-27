@@ -1,5 +1,7 @@
 # sqlite
 
+> **Based on:** sqlite 3.51.3 | **Updated:** 2026-03-27
+
 ## Identity
 
 | Property | Value |

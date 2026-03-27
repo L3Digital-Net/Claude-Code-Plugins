@@ -1,5 +1,7 @@
 # systemd
 
+> **Based on:** distro-packaged (no independent version) | **Updated:** 2026-03-27
+
 ## Identity
 
 - **PID**: 1 — systemd is the first process started by the kernel; all other processes are its descendants

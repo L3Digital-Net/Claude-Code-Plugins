@@ -1,5 +1,7 @@
 # samba
 
+> **Based on:** samba 4.24.0 | **Updated:** 2026-03-27
+
 ## Identity
 - **Daemons**: `smbd.service` (file/print sharing), `nmbd.service` (NetBIOS name service), `winbindd.service` (AD/domain integration)
 - **Config**: `/etc/samba/smb.conf`

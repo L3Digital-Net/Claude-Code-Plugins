@@ -1,5 +1,7 @@
 # auditd
 
+> **Based on:** distro-packaged (no independent version) | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `auditd.service` (manage with `service auditd` on RHEL; `systemctl` only for `enable`/`status`)
 - **Config**: `/etc/audit/auditd.conf`

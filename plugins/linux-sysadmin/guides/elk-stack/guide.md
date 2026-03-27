@@ -1,5 +1,7 @@
 # elk-stack
 
+> **Based on:** elk-stack 9.3.2 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Components**: Elasticsearch (search/analytics engine), Kibana (visualization/dashboards), Logstash (pipeline processor), Beats (lightweight shippers: Filebeat, Metricbeat, Packetbeat, etc.)

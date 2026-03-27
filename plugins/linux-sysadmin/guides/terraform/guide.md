@@ -1,5 +1,7 @@
 # terraform
 
+> **Based on:** terraform 1.14.8 | **Updated:** 2026-03-27
+
 ## Identity
 
 | Field | Value |

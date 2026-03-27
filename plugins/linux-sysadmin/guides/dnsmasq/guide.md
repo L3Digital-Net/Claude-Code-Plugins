@@ -1,5 +1,7 @@
 # dnsmasq
 
+> **Based on:** dnsmasq 2.92 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `dnsmasq.service`
 - **Config**: `/etc/dnsmasq.conf`, `/etc/dnsmasq.d/` (drop-in directory)

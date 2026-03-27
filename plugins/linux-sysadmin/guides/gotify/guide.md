@@ -1,5 +1,7 @@
 # gotify
 
+> **Based on:** gotify 2.9.1 | **Updated:** 2026-03-27
+
 ## Identity
 - **Docker image**: `gotify/server` (current stable: v2.9.1)
 - **Binary**: single Go binary, downloadable from GitHub releases

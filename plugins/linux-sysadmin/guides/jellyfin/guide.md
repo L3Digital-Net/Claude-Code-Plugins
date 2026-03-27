@@ -1,5 +1,7 @@
 # jellyfin
 
+> **Based on:** jellyfin 10.11.6 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Unit (native)**: `jellyfin.service`

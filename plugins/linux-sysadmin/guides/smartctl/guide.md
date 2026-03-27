@@ -1,5 +1,7 @@
 # smartctl
 
+> **Based on:** smartctl 7.4 | **Updated:** 2026-03-27
+
 ## Identity
 
 | Property | Value |

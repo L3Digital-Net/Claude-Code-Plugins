@@ -1,5 +1,7 @@
 # nfs
 
+> **Based on:** distro-packaged (no independent version) | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `nfs-server.service` (RHEL/Fedora) or `nfs-kernel-server.service` (Debian/Ubuntu)
 - **Config**: `/etc/exports`, `/etc/exports.d/*.exports`

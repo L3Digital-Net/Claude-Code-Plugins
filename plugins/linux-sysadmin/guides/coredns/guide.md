@@ -1,5 +1,7 @@
 # coredns
 
+> **Based on:** coredns 1.14.2 | **Updated:** 2026-03-27
+
 ## Identity
 - **Binary**: `/usr/local/bin/coredns` (standalone), `/usr/bin/coredns` (package install)
 - **Unit**: `coredns.service` (when run as a systemd service)

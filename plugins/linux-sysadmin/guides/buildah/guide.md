@@ -1,5 +1,7 @@
 # buildah
 
+> **Based on:** buildah 1.43.0 | **Updated:** 2026-03-27
+
 ## Identity
 
 | Field | Value |

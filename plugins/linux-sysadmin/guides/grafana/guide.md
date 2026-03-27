@@ -1,5 +1,7 @@
 # grafana
 
+> **Based on:** grafana 12.4.2 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Unit**: `grafana-server.service`

@@ -1,5 +1,7 @@
 # tmux
 
+> **Based on:** tmux 3.6a | **Updated:** 2026-03-27
+
 ## Identity
 
 | Property | Value |

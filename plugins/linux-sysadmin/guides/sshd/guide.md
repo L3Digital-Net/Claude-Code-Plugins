@@ -1,5 +1,7 @@
 # sshd
 
+> **Based on:** sshd 9.9.x | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `sshd.service` (or `ssh.service` on some Debian systems)
 - **Config**: `/etc/ssh/sshd_config`, `/etc/ssh/sshd_config.d/` (drop-in dir)

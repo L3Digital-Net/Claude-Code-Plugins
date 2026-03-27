@@ -1,5 +1,7 @@
 # osquery
 
+> **Based on:** osquery 5.22.1 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `osqueryd.service`
 - **Daemon**: `osqueryd`

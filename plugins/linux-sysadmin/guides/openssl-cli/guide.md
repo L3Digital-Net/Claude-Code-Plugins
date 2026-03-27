@@ -1,5 +1,7 @@
 # openssl-cli
 
+> **Based on:** openssl-cli 3.4.x | **Updated:** 2026-03-27
+
 ## Identity
 
 | Property | Value |

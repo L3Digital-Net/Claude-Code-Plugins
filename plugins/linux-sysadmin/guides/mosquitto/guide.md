@@ -1,5 +1,7 @@
 # mosquitto
 
+> **Based on:** mosquitto 2.1.2 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `mosquitto.service`
 - **Daemon**: `mosquitto`

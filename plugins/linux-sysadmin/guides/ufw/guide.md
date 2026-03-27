@@ -1,5 +1,7 @@
 # ufw
 
+> **Based on:** distro-packaged (no independent version) | **Updated:** 2026-03-27
+
 ## Identity
 - **Package**: `ufw`
 - **Config**: `/etc/ufw/` (rules in `user.rules`, `user6.rules`)

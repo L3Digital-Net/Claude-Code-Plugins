@@ -1,5 +1,7 @@
 # kong
 
+> **Based on:** kong 3.9.1 | **Updated:** 2026-03-27
+
 ## Identity
 - **Docker image**: `kong/kong-gateway:3.13` (current stable; `kong:latest` tracks OSS releases)
 - **Binary install**: Download from https://docs.konghq.com/gateway/latest/install/ or `apt`/`yum` repos

@@ -1,5 +1,7 @@
 # opendkim
 
+> **Based on:** opendkim 2.11.x | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `opendkim.service`
 - **Daemon**: `opendkim`

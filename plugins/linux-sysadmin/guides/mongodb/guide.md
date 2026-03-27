@@ -1,5 +1,7 @@
 # mongodb
 
+> **Based on:** mongodb 8.2.6 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `mongod.service`
 - **Config**: `/etc/mongod.conf` (YAML format)

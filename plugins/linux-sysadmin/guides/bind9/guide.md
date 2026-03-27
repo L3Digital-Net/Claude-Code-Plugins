@@ -1,5 +1,7 @@
 # bind9
 
+> **Based on:** bind9 9.20.21 | **Updated:** 2026-03-27
+
 ## Identity
 - **Unit**: `named.service` (Debian/Ubuntu) or `bind9.service` (newer Debian)
 - **Config (Debian/Ubuntu)**: `/etc/bind/named.conf`, `/etc/bind/named.conf.options`, `/etc/bind/named.conf.local`, `/etc/bind/named.conf.default-zones`

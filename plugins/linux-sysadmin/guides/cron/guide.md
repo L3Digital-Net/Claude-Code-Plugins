@@ -1,5 +1,7 @@
 # cron
 
+> **Based on:** distro-packaged (no independent version) | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Daemon**: `cron` (Debian/Ubuntu) or `crond` (RHEL/Fedora/Arch)

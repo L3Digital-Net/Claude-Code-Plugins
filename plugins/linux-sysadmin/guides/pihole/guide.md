@@ -1,5 +1,7 @@
 # pihole
 
+> **Based on:** pihole 2026.02.0 | **Updated:** 2026-03-27
+
 ## Identity
 - **Service unit**: `pihole-FTL.service` (the DNS resolver + stats engine)
 - **Config dir**: `/etc/pihole/` (setupVars.conf, pihole-FTL.conf, custom.list, etc.)

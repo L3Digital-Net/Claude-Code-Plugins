@@ -1,5 +1,7 @@
 # kafka
 
+> **Based on:** kafka 4.2.0 | **Updated:** 2026-03-27
+
 ## Identity
 
 - **Runtime**: JVM (Java 17+ required)

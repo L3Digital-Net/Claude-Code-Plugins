@@ -1,5 +1,7 @@
 # loki
 
+> **Based on:** loki 3.7.0 | **Updated:** 2026-03-27
+
 ## Identity
 - **Loki unit**: `loki.service` (binary install) or `grafana-loki.service` (package)
 - **Promtail unit**: `promtail.service`
