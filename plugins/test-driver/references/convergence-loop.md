@@ -134,18 +134,7 @@ Oscillation usually indicates a design issue (tightly coupled components, shared
 
 After the loop exits (for any reason), produce a summary and update `TEST_STATUS.json`:
 
-**Summary format:**
-```
-## Convergence Loop Results
-
-- **Iterations:** 4 of 10 max
-- **Tests generated:** 8
-- **Tests passing:** 8
-- **Source bugs fixed:** 1 (off-by-one in auth.py token expiry check)
-- **Gaps filled:** 5 of 7
-- **Gaps deferred:** 2 (reason: max complexity, would need architectural changes)
-- **Exit reason:** All generated tests pass, coverage target met
-```
+**Summary format:** Use Template 2 (Convergence Loop Results) from `${CLAUDE_PLUGIN_ROOT}/references/ux-templates.md`.
 
 **TEST_STATUS.json updates** (defer to the `test-status` skill for schema details):
 - Update `categories` with new test counts and pass/fail status

@@ -107,33 +107,4 @@ For each source file missing test coverage in an applicable category, create a g
 
 ## Step 7: Gap Report Output
 
-Produce a structured report that the convergence-loop skill can consume:
-
-```
-## Gap Analysis Report
-
-**Project:** <project-name>
-**Profile:** <stack-profile>
-**Date:** <ISO-8601 timestamp>
-**Source files analyzed:** <count>
-
-### Gaps Found: <total-count>
-
-| Priority | File | Category | Description |
-|----------|------|----------|-------------|
-| high | src/api/auth.py | unit | No unit tests for token validation functions |
-| high | src/api/auth.py | integration | No integration test for token refresh with expired session |
-| medium | src/services/email.py | unit | Email template rendering has no tests |
-| low | src/utils/formatting.py | unit | String formatting helpers untested (low complexity) |
-
-### Category Summary
-
-| Category | Applicable | Existing Tests | Gaps |
-|----------|-----------|----------------|------|
-| unit | yes | 38 | 3 |
-| integration | yes | 12 | 1 |
-| e2e | yes | 4 | 0 |
-| contract | yes | 0 | 0 |
-```
-
-This report feeds directly into the convergence-loop skill, which generates tests for the highest-priority gaps first.
+Produce a structured report using Template 1 (Gap Analysis Report) from `${CLAUDE_PLUGIN_ROOT}/references/ux-templates.md`. This report feeds directly into the convergence-loop reference, which generates tests for the highest-priority gaps first.

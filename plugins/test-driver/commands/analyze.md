@@ -45,28 +45,7 @@ Follow the full gap-analysis methodology (from the gap-analysis reference):
 
 ## Step 4: Present Results and Offer Convergence
 
-If gaps were found, present a structured summary:
-
-```
-## Gap Analysis Results
-
-Found **N gaps** across M source files.
-
-| Priority | File | Category | Description |
-|----------|------|----------|-------------|
-| high | src/api/auth.py | unit | No unit tests for token validation |
-| ... | ... | ... | ... |
-
-Coverage: X% (target: Y%)
-```
-
-Then ask via `AskUserQuestion`:
-
-**Question:** "Found N gaps. How would you like to proceed?"
-**Options:**
-- "Fill all gaps" — enter convergence-loop for all identified gaps
-- "Fill specific files only" — follow up with another AskUserQuestion listing gap files as options, then enter convergence-loop scoped to selection
-- "Record gaps only" — update TEST_STATUS.json with gap inventory without generating tests
+If gaps were found, present results using Template 1 (Gap Analysis Report) from `${CLAUDE_PLUGIN_ROOT}/references/ux-templates.md`. Follow with the `AskUserQuestion` options defined in that template (fill all, fill specific, record only).
 
 ## Step 5: Report
 
