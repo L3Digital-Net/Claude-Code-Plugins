@@ -60,6 +60,7 @@ installed plugins at the start of each session.
 | [Qt Suite](#qt-suite) | MCP + Commands + Skills + Agents | `/qt-suite:scaffold`, `/qt-suite:coverage`, `/qt-suite:visual` | Complete Qt development and testing toolkit: proactive agents, 16 skills, scaffolding, and headless GUI testing |
 | [Opus Context](#opus-context) | Skills + Hooks | always-on | Teaches Opus 4.6 to use its full 1M context window instead of conservative small-model defaults |
 | [Test Driver](#test-driver) | Commands + Skills | `/test-driver:analyze`, `/test-driver:status` | Proactive testing via gap analysis, convergence loops, and persistent status tracking |
+| [Up Docs](#up-docs) | Skills | `/up-docs:repo`, `/up-docs:wiki`, `/up-docs:notion`, `/up-docs:all` | Update documentation across three layers (repo, Outline wiki, Notion) from session context |
 
 ## Principles
 
@@ -421,6 +422,31 @@ iterates through a convergence loop until everything passes.
 
 ---
 
+### Up Docs
+
+**Three-layer documentation updater**: infers what changed during a session and updates
+repo docs, Outline wiki, and Notion at the right level of detail for each layer.
+
+**Features:**
+
+- `/up-docs:repo`: updates README.md, docs/, and other repo-local documentation
+- `/up-docs:wiki`: updates Outline wiki with implementation-level details
+- `/up-docs:notion`: updates Notion with strategic and organizational context
+- `/up-docs:all`: runs all three layers sequentially with a combined summary
+- Infers session changes from git history and conversation context
+- Summary report with a table of every page touched and changes made
+
+**Install:**
+
+```bash
+/plugin install up-docs@l3digitalnet-plugins
+```
+
+**Learn more:**
+[plugins/up-docs/README.md](plugins/up-docs/README.md)
+
+---
+
 ## Plugin Development
 
 This repository also serves as a development workspace for creating new plugins. See
@@ -483,7 +509,8 @@ Claude-Code-Plugins/
 │   ├── qt-suite/                # Qt development and testing toolkit (agents, skills, MCP)
 │   ├── release-pipeline/        # Autonomous release pipeline
 │   ├── repo-hygiene/            # Autonomous repo maintenance sweep
-│   └── test-driver/             # Proactive testing via gap analysis and convergence
+│   ├── test-driver/             # Proactive testing via gap analysis and convergence
+│   └── up-docs/                 # Three-layer documentation updater (repo, wiki, Notion)
 ├── scripts/
 │   └── validate-marketplace.sh  # Marketplace validation
 ├── docs/                        # Comprehensive documentation

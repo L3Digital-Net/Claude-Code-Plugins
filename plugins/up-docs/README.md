@@ -89,6 +89,11 @@ The mapping is intentionally loose. It points to the general area and lets Claud
 | `up-notion` | `/up-docs:notion` or `/up-docs:all` |
 | `up-all` | `/up-docs:all` |
 
+## Planned Features
+
+- Per-layer dry-run mode that previews changes without pushing to Outline or Notion
+- Cross-layer link insertion (Notion pages linking to relevant Outline articles automatically)
+
 ## Known Issues
 
 - Requires both Outline and Notion MCP servers to be configured and running. If only one external system is available, use the individual commands for the layers you have.
