@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.7.3] - 2026-04-07
+
+### Changed
+- Bump handlebars in /plugins/plugin-test-harness
+- Bump hono in /plugins/plugin-test-harness
+- Bump picomatch in /plugins/plugin-test-harness
+- Bump the all-dependencies group across 1 directory with 7 updates
+- Bump flatted in /plugins/plugin-test-harness
+- bump express-rate-limit in /plugins/plugin-test-harness
+- bump @hono/node-server in /plugins/plugin-test-harness
+
+### Fixed
+- bump ts-jest to 29.4.9 in both plugin lock files
+
+
 ## [0.7.2] - 2026-03-04
 
 ### Changed
