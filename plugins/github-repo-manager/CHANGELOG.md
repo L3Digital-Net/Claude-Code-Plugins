@@ -2,6 +2,12 @@
 
 All notable changes to the github-repo-manager plugin are documented here.
 
+## [0.4.1] - 2026-04-07
+
+### Changed
+- Bump the all-dependencies group across 1 directory with 2 updates
+
+
 ## [Unreleased]
 
 ## [0.4.0] - 2026-03-27
