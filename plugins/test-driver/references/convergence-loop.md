@@ -37,11 +37,19 @@ REPORT ──── update TEST_STATUS.json, summarize to user
 
 ### ANALYZE
 
-Read the gap report produced by gap-analysis. Sort gaps by priority (high first). Select the top 3-5 gaps for the first batch.
+Read the gap report produced by gap-analysis. Sort gaps by priority (high first). Select the first batch based on gap count (see batch sizing below).
 
 ### GENERATE
 
-Write 3-5 tests per batch, targeting the highest-priority unfilled gaps.
+Scale batch size to the total gap count to avoid hitting the 10-iteration ceiling with many gaps unfilled:
+
+| Total Gaps | Tests per Batch | Rationale |
+|------------|-----------------|-----------|
+| ≤15 | 3-5 | Focused iteration, room for fixes |
+| 16-30 | 5-8 | Moderate throughput |
+| 31+ | 8-12 | High throughput; 31+ gaps with 3-5/batch would exhaust iterations |
+
+Target the highest-priority unfilled gaps within each batch.
 
 - Consult the `test-design` skill for universal principles (isolation, naming, assertions)
 - Consult the active stack profile for framework conventions (test runner, fixture patterns, file locations)
@@ -63,14 +71,14 @@ When generating tests for non-unit gaps, adapt the test approach to match the ca
 
 #### Category Ordering
 
-When the gap report contains gaps across multiple categories, generate tests in this order:
+When the gap report contains gaps across multiple categories, **complete one category before starting the next.** Mixing categories within a batch causes fixture/setup churn (unit tests use mocks; integration tests use real dependencies; security tests need attack payloads). The ordering:
 
 1. **Unit** — fastest to write and run, catches the most bugs per iteration
 2. **Integration** — validates component interactions
 3. **Contract** / **Security** — validates API shape and attack resistance
 4. **E2E** / **UI** — slowest, run last
 
-Within each category, follow the gap report's priority ordering (high before medium before low).
+Within each category, follow the gap report's priority ordering (high before medium before low). Generate all high+medium priority gaps in category N before moving to category N+1. Low-priority gaps in earlier categories can be deferred if later categories have high-priority gaps remaining.
 
 ### RUN
 

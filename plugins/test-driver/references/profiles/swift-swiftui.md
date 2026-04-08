@@ -203,6 +203,19 @@ func testAsyncFetch() async throws {
 }
 ```
 
+## Commonly Undertested Patterns
+
+These Swift/SwiftUI-specific patterns are frequently missed because they involve reactive state and concurrency:
+
+- **@Observable / @StateObject lifecycle**: Test that published property changes trigger downstream reactions — use `@MainActor` test methods to ensure main-thread assertions.
+- **Async/await error paths**: `Task` cancellation handling, `try await` failure branches — test with `Task.cancel()` and verify cleanup runs. Use `XCTAssertThrowsError` for async functions.
+- **Navigation state**: `NavigationPath` mutations, deep link URL parsing — test programmatic navigation and back-stack behavior.
+- **Combine publisher chains**: `publisher.sink()` sequences — test with `XCTestExpectation` and timeout, verify cancellation cleanup.
+- **CoreData / SwiftData**: Model CRUD operations, migration paths, fetch request predicates, cascade delete rules.
+- **Codable conformance**: Custom `init(from:)` and `encode(to:)` — test with malformed JSON, missing optional fields, unexpected types, and round-trip encoding.
+- **Protocol default implementations**: Protocol extensions with default behavior — test that conforming types correctly override defaults and that the defaults themselves work.
+- **Actor isolation**: `@MainActor` and custom actors — test concurrent access patterns, verify that `nonisolated` methods don't access actor-isolated state.
+
 ## Delegates To
 
 Self-contained; no existing Swift testing plugin. If a Swift testing plugin is added in the future, this profile should be updated to delegate framework specifics.

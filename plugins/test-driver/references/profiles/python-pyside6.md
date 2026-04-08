@@ -109,6 +109,19 @@ Setup: requires Xvfb and the `qt-suite` plugin installed.
 - Test widget state changes (enabled/disabled, text content, visibility) after interactions
 - Use `qtbot.waitUntil(lambda: condition(), timeout=1000)` for polling conditions
 
+## Commonly Undertested Patterns
+
+These PySide6-specific patterns are frequently missed because they involve asynchronous UI behavior:
+
+- **Signal/slot connections**: Verify that connecting signal A to slot B produces the expected *state change* — not just that the signal emits. Use `qtbot.waitSignal()` with assertions on widget state after emission.
+- **QThread lifecycle**: `started`/`finished` signals, `moveToThread()` cleanup, thread safety of shared data. Test that threads terminate cleanly and don't leave dangling references.
+- **Model/view data binding**: `QAbstractItemModel` subclass methods (`data()`, `rowCount()`, `setData()`) — test with various roles (`DisplayRole`, `EditRole`, `DecorationRole`) and empty models.
+- **Widget event overrides**: `closeEvent()`, `resizeEvent()`, `keyPressEvent()` — test that overrides call `event.accept()` or `event.ignore()` correctly and that side effects (save prompts, layout recalculation) trigger.
+- **Property bindings (QML hybrid)**: Python property changes propagating to QML — test with `QQuickView` and verify binding updates.
+- **Timer-driven behavior**: `QTimer` callbacks — use `qtbot.waitUntil()` rather than real delays. Test both single-shot and repeating timers.
+- **Drag and drop**: `dragEnterEvent()`, `dropEvent()` — test MIME data handling, acceptance logic, and rejection of unsupported formats.
+- **Settings persistence**: `QSettings` read/write — test with temporary config files or `QSettings.Scope.UserScope` override, verify defaults when settings file is missing.
+
 ## Delegates To
 
 - `qt-suite:qtest-patterns` for comprehensive Qt test patterns and QML testing

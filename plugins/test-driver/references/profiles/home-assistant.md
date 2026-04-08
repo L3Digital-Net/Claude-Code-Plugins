@@ -152,6 +152,19 @@ async def test_form_success(hass):
     assert result["title"] == "My Device"
 ```
 
+## Commonly Undertested Patterns
+
+These HA-specific patterns are frequently missed because they involve complex lifecycle management:
+
+- **Device triggers**: `async_get_triggers()` and trigger firing — test that triggers register correctly and produce automation events with expected payloads.
+- **Service call handlers**: `async_setup_services()` — test with mock `ServiceCall` objects, verify entity state changes and error responses for invalid service data.
+- **Coordinator error recovery**: `DataUpdateCoordinator._async_update_data()` raising `UpdateFailed` — test that the coordinator retries, respects backoff, and recovers after multiple consecutive failures.
+- **Config flow reauth**: `async_step_reauth()` — test the full reauth flow including expired token detection, credential re-entry, token refresh, and config entry update.
+- **Options flow**: `async_step_init()` in `OptionsFlowHandler` — test that options changes propagate to entities without requiring a full integration reload.
+- **Entity removal cleanup**: `async_will_remove_from_hass()` — test that listeners are removed, connections closed, and timers cancelled.
+- **Device info updates**: Changes to `DeviceInfo` — test that device registry updates propagate to the entity registry.
+- **State restoration**: `async_added_to_hass()` with `async_get_last_state()` — test that entity state is correctly restored after HA restart, including attributes and availability.
+
 ## Delegates To
 
 - `home-assistant-dev:ha-testing` for comprehensive HA test patterns and fixtures

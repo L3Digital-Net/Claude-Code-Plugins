@@ -37,11 +37,11 @@ Follow the full gap-analysis methodology (from the gap-analysis reference):
 
 1. Determine applicable test categories from the stack profile
 2. Inventory existing tests (Glob for test files, categorize by type)
-3. Inventory source files (exclude non-source patterns)
-4. Map coverage (structural: which source files have corresponding tests)
-5. Identify and prioritize gaps
+3. Inventory source files, then **read each one** to enumerate functions and behaviors
+4. Map coverage (behavioral: which functions and code paths have corresponding tests)
+5. Identify and prioritize gaps — one gap per untested function/behavior, not per file
 
-**opus-context alignment:** Read source files fully (no offset/limit for files under 4000 lines). Read test files in parallel batches.
+**opus-context alignment:** Read source files fully (no offset/limit for files under 4000 lines). Read test files in parallel batches. The function-level enumeration in step 3 is the foundation of accurate gap detection — skipping it collapses the analysis to file-level mapping, which dramatically under-reports gaps.
 
 ## Step 4: Present Results and Offer Convergence
 

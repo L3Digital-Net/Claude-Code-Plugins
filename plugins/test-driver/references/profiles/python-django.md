@@ -131,6 +131,21 @@ Key fixtures provided by pytest-django:
 - `db` — database access marker (required for DB tests)
 - `transactional_db` — transactional database access
 
+## Commonly Undertested Patterns
+
+These Django-specific patterns are frequently missed because they don't surface as standalone view functions:
+
+- **Custom middleware**: `process_request`/`process_response`/`process_exception` — test path exemptions, header manipulation, error handling. Middleware bugs silently affect every request.
+- **Signals**: `post_save`, `post_delete`, `pre_save` handlers — test that receivers fire correctly and produce expected side effects. Use `signal.disconnect()` in teardown for test isolation.
+- **Model method overrides**: Custom `save()`, `delete()`, `clean()`, `__str__()` — test validation logic, cascade behavior, side effects (e.g., slug generation in `save()`).
+- **Management commands**: `BaseCommand.handle()` — test with `call_command()`, verify stdout/stderr output, test error exits and `CommandError` raising.
+- **Template tags and filters**: Custom tags in `templatetags/` — test rendering output with various inputs including `None`, empty strings, and HTML-unsafe content.
+- **Form validation**: `clean_<field>()` and `clean()` methods — test invalid inputs, cross-field validation, specific error messages.
+- **Admin customizations**: `ModelAdmin.get_queryset()`, `save_model()`, custom actions — test with `AdminSite` instance and mock requests.
+- **Class-based view mixins**: `get_queryset()`, `get_context_data()`, permission mixins — test each method override independently, not just via full HTTP requests.
+- **Celery/background tasks**: Async task functions — test with `task.apply()` (synchronous execution), verify retry configuration and failure handling.
+- **Database constraints at application level**: Unique constraints, check constraints — test that `IntegrityError` is handled gracefully rather than producing 500 errors.
+
 ## Delegates To
 
 - `python-dev:python-testing-patterns` for pytest fixtures, mocking, parametrize patterns
