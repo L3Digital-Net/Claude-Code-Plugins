@@ -10,7 +10,7 @@
 - **E2E** — applicable (full request lifecycle tests)
 - **Contract** — applicable (API schema validation)
 - **Security** — applicable (auth, injection, input validation)
-- **UI** — not applicable (API-only projects)
+- **UI** — applicable when the project renders HTML via Jinja2/HTMX; not applicable for pure JSON API projects
 
 ## 2. Test Discovery
 
@@ -56,7 +56,13 @@ Determine `<package>` from `pyproject.toml` source config or the project's main 
 
 ## 5. UI Testing
 
-Not applicable. FastAPI projects are API-only. If the project has a frontend, it should be tested separately with its own profile.
+For pure JSON API projects, UI testing is not applicable.
+
+For projects that render HTML (Jinja2 templates, HTMX partials), UI testing applies:
+
+- **Tool:** Charlotte for browser automation, or `TestClient`/`AsyncClient` with HTML response assertions
+- **What to test:** Template rendering with expected context variables, HTMX partial responses (request with `HX-Request: true` header returns fragment, not full page), form submissions, redirect chains after auth
+- **Scope:** Focus on critical user flows (login → dashboard → data view). Template rendering bugs are best caught with response content assertions (`assert "Expected Text" in response.text`) rather than full browser automation when possible.
 
 ## Key Testing Patterns
 
@@ -131,6 +137,22 @@ def client():
         yield c
     app.dependency_overrides.clear()
 ```
+
+## Commonly Undertested Patterns
+
+These FastAPI-specific patterns are frequently missed by gap analysis because they don't appear as obvious standalone functions. Flag them during source file enumeration (gap-analysis Step 4):
+
+- **Custom middleware** (`BaseHTTPMiddleware` subclasses): path exemption logic, redirect behavior, header injection, error handling within `dispatch()`. Middleware bugs affect every request silently.
+- **Lifespan events**: `@asynccontextmanager` lifespan handlers — startup initialization (scheduler, database connections), shutdown cleanup, resource disposal on error during startup.
+- **Dependency injection in tests**: Verify that `app.dependency_overrides` properly replaces `Depends()` parameters and that overrides are cleaned up between tests. Leaked overrides corrupt subsequent tests.
+- **Background tasks**: `BackgroundTasks` parameters in route handlers — verify tasks are queued with correct arguments and that task failures don't crash the response.
+- **Exception handlers**: Custom `@app.exception_handler(...)` — verify the handler returns the expected status code and body for each exception type, and that unhandled exceptions don't leak stack traces.
+- **Pydantic model validation**: Edge cases in request/response models — optional fields with `None`, type coercion (string-to-int), custom validators, nested model validation failures.
+- **Server-rendered HTML (Jinja2/HTMX)**: Routes that return HTML templates — test both full-page renders and HTMX partial responses (check `HX-Request` header handling), verify template context variables are injected correctly.
+- **Webhook endpoints**: External callback handlers — signature/token verification, idempotent processing, error payloads, unknown event types returning 200 (not 500).
+- **Scheduled jobs** (APScheduler/cron): The job function itself should be tested in isolation with a real or test database session. Verify scheduling configuration (hour, interval) separately.
+- **External API clients via `asyncio.to_thread`**: Functions wrapping synchronous SDK calls — test timeout behavior, retry logic, and error mapping from external API exceptions to domain-specific errors.
+- **Module-level singletons**: Database engines, API clients, and settings initialized at import time — verify test fixtures properly isolate these to prevent state leakage between tests.
 
 ## Delegates To
 

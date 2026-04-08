@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.0] - 2026-04-08
+
+### Added
+- Step 5 Phase 3: test quality assessment — flags weak assertions, missing boundary coverage, and over-mocked tests
+- Step 6: git diff integration for recently-changed function priority boost
+- Step 3: conftest.py complexity check — flags complex fixtures as candidates for their own tests
+- Convergence loop: batch size now scales with gap count (3-5 for ≤15 gaps, 5-8 for 16-30, 8-12 for 31+)
+- All 5 stack profiles: "Commonly Undertested Patterns" section with framework-specific testing blind spots
+- python-fastapi profile: middleware, scheduler, Jinja2/HTMX, webhooks, external API clients, module-level singletons
+- python-fastapi profile: UI testing now applicable for server-rendered HTML projects (Jinja2/HTMX)
+- Status command: staleness check now estimates function-level change scope
+
+### Changed
+- Gap analysis now operates at function/behavior level instead of file level
+- Step 4 reads source files to enumerate functions, behaviors, and branches
+- Step 5 Phase 2 maps test functions → source functions instead of test files → source files
+- Step 6 creates one gap per untested function/behavior, not per source file
+- Convergence loop: category ordering is now a phase gate (complete one category before starting next)
+- Analyze command updated to reflect behavioral (not structural) coverage mapping
+
+### Fixed
+- File-level mapping drastically under-reported gaps: a source file with 15 functions where only 3 were tested reported zero gaps
+
 ## [0.3.0] - 2026-03-27
 
 ### Changed

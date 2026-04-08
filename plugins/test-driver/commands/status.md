@@ -29,9 +29,9 @@ Present a compact summary using Template 3 (Test Posture Summary) from `${CLAUDE
 Check for staleness using two signals:
 
 1. **Time-based:** If `last_analysis.date` is more than 7 days ago, the status is likely stale.
-2. **Change-based:** Run `git log --since="<last_analysis_date>" --oneline -- "*.py" "*.swift" "*.ts"` to check for source changes since the last analysis.
+2. **Change-based:** Run `git log --since="<last_analysis_date>" --oneline --stat -- "*.py" "*.swift" "*.ts"` to check for source changes since the last analysis. If changes exist, also estimate scope: `git log --since="<last_analysis_date>" -p -- <source_files> | grep -c "^[+-].*def \|^[+-].*async def \|^[+-].*func "` to count how many function signatures were added or modified.
 
-If either signal fires, emit Template 4 (Staleness Warning) from `${CLAUDE_PLUGIN_ROOT}/references/ux-templates.md`.
+If either signal fires, emit Template 4 (Staleness Warning) from `${CLAUDE_PLUGIN_ROOT}/references/ux-templates.md`. Include the count of modified source files and estimated function changes to help the user gauge how stale the analysis is.
 
 ## Step 4: End
 
