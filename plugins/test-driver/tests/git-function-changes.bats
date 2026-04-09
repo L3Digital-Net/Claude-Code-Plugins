@@ -83,6 +83,35 @@ assert d['total_functions_changed'] >= 1, 'expected at least 1 .py function'
 "
 }
 
+@test "detects modified function" {
+    mkdir -p "$TEST_TMPDIR/git-mod"
+    cd "$TEST_TMPDIR/git-mod"
+    git init -q
+    git config user.email "test@test.com"
+    git config user.name "Test"
+    # Initial: function with one signature
+    cat > app.py <<'EOF'
+def hello(name):
+    return f"hi {name}"
+EOF
+    git add . && git commit -q -m "initial"
+    # Modify: change the signature itself so both -def and +def appear in diff
+    cat > app.py <<'EOF'
+def hello(name, greeting):
+    return f"{greeting} {name}"
+EOF
+    git add . && git commit -q -m "modify hello signature"
+    run "$SCRIPTS_DIR/git-function-changes.sh" "2020-01-01" "$TEST_TMPDIR/git-mod"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+funcs = {fn['function']: fn['change_type'] for fn in d['changed_functions'] if fn['file'] == 'app.py'}
+assert 'hello' in funcs, f'expected hello in changed functions, got {list(funcs.keys())}'
+assert funcs['hello'] == 'modified', f'expected hello to be modified, got {funcs[\"hello\"]}'
+"
+}
+
 @test "function added in commit detected as added" {
     mkdir -p "$TEST_TMPDIR/git-add"
     cd "$TEST_TMPDIR/git-add"

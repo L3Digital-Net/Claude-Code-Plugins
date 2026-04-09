@@ -92,6 +92,54 @@ EOF
     [ "$(echo "$output" | jq -r '.operational.fallback.exists')" = "true" ]
 }
 
+@test "hook timestamps parsed when present" {
+    mkdir -p "$HOME/.docs-manager"
+    cat > "$HOME/.docs-manager/config.yaml" << 'EOF'
+index_type: json
+machine_id: testbox
+EOF
+
+    # Create hook timestamp files
+    mkdir -p "$HOME/.docs-manager/hooks"
+    echo "2026-04-01T10:30:00" > "$HOME/.docs-manager/hooks/post-tool-use.last-fired"
+
+    run bash "$SCRIPTS_DIR/status-dashboard.sh"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.operational.hooks.post_tool_use.last_fired')" != "null" ]
+    [ "$(echo "$output" | jq -r '.operational.hooks.post_tool_use.last_fired')" = "2026-04-01T10:30:00" ]
+}
+
+@test "library health with fixture index" {
+    mkdir -p "$HOME/.docs-manager"
+
+    local idx_path="$DOCS_MANAGER_HOME/docs-index.json"
+
+    cat > "$HOME/.docs-manager/config.yaml" << EOF
+index_type: json
+machine_id: testbox
+index_path: $idx_path
+EOF
+
+    # Create fixture index with 3 documents, 1 missing upstream_url
+    cat > "$idx_path" << 'EOF'
+{
+  "documents": [
+    {"title": "Doc A", "upstream_url": "https://example.com/a", "source_files": ["a.md"]},
+    {"title": "Doc B", "upstream_url": "https://example.com/b", "source_files": ["b.md"]},
+    {"title": "Doc C", "source_files": ["c.md"]}
+  ]
+}
+EOF
+
+    run bash "$SCRIPTS_DIR/status-dashboard.sh"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.library.available')" = "true" ]
+    [ "$(echo "$output" | jq '.library.total_documents')" = "3" ]
+    [ "$(echo "$output" | jq '.library.missing_upstream_url')" = "1" ]
+}
+
 @test "--test flag with failures shows detail" {
     mkdir -p "$HOME/.docs-manager"
     cat > "$HOME/.docs-manager/config.yaml" << 'EOF'

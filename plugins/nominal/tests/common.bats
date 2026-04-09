@@ -91,6 +91,12 @@ assert data['num'] == 42, f'num mismatch: {data[\"num\"]}'
     [ "$status" -ne 0 ]
 }
 
+@test "run_check executes local command successfully" {
+    run bash -c "source '$SCRIPTS_DIR/_common.sh' && run_check 'echo hello'"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"hello"* ]]
+}
+
 @test "check_result with multiline evidence produces valid JSON" {
     run bash -c 'source "'"$SCRIPTS_DIR"'/_common.sh" && printf "line one\nline two\nline three" | check_result "multi_check" "pass"'
     [ "$status" -eq 0 ]

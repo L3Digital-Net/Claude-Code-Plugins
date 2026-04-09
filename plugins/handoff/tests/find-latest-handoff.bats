@@ -108,6 +108,45 @@ EOF
     [ "$(echo "$output" | jq -r '.filename')" = "handoff-2026-04-09-150000.md" ]
 }
 
+@test "prefixed handoff filename discovered" {
+    mkdir -p "$TEST_TMPDIR/handoffs"
+    cat > "$TEST_TMPDIR/handoffs/my-task-handoff-2026-04-09-120000.md" << 'EOF'
+# My Task
+
+## Task Summary
+Some work was done.
+
+## Next Steps
+1. Continue
+EOF
+
+    run bash "$SCRIPTS_DIR/find-latest-handoff.sh" --directory "$TEST_TMPDIR/handoffs"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.found')" = "true" ]
+    [ "$(echo "$output" | jq -r '.filename')" = "my-task-handoff-2026-04-09-120000.md" ]
+}
+
+@test "timestamp extracted from filename" {
+    mkdir -p "$TEST_TMPDIR/handoffs"
+    cat > "$TEST_TMPDIR/handoffs/handoff-2026-04-09-153045.md" << 'EOF'
+# Timestamp Test
+
+## Task Summary
+Testing timestamp extraction.
+EOF
+
+    run bash "$SCRIPTS_DIR/find-latest-handoff.sh" --directory "$TEST_TMPDIR/handoffs"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.found')" = "true" ]
+    local ts
+    ts=$(echo "$output" | jq -r '.metadata.timestamp')
+    [ "$ts" != "null" ]
+    # Should be formatted as ISO-ish: 2026-04-09T15:30:45
+    [[ "$ts" == "2026-04-09T15:30:45" ]]
+}
+
 @test "--sort-by filename mode works" {
     mkdir -p "$TEST_TMPDIR/handoffs"
 

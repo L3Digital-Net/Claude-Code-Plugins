@@ -144,6 +144,36 @@ EOF
     [ "$(echo "$output" | jq '.issues | length')" = "0" ]
 }
 
+@test "write replaces existing config block" {
+    # Write an initial config
+    run bash -c 'echo "{\"sync_path\":\"/first/path\",\"repos_root\":\"/home/user/projects\",\"machine_id\":\"box1\"}" | bash "$SCRIPTS_DIR/config-block.sh" write'
+    [ "$status" -eq 0 ]
+    [ "$(echo "$output" | jq -r '.sync_path')" = "/first/path" ]
+
+    # Overwrite with a different config
+    run bash -c 'echo "{\"sync_path\":\"/second/path\",\"repos_root\":\"/home/other/projects\",\"machine_id\":\"box2\"}" | bash "$SCRIPTS_DIR/config-block.sh" write'
+    [ "$status" -eq 0 ]
+    [ "$(echo "$output" | jq -r '.sync_path')" = "/second/path" ]
+
+    # Read back and verify the second write replaced the first
+    run bash "$SCRIPTS_DIR/config-block.sh" read
+    [ "$status" -eq 0 ]
+    [ "$(echo "$output" | jq -r '.block_found')" = "true" ]
+    [ "$(echo "$output" | jq -r '.sync_path')" = "/second/path" ]
+    [ "$(echo "$output" | jq -r '.repos_root')" = "/home/other/projects" ]
+    [ "$(echo "$output" | jq -r '.machine_id')" = "box2" ]
+
+    # Verify only one config block exists (not two)
+    local count
+    count=$(grep -c "claude-sync-config" "$HOME/.claude/CLAUDE.md")
+    [ "$count" -eq 1 ]
+}
+
+@test "invalid subcommand exits 1" {
+    run bash "$SCRIPTS_DIR/config-block.sh" badcmd
+    [ "$status" -eq 1 ]
+}
+
 @test "validate with missing required field returns valid=false" {
     # Config block with sync_path and repos_root but no machine_id
     mkdir -p "$TEST_TMPDIR/sync-path"

@@ -93,6 +93,70 @@ teardown() {
     [ "$(echo "$merged" | jq 'has("plugin-b")')" = "true" ]
 }
 
+@test "claude-md category preserves local config block" {
+    # Set up local CLAUDE.md with a config block
+    cat > "$HOME/.claude/CLAUDE.md" << 'EOF'
+# My Local Config
+
+Some local content.
+
+<!-- claude-sync-config
+sync_path: /mnt/share/sync
+repos_root: /home/user/projects
+machine_id: localbox
+-->
+EOF
+
+    # Set up snapshot CLAUDE.md without a config block
+    local snap="$TEST_TMPDIR/snapshot"
+    mkdir -p "$snap/claude-md"
+    cat > "$snap/claude-md/CLAUDE.md" << 'EOF'
+# Snapshot Config
+
+New content from snapshot.
+EOF
+
+    run bash "$SCRIPTS_DIR/apply-snapshot.sh" "$snap" claude-md
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+
+    # The local config block should be preserved in the result
+    grep -q "claude-sync-config" "$HOME/.claude/CLAUDE.md"
+    grep -q "machine_id: localbox" "$HOME/.claude/CLAUDE.md"
+    # The snapshot content should also be present
+    grep -q "New content from snapshot" "$HOME/.claude/CLAUDE.md"
+}
+
+@test "unknown category exits 1" {
+    local snap="$TEST_TMPDIR/snapshot"
+    mkdir -p "$snap"
+
+    run bash "$SCRIPTS_DIR/apply-snapshot.sh" "$snap" badcategory
+    [ "$status" -eq 1 ]
+}
+
+@test "update creates backup file" {
+    # Set up local file (older)
+    mkdir -p "$HOME/.claude"
+    echo '{"old": true}' > "$HOME/.claude/settings.json"
+    touch -t 202001010000 "$HOME/.claude/settings.json"
+
+    # Set up snapshot with newer file
+    local snap="$TEST_TMPDIR/snapshot"
+    mkdir -p "$snap/claude"
+    echo '{"new": true}' > "$snap/claude/settings.json"
+    touch -t 203001010000 "$snap/claude/settings.json"
+
+    run bash "$SCRIPTS_DIR/apply-snapshot.sh" "$snap" settings
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+
+    # A .bak file should have been created
+    local bak_count
+    bak_count=$(find "$HOME/.claude" -name "settings.json.bak.*" | wc -l)
+    [ "$bak_count" -ge 1 ]
+}
+
 @test "local newer file is skipped" {
     # Set up local file that is NEWER than the snapshot
     mkdir -p "$HOME/.claude"

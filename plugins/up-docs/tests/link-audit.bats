@@ -52,6 +52,23 @@ See [link](#nonexistent) for details.
     [ "$(echo "$output" | jq -r '.internal.broken[0].target')" = "nonexistent" ]
 }
 
+@test "detects bare URLs" {
+    local md='Visit https://example.com for details.'
+    run bash -c "echo '$md' | bash \"$SCRIPTS_DIR/link-audit.sh\" -"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq '.total_links')" -ge 1 ]
+}
+
+@test "deduplicates repeated URLs" {
+    local md='Go to [Example](https://example.com) and also [Another](https://example.com) link.'
+    run bash -c "echo '$md' | bash \"$SCRIPTS_DIR/link-audit.sh\" -"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    # The seen set deduplicates, so total_links should be 1
+    [ "$(echo "$output" | jq '.total_links')" = "1" ]
+}
+
 @test "classifies internal relative links as needs_verification" {
     local md='See [link](./page) for details.'
     run bash -c "echo '$md' | bash \"$SCRIPTS_DIR/link-audit.sh\" -"

@@ -232,6 +232,140 @@ assert 'disk' in check_names, f'expected disk check, got: {check_names}'
 "
 }
 
+@test "domain 7 reports autostart check" {
+    cat > "$FIXTURE_DIR/env_enriched.json" << 'FIXTURE'
+{
+  "_schema_version": "1.0.0",
+  "test": {
+    "host": {"hostname": "localhost", "os_name": "Linux", "os_version": "6.0", "architecture": "x86_64", "kernel_version": "6.0.0", "virtualization_type": "bare_metal", "_discovery_note": null},
+    "network": {"topology": "flat", "private_bridge_or_overlay": null, "private_subnet": null, "vpn_tool": null, "firewall_tool": null, "_discovery_note": null},
+    "ingress": {"reverse_proxy_tool": null, "config_path": null, "access_model": null, "_discovery_note": null},
+    "ssl": {"cert_tool": "certbot", "config_path": null, "renewal_mechanism": null, "_discovery_note": null},
+    "monitoring": {"metrics_tool": null, "metrics_status_check": null, "uptime_tool": null, "uptime_status_check": null, "log_aggregation_tool": null, "log_status_check": null, "_discovery_note": null},
+    "backup": {"backup_tool": "restic", "targets": null, "pre_dump_scripts": null, "last_run_check": null, "_discovery_note": null},
+    "secrets": {"approach": null, "canonical_location": null, "_discovery_note": null},
+    "security_tooling": {"fim_tool": null, "fim_baseline_update_method": null, "ips_tool": null, "ips_status_check": null, "_discovery_note": null},
+    "vcs": {"tool": null, "remote": null, "config_tracked_paths": null, "_discovery_note": null},
+    "services": [{"name": "test-svc", "host_address": "127.0.0.1", "ports": [8080], "health_endpoint": "http://127.0.0.1:8080/health", "access_tier": "public", "dependencies": null, "role": null, "monitoring_collector": null}]
+  }
+}
+FIXTURE
+    run bash "$SCRIPTS_DIR/domain-checker.sh" 7 "$FIXTURE_DIR/env_enriched.json"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+check_names = [c['name'] for c in data['checks']]
+assert 'autostart' in check_names, f'expected autostart check, got: {check_names}'
+"
+}
+
+@test "domain 2 with backup_tool configured reports backup_installed" {
+    cat > "$FIXTURE_DIR/env_backup.json" << 'FIXTURE'
+{
+  "_schema_version": "1.0.0",
+  "test": {
+    "host": {"hostname": "localhost", "os_name": "Linux", "os_version": "6.0", "architecture": "x86_64", "kernel_version": "6.0.0", "virtualization_type": "bare_metal", "_discovery_note": null},
+    "network": {"topology": "flat", "private_bridge_or_overlay": null, "private_subnet": null, "vpn_tool": null, "firewall_tool": null, "_discovery_note": null},
+    "ingress": {"reverse_proxy_tool": null, "config_path": null, "access_model": null, "_discovery_note": null},
+    "ssl": {"cert_tool": null, "config_path": null, "renewal_mechanism": null, "_discovery_note": null},
+    "monitoring": {"metrics_tool": null, "metrics_status_check": null, "uptime_tool": null, "uptime_status_check": null, "log_aggregation_tool": null, "log_status_check": null, "_discovery_note": null},
+    "backup": {"backup_tool": "restic", "targets": null, "pre_dump_scripts": null, "last_run_check": null, "_discovery_note": null},
+    "secrets": {"approach": null, "canonical_location": null, "_discovery_note": null},
+    "security_tooling": {"fim_tool": null, "fim_baseline_update_method": null, "ips_tool": null, "ips_status_check": null, "_discovery_note": null},
+    "vcs": {"tool": null, "remote": null, "config_tracked_paths": null, "_discovery_note": null},
+    "services": []
+  }
+}
+FIXTURE
+    run bash "$SCRIPTS_DIR/domain-checker.sh" 2 "$FIXTURE_DIR/env_backup.json"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+check_names = [c['name'] for c in data['checks']]
+assert 'backup_installed' in check_names, f'expected backup_installed check, got: {check_names}'
+"
+}
+
+@test "domain 4 with service having health_endpoint reports service_reachable" {
+    cat > "$FIXTURE_DIR/env_health.json" << 'FIXTURE'
+{
+  "_schema_version": "1.0.0",
+  "test": {
+    "host": {"hostname": "localhost", "os_name": "Linux", "os_version": "6.0", "architecture": "x86_64", "kernel_version": "6.0.0", "virtualization_type": "bare_metal", "_discovery_note": null},
+    "network": {"topology": "flat", "private_bridge_or_overlay": null, "private_subnet": null, "vpn_tool": null, "firewall_tool": null, "_discovery_note": null},
+    "ingress": {"reverse_proxy_tool": null, "config_path": null, "access_model": null, "_discovery_note": null},
+    "ssl": {"cert_tool": null, "config_path": null, "renewal_mechanism": null, "_discovery_note": null},
+    "monitoring": {"metrics_tool": null, "metrics_status_check": null, "uptime_tool": null, "uptime_status_check": null, "log_aggregation_tool": null, "log_status_check": null, "_discovery_note": null},
+    "backup": {"backup_tool": null, "targets": null, "pre_dump_scripts": null, "last_run_check": null, "_discovery_note": null},
+    "secrets": {"approach": null, "canonical_location": null, "_discovery_note": null},
+    "security_tooling": {"fim_tool": null, "fim_baseline_update_method": null, "ips_tool": null, "ips_status_check": null, "_discovery_note": null},
+    "vcs": {"tool": null, "remote": null, "config_tracked_paths": null, "_discovery_note": null},
+    "services": [{"name": "test-svc", "host_address": "127.0.0.1", "ports": [8080], "health_endpoint": "http://127.0.0.1:8080/health", "access_tier": "public", "dependencies": null, "role": null, "monitoring_collector": null}]
+  }
+}
+FIXTURE
+    run bash "$SCRIPTS_DIR/domain-checker.sh" 4 "$FIXTURE_DIR/env_health.json"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+check_names = [c['name'] for c in data['checks']]
+assert 'service_reachable' in check_names, f'expected service_reachable check, got: {check_names}'
+"
+}
+
+@test "domain 9 with cert_tool reports cert_renewal check" {
+    cat > "$FIXTURE_DIR/env_cert.json" << 'FIXTURE'
+{
+  "_schema_version": "1.0.0",
+  "test": {
+    "host": {"hostname": "localhost", "os_name": "Linux", "os_version": "6.0", "architecture": "x86_64", "kernel_version": "6.0.0", "virtualization_type": "bare_metal", "_discovery_note": null},
+    "network": {"topology": "flat", "private_bridge_or_overlay": null, "private_subnet": null, "vpn_tool": null, "firewall_tool": null, "_discovery_note": null},
+    "ingress": {"reverse_proxy_tool": null, "config_path": null, "access_model": null, "_discovery_note": null},
+    "ssl": {"cert_tool": "certbot", "config_path": null, "renewal_mechanism": null, "_discovery_note": null},
+    "monitoring": {"metrics_tool": null, "metrics_status_check": null, "uptime_tool": null, "uptime_status_check": null, "log_aggregation_tool": null, "log_status_check": null, "_discovery_note": null},
+    "backup": {"backup_tool": null, "targets": null, "pre_dump_scripts": null, "last_run_check": null, "_discovery_note": null},
+    "secrets": {"approach": null, "canonical_location": null, "_discovery_note": null},
+    "security_tooling": {"fim_tool": null, "fim_baseline_update_method": null, "ips_tool": null, "ips_status_check": null, "_discovery_note": null},
+    "vcs": {"tool": null, "remote": null, "config_tracked_paths": null, "_discovery_note": null},
+    "services": []
+  }
+}
+FIXTURE
+    run bash "$SCRIPTS_DIR/domain-checker.sh" 9 "$FIXTURE_DIR/env_cert.json"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+check_names = [c['name'] for c in data['checks']]
+assert 'cert_renewal' in check_names, f'expected cert_renewal check, got: {check_names}'
+"
+}
+
+@test "domain 10 reports wildcard_bindings check" {
+    run bash "$SCRIPTS_DIR/domain-checker.sh" 10 "$FIXTURE_DIR/environment.json"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+check_names = [c['name'] for c in data['checks']]
+assert 'wildcard_bindings' in check_names, f'expected wildcard_bindings check, got: {check_names}'
+"
+}
+
+@test "domain 11 reports commits_not_pushed check" {
+    run bash "$SCRIPTS_DIR/domain-checker.sh" 11 "$FIXTURE_DIR/environment.json"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+check_names = [c['name'] for c in data['checks']]
+assert 'commits_not_pushed' in check_names, f'expected commits_not_pushed check, got: {check_names}'
+"
+}
+
 @test "domain 5 reports firewall_active check" {
     run bash "$SCRIPTS_DIR/domain-checker.sh" 5 "$FIXTURE_DIR/environment.json"
     [ "$status" -eq 0 ]

@@ -95,3 +95,47 @@ assert 'portfolio_repo_override' in d['precedence_applied'], \
 print('ok')
 "
 }
+
+@test "config-resolve: YAML coerce converts boolean and null" {
+    cat > "$TEST_TMPDIR/portfolio-types.yml" << 'EOF'
+defaults:
+  auto_label: true
+  wiki_sync: null
+EOF
+    run bash "$SCRIPTS_DIR/config-resolve.sh" "testowner/testrepo" \
+        --portfolio-path "$TEST_TMPDIR/portfolio-types.yml"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+defaults = d['sources']['portfolio_defaults']
+# 'true' must be parsed as boolean True, not the string 'true'
+assert defaults['auto_label'] is True, \
+    f'auto_label should be bool True, got {type(defaults[\"auto_label\"]).__name__}: {defaults[\"auto_label\"]!r}'
+assert type(defaults['auto_label']) is bool, \
+    f'auto_label type should be bool, got {type(defaults[\"auto_label\"]).__name__}'
+# 'null' must be parsed as None, not the string 'null'
+assert defaults['wiki_sync'] is None, \
+    f'wiki_sync should be None, got {type(defaults[\"wiki_sync\"]).__name__}: {defaults[\"wiki_sync\"]!r}'
+print('ok')
+"
+}
+
+@test "config-resolve: YAML coerce converts integers" {
+    cat > "$TEST_TMPDIR/portfolio-int.yml" << 'EOF'
+defaults:
+  pr_stale_days: 14
+EOF
+    run bash "$SCRIPTS_DIR/config-resolve.sh" "testowner/testrepo" \
+        --portfolio-path "$TEST_TMPDIR/portfolio-int.yml"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+defaults = d['sources']['portfolio_defaults']
+val = defaults['pr_stale_days']
+assert val == 14, f'pr_stale_days should be 14, got {val!r}'
+assert type(val) is int, f'pr_stale_days should be int, got {type(val).__name__}'
+print('ok')
+"
+}

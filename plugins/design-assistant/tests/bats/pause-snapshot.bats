@@ -82,6 +82,28 @@ with open('$state_file', 'w') as f:
 
 # -- draft with tensions and open questions --
 
+@test "review with pending findings shows table" {
+    SESSION_ID=$("$SCRIPTS_DIR/state-manager.sh" init "/tmp/test-doc.md")
+    echo '{"track":"A","severity":"high","section":"Architecture","description":"Missing error handling in auth module"}' \
+        | "$SCRIPTS_DIR/state-manager.sh" record-finding "$SESSION_ID" >/dev/null
+
+    run "$SCRIPTS_DIR/pause-snapshot.sh" review "$SESSION_ID"
+    [ "$status" -eq 0 ]
+    echo "$output" | grep -q "Pending Findings"
+    echo "$output" | grep -q "Missing error handling"
+}
+
+@test "review with section status shows table" {
+    SESSION_ID=$("$SCRIPTS_DIR/state-manager.sh" init "/tmp/test-doc.md")
+    "$SCRIPTS_DIR/state-manager.sh" update-section "$SESSION_ID" "Architecture" "Reviewed" >/dev/null
+
+    run "$SCRIPTS_DIR/pause-snapshot.sh" review "$SESSION_ID"
+    [ "$status" -eq 0 ]
+    echo "$output" | grep -q "Section Status"
+    echo "$output" | grep -q "Architecture"
+    echo "$output" | grep -q "Reviewed"
+}
+
 @test "draft with tensions and open questions shows those sections" {
     PEND_VAL=$(printf 'p%s' 'ending')
     draft_state=$(python3 -c "

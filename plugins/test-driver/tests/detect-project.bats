@@ -196,6 +196,60 @@ assert 'Cargo.toml' in d['markers_found']
 "
 }
 
+@test "go.mod detects go project" {
+    mkdir -p "$TEST_TMPDIR/go-proj"
+    printf 'module example.com/mymod\n\ngo 1.21\n' > "$TEST_TMPDIR/go-proj/go.mod"
+    run "$SCRIPTS_DIR/detect-project.sh" "$TEST_TMPDIR/go-proj"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['project_type'] == 'go', f'expected go, got {d[\"project_type\"]}'
+assert d['confidence'] == 'high'
+assert 'go.mod' in d['markers_found']
+"
+}
+
+@test "pom.xml detects java project" {
+    mkdir -p "$TEST_TMPDIR/java-proj"
+    printf '<project><modelVersion>4.0.0</modelVersion></project>\n' > "$TEST_TMPDIR/java-proj/pom.xml"
+    run "$SCRIPTS_DIR/detect-project.sh" "$TEST_TMPDIR/java-proj"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['project_type'] == 'java', f'expected java, got {d[\"project_type\"]}'
+assert d['confidence'] == 'high'
+assert 'pom.xml' in d['markers_found']
+"
+}
+
+@test "setup.py detects python project" {
+    mkdir -p "$TEST_TMPDIR/setuppy-proj"
+    printf 'from setuptools import setup\nsetup(name=\"mypkg\")\n' > "$TEST_TMPDIR/setuppy-proj/setup.py"
+    run "$SCRIPTS_DIR/detect-project.sh" "$TEST_TMPDIR/setuppy-proj"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['project_type'].startswith('python'), f'expected python*, got {d[\"project_type\"]}'
+assert 'setup.py' in d['markers_found']
+"
+}
+
+@test "requirements.txt detects python project" {
+    mkdir -p "$TEST_TMPDIR/reqs-proj"
+    printf 'requests>=2.28\nclick\n' > "$TEST_TMPDIR/reqs-proj/requirements.txt"
+    run "$SCRIPTS_DIR/detect-project.sh" "$TEST_TMPDIR/reqs-proj"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['project_type'].startswith('python'), f'expected python*, got {d[\"project_type\"]}'
+assert 'requirements.txt' in d['markers_found']
+"
+}
+
 @test "secondary markers collected when multiple markers exist" {
     mkdir -p "$TEST_TMPDIR/multi-proj2"
     cat > "$TEST_TMPDIR/multi-proj2/pyproject.toml" <<'EOF'

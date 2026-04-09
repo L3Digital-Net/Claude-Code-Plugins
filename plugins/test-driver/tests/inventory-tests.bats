@@ -142,6 +142,76 @@ assert any('app.test.ts' in p for p in paths), f'expected app.test.ts in {paths}
 "
 }
 
+@test "go test files detected" {
+    mkdir -p "$TEST_TMPDIR/go-tests"
+    cat > "$TEST_TMPDIR/go-tests/handler_test.go" <<'EOF'
+package main
+
+import "testing"
+
+func TestFoo(t *testing.T) {
+    if 1 != 1 {
+        t.Fatal("math is broken")
+    }
+}
+EOF
+    run "$SCRIPTS_DIR/inventory-tests.sh" go "$TEST_TMPDIR/go-tests"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['total_files'] == 1, f'expected 1 test file, got {d[\"total_files\"]}'
+assert d['total_tests'] >= 1, f'expected >= 1 test, got {d[\"total_tests\"]}'
+paths = [f['path'] for f in d['test_files']]
+assert any('handler_test.go' in p for p in paths), f'expected handler_test.go in {paths}'
+"
+}
+
+@test "rust test detection" {
+    mkdir -p "$TEST_TMPDIR/rust-tests"
+    cat > "$TEST_TMPDIR/rust-tests/lib_test.rs" <<'EOF'
+#[test]
+fn test_add() {
+    assert_eq!(2 + 2, 4);
+}
+
+#[test]
+fn test_sub() {
+    assert_eq!(4 - 2, 2);
+}
+EOF
+    run "$SCRIPTS_DIR/inventory-tests.sh" rust "$TEST_TMPDIR/rust-tests"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['total_files'] == 1, f'expected 1 test file, got {d[\"total_files\"]}'
+assert d['total_tests'] == 2, f'expected 2 tests, got {d[\"total_tests\"]}'
+paths = [f['path'] for f in d['test_files']]
+assert any('lib_test.rs' in p for p in paths), f'expected lib_test.rs in {paths}'
+"
+}
+
+@test "conftest.py counted as test file" {
+    mkdir -p "$TEST_TMPDIR/conftest-tests/tests"
+    cat > "$TEST_TMPDIR/conftest-tests/tests/conftest.py" <<'EOF'
+import pytest
+
+@pytest.fixture
+def sample_data():
+    return {"key": "value"}
+EOF
+    run "$SCRIPTS_DIR/inventory-tests.sh" python "$TEST_TMPDIR/conftest-tests"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['total_files'] >= 1, f'expected >= 1 test file, got {d[\"total_files\"]}'
+paths = [f['path'] for f in d['test_files']]
+assert any('conftest.py' in p for p in paths), f'expected conftest.py in {paths}'
+"
+}
+
 @test "output is valid JSON with required fields" {
     mkdir -p "$TEST_TMPDIR/json-check"
     run "$SCRIPTS_DIR/inventory-tests.sh" python "$TEST_TMPDIR/json-check"

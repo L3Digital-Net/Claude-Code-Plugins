@@ -68,3 +68,15 @@ print(len(matches))
 ")
     [ "$count" -eq 0 ]
 }
+
+@test "check-readme-placeholders: no false positives on release-pipeline README" {
+    run bash "$SCRIPTS_DIR/check-readme-placeholders.sh"
+    [ "$status" -eq 0 ]
+    count=$(echo "$output" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+matches = [f for f in d['findings'] if 'plugins/release-pipeline/README.md' in f['path']]
+print(len(matches))
+")
+    [ "$count" -eq 0 ]
+}

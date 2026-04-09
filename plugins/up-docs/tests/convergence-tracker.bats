@@ -141,6 +141,39 @@ teardown() {
     [ "$(echo "$output" | jq -r '.phases["1"].status')" = "converged" ]
 }
 
+@test "record-iteration on un-started phase exits 1" {
+    bash "$SCRIPTS_DIR/convergence-tracker.sh" init
+
+    run bash -c 'echo "{\"findings\":[],\"fixes_applied\":0}" | bash "$SCRIPTS_DIR/convergence-tracker.sh" record-iteration 99'
+    [ "$status" -eq 1 ]
+}
+
+@test "record-iteration accumulates changes_applied" {
+    bash "$SCRIPTS_DIR/convergence-tracker.sh" init
+    bash "$SCRIPTS_DIR/convergence-tracker.sh" start-phase 1
+
+    echo '{"findings":["a","b","c"],"fixes_applied":3}' | bash "$SCRIPTS_DIR/convergence-tracker.sh" record-iteration 1
+    echo '{"findings":["d","e"],"fixes_applied":2}' | bash "$SCRIPTS_DIR/convergence-tracker.sh" record-iteration 1
+
+    run bash "$SCRIPTS_DIR/convergence-tracker.sh" status
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq '.phases["1"].changes_applied')" = "5" ]
+}
+
+@test "record-iteration tracks pages_touched as max" {
+    bash "$SCRIPTS_DIR/convergence-tracker.sh" init
+    bash "$SCRIPTS_DIR/convergence-tracker.sh" start-phase 1
+
+    echo '{"findings":["a"],"fixes_applied":1,"pages_touched":3}' | bash "$SCRIPTS_DIR/convergence-tracker.sh" record-iteration 1
+    echo '{"findings":["b"],"fixes_applied":1,"pages_touched":5}' | bash "$SCRIPTS_DIR/convergence-tracker.sh" record-iteration 1
+
+    run bash "$SCRIPTS_DIR/convergence-tracker.sh" status
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq '.phases["1"].pages_touched')" = "5" ]
+}
+
 @test "invalid subcommand exits 1" {
     run bash "$SCRIPTS_DIR/convergence-tracker.sh" bogus-command
     [ "$status" -eq 1 ]

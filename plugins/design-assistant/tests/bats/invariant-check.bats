@@ -179,6 +179,62 @@ assert any('counter' in v.get('invariant','').lower() or 'counter' in v.get('det
 "
 }
 
+@test "review: retired deferred with invalid retired_by detected" {
+    SESSION_ID=$("$SCRIPTS_DIR/state-manager.sh" init "/tmp/test-doc.md")
+    # Record and defer a finding, then retire it with a nonexistent finding ID
+    echo '{"track":"A","severity":"medium","section":"Overview","description":"Retired ref test"}' \
+        | "$SCRIPTS_DIR/state-manager.sh" record-finding "$SESSION_ID" >/dev/null
+    "$SCRIPTS_DIR/state-manager.sh" defer-finding "$SESSION_ID" 1 "Deferred for test" >/dev/null
+
+    state_file="/tmp/design-assistant-${SESSION_ID}.json"
+    python3 -c "
+import json
+with open('$state_file') as f:
+    state = json.load(f)
+# Set retired_status=RETIRED but retired_by points to nonexistent finding ID
+state['deferred_log'][0]['retired_status'] = 'RETIRED'
+state['deferred_log'][0]['retired_by'] = 9999
+with open('$state_file', 'w') as f:
+    json.dump(state, f, indent=2)
+"
+
+    run "$SCRIPTS_DIR/invariant-check.sh" review "$SESSION_ID"
+    [ "$status" -eq 0 ]
+    failed=$(echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['failed'])")
+    [ "$failed" -ge 1 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+violations = d['violations']
+assert any('retired' in v.get('invariant','').lower() or 'retired_by' in v.get('detail','').lower() for v in violations), f'Expected retired_by invariant violation, got: {violations}'
+"
+}
+
+@test "review: violation streak >= 3 without systemic trigger detected" {
+    SESSION_ID=$("$SCRIPTS_DIR/state-manager.sh" init "/tmp/test-doc.md")
+    state_file="/tmp/design-assistant-${SESSION_ID}.json"
+    python3 -c "
+import json
+with open('$state_file') as f:
+    state = json.load(f)
+state['violation_streaks'] = {'P1': 3}
+state['systemic_triggers'] = []
+with open('$state_file', 'w') as f:
+    json.dump(state, f, indent=2)
+"
+
+    run "$SCRIPTS_DIR/invariant-check.sh" review "$SESSION_ID"
+    [ "$status" -eq 0 ]
+    failed=$(echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['failed'])")
+    [ "$failed" -ge 1 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+violations = d['violations']
+assert any('streak' in v.get('invariant','').lower() or 'streak' in v.get('detail','').lower() for v in violations), f'Expected streak triggers invariant violation, got: {violations}'
+"
+}
+
 @test "review: section mod count decrease detected" {
     SESSION_ID=$("$SCRIPTS_DIR/state-manager.sh" init "/tmp/test-doc.md")
     state_file="/tmp/design-assistant-${SESSION_ID}.json"

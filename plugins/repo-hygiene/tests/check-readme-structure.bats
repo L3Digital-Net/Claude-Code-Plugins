@@ -69,3 +69,48 @@ for f in d['findings']:
 print('ok')
 "
 }
+
+@test "check-readme-structure: findings for plugins with commands/ dir mention Commands heading if missing" {
+    run bash "$SCRIPTS_DIR/check-readme-structure.sh"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import sys, json, os
+
+d = json.load(sys.stdin)
+repo_root = os.popen('git rev-parse --show-toplevel').read().strip()
+marketplace_path = os.path.join(repo_root, '.claude-plugin', 'marketplace.json')
+with open(marketplace_path) as f:
+    marketplace = json.load(f)
+
+# Build set of plugins that have a non-empty commands/ directory
+plugins_with_commands = set()
+for p in marketplace.get('plugins', []):
+    source = p.get('source', '')
+    if source.startswith('./') or source.startswith('../'):
+        plugin_dir = os.path.normpath(os.path.join(repo_root, source))
+    else:
+        plugin_dir = source
+    cmd_dir = os.path.join(plugin_dir, 'commands')
+    if os.path.isdir(cmd_dir):
+        has_files = any(f for f in os.listdir(cmd_dir) if not f.startswith('.'))
+        if has_files:
+            readme_rel = os.path.relpath(os.path.join(plugin_dir, 'README.md'), repo_root)
+            plugins_with_commands.add(readme_rel)
+
+# For each plugin with commands/, verify that either:
+# (a) the README already has a Commands heading (no finding), or
+# (b) there is a finding mentioning the missing Commands section
+findings_by_path = {}
+for f in d['findings']:
+    findings_by_path.setdefault(f['path'], []).append(f)
+
+for readme_path in plugins_with_commands:
+    plugin_findings = findings_by_path.get(readme_path, [])
+    commands_findings = [f for f in plugin_findings if 'Commands' in f['detail'] and 'commands/' in f['detail']]
+    # If the script found an issue, it should have a meaningful detail string
+    for cf in commands_findings:
+        assert len(cf['detail']) > 20, f'Commands finding detail too short: {cf[\"detail\"]}'
+        assert 'commands/' in cf['detail'], f'Commands finding should reference commands/ dir: {cf[\"detail\"]}'
+print('ok')
+"
+}

@@ -68,6 +68,43 @@ teardown() { teardown_test_env; }
     [[ "$filename" == foo-bar-baz-handoff-* ]]
 }
 
+@test "dirty git repo shows uncommitted files" {
+    git init -q -b main
+    git config user.email "test@test.com"
+    git config user.name "Test"
+    echo "hello" > committed.txt
+    git add committed.txt
+    git commit -q -m "initial"
+
+    # Create an uncommitted file
+    echo "dirty" > uncommitted.txt
+
+    run bash "$SCRIPTS_DIR/gather-context.sh"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.git.status')" = "dirty" ]
+    local uf_len
+    uf_len=$(echo "$output" | jq '.git.uncommitted_files | length')
+    [ "$uf_len" -ge 1 ]
+}
+
+@test "recent_commits have hash and subject" {
+    git init -q -b main
+    git config user.email "test@test.com"
+    git config user.name "Test"
+    echo "hello" > file.txt
+    git add file.txt
+    git commit -q -m "initial commit"
+
+    run bash "$SCRIPTS_DIR/gather-context.sh"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.git.recent_commits[0].hash')" != "null" ]
+    [ "$(echo "$output" | jq -r '.git.recent_commits[0].subject')" != "null" ]
+    # hash should be a short sha
+    [[ "$(echo "$output" | jq -r '.git.recent_commits[0].hash')" =~ ^[0-9a-f]{7,} ]]
+}
+
 @test "no upstream sets ahead/behind to null" {
     local repo="$TEST_TMPDIR/local-only-repo"
     mkdir -p "$repo"

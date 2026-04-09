@@ -96,6 +96,18 @@ assert data[2]['seq'] == 3
 "
 }
 
+@test "append preserves user-supplied timestamp" {
+    run bash -c "echo '{\"type\":\"postflight\",\"timestamp\":\"2025-01-01T00:00:00Z\",\"result\":\"nominal\"}' | '$SCRIPTS_DIR/flight-log.sh' append"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+assert data['timestamp'] == '2025-01-01T00:00:00Z', f'timestamp was overwritten: {data[\"timestamp\"]}'
+assert data['type'] == 'postflight'
+assert data['result'] == 'nominal'
+"
+}
+
 @test "query returns records with correct data fields" {
     echo '{"type":"postflight","result":"nominal","host":"srv1"}' | bash "$SCRIPTS_DIR/flight-log.sh" append >/dev/null
     echo '{"type":"abort","reason":"disk_full"}' | bash "$SCRIPTS_DIR/flight-log.sh" append >/dev/null

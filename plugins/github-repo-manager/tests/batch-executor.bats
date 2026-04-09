@@ -80,3 +80,12 @@ assert d['total'] == 0, f'expected total=0, got {d[\"total\"]}'
 print('ok')
 "
 }
+
+@test "batch-executor: --min-remaining flag accepted" {
+    cat > "$TEST_TMPDIR/min-remain-plan.json" << 'EOF'
+{"mutations": []}
+EOF
+    run bash "$SCRIPTS_DIR/batch-executor.sh" "$TEST_TMPDIR/min-remain-plan.json" "$PLUGIN_ROOT" --min-remaining 50
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "import sys,json; json.load(sys.stdin)"
+}
