@@ -153,7 +153,7 @@
     {
       "name": "up-docs",
       "description": "Update documentation across three layers (repo, Outline wiki, Notion) from session context. Five commands for targeted updates and comprehensive drift analysis with four-phase convergence.",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "author": {
         "name": "L3DigitalNet",
         "url": "https://github.com/L3DigitalNet"
