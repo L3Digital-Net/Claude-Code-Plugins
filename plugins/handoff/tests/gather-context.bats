@@ -47,3 +47,42 @@ teardown() { teardown_test_env; }
     # Should match handoff-YYYY-MM-DD-HHMMSS.md
     [[ "$filename" =~ handoff-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{6}\.md ]]
 }
+
+@test "non-git directory returns is_repo false" {
+    local nogit="$TEST_TMPDIR/no-git-dir"
+    mkdir -p "$nogit"
+    cd "$nogit"
+
+    run bash "$SCRIPTS_DIR/gather-context.sh"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.git.is_repo')" = "false" ]
+}
+
+@test "special characters in description are slugified" {
+    run bash "$SCRIPTS_DIR/gather-context.sh" --description "foo@bar#baz!"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    local filename
+    filename=$(echo "$output" | jq -r '.filename')
+    [[ "$filename" == foo-bar-baz-handoff-* ]]
+}
+
+@test "no upstream sets ahead/behind to null" {
+    local repo="$TEST_TMPDIR/local-only-repo"
+    mkdir -p "$repo"
+    cd "$repo"
+    git init -q -b main
+    git config user.email "test@test.com"
+    git config user.name "Test"
+    echo "hello" > file.txt
+    git add file.txt
+    git commit -q -m "initial"
+
+    # No remote set, so no upstream tracking
+    run bash "$SCRIPTS_DIR/gather-context.sh"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq '.git.ahead')" = "null" ]
+    [ "$(echo "$output" | jq '.git.behind')" = "null" ]
+}

@@ -136,3 +136,109 @@ assert 'skip' in data['summary']
     [ "$status" -eq 0 ]
     echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['domain']==11"
 }
+
+@test "domain 6 with --since-time flag includes oom_events check" {
+    run bash "$SCRIPTS_DIR/domain-checker.sh" 6 "$FIXTURE_DIR/environment.json" --since-time "2026-04-09T00:00:00Z"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+check_names = [c['name'] for c in data['checks']]
+assert 'oom_events' in check_names, f'expected oom_events check, got: {check_names}'
+"
+}
+
+@test "domain 5 returns undeclared_ports check in output" {
+    run bash "$SCRIPTS_DIR/domain-checker.sh" 5 "$FIXTURE_DIR/environment.json"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+check_names = [c['name'] for c in data['checks']]
+assert 'undeclared_ports' in check_names, f'expected undeclared_ports check, got: {check_names}'
+"
+}
+
+@test "domain 3 returns secrets_process_scan check in output" {
+    # Domain 3 requires a canonical_location to run the process scan checks
+    cat > "$FIXTURE_DIR/env_with_secrets.json" << 'FIXTURE'
+{
+  "_schema_version": "1.0.0",
+  "test": {
+    "host": {"hostname": "localhost", "os_name": "Linux", "os_version": "6.0", "architecture": "x86_64", "kernel_version": "6.0.0", "virtualization_type": "bare_metal", "_discovery_note": null},
+    "network": {"topology": "flat", "private_bridge_or_overlay": null, "private_subnet": null, "vpn_tool": null, "firewall_tool": null, "_discovery_note": null},
+    "ingress": {"reverse_proxy_tool": null, "config_path": null, "access_model": null, "_discovery_note": null},
+    "ssl": {"cert_tool": null, "config_path": null, "renewal_mechanism": null, "_discovery_note": null},
+    "monitoring": {"metrics_tool": null, "metrics_status_check": null, "uptime_tool": null, "uptime_status_check": null, "log_aggregation_tool": null, "log_status_check": null, "_discovery_note": null},
+    "backup": {"backup_tool": null, "targets": null, "pre_dump_scripts": null, "last_run_check": null, "_discovery_note": null},
+    "secrets": {"approach": "vault", "canonical_location": "vault://secret/data"},
+    "security_tooling": {"fim_tool": null, "fim_baseline_update_method": null, "ips_tool": null, "ips_status_check": null, "_discovery_note": null},
+    "vcs": {"tool": null, "remote": null, "config_tracked_paths": null, "_discovery_note": null},
+    "services": []
+  }
+}
+FIXTURE
+    run bash "$SCRIPTS_DIR/domain-checker.sh" 3 "$FIXTURE_DIR/env_with_secrets.json"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+check_names = [c['name'] for c in data['checks']]
+assert 'secrets_process_scan' in check_names, f'expected secrets_process_scan check, got: {check_names}'
+"
+}
+
+@test "domain 11 returns config_uncommitted check in output" {
+    run bash "$SCRIPTS_DIR/domain-checker.sh" 11 "$FIXTURE_DIR/environment.json"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+check_names = [c['name'] for c in data['checks']]
+assert 'config_uncommitted' in check_names, f'expected config_uncommitted check, got: {check_names}'
+"
+}
+
+@test "domain 6 reports cpu_load check" {
+    run bash "$SCRIPTS_DIR/domain-checker.sh" 6 "$FIXTURE_DIR/environment.json"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+check_names = [c['name'] for c in data['checks']]
+assert 'cpu_load' in check_names, f'expected cpu_load check, got: {check_names}'
+"
+}
+
+@test "domain 6 reports memory check" {
+    run bash "$SCRIPTS_DIR/domain-checker.sh" 6 "$FIXTURE_DIR/environment.json"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+check_names = [c['name'] for c in data['checks']]
+assert 'memory' in check_names, f'expected memory check, got: {check_names}'
+"
+}
+
+@test "domain 6 reports disk check" {
+    run bash "$SCRIPTS_DIR/domain-checker.sh" 6 "$FIXTURE_DIR/environment.json"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+check_names = [c['name'] for c in data['checks']]
+assert 'disk' in check_names, f'expected disk check, got: {check_names}'
+"
+}
+
+@test "domain 5 reports firewall_active check" {
+    run bash "$SCRIPTS_DIR/domain-checker.sh" 5 "$FIXTURE_DIR/environment.json"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+check_names = [c['name'] for c in data['checks']]
+assert 'firewall_active' in check_names, f'expected firewall_active check, got: {check_names}'
+"
+}

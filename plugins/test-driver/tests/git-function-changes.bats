@@ -46,3 +46,60 @@ assert isinstance(d['changed_functions'], list)
 assert isinstance(d['changed_files'], list)
 "
 }
+
+@test "--extensions filter limits to specified extensions" {
+    mkdir -p "$TEST_TMPDIR/ext-filter"
+    cd "$TEST_TMPDIR/ext-filter"
+    git init -q
+    git config user.email "test@test.com"
+    git config user.name "Test"
+    echo "x = 1" > init.py
+    echo "const x = 1;" > init.ts
+    git add . && git commit -q -m "initial"
+    # Add functions to both file types
+    cat > init.py <<'EOF'
+def hello():
+    pass
+def world():
+    pass
+EOF
+    cat > init.ts <<'EOF'
+export function greet(): void {}
+export function farewell(): void {}
+EOF
+    git add . && git commit -q -m "add functions"
+    run "$SCRIPTS_DIR/git-function-changes.sh" "2020-01-01" "$TEST_TMPDIR/ext-filter" --extensions .py
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+# Only .py files should appear
+for f in d['changed_files']:
+    assert f.endswith('.py'), f'expected only .py files, got {f}'
+for fn in d['changed_functions']:
+    assert fn['file'].endswith('.py'), f'expected only .py functions, got {fn[\"file\"]}'
+assert d['total_files_changed'] >= 1, 'expected at least 1 .py file'
+assert d['total_functions_changed'] >= 1, 'expected at least 1 .py function'
+"
+}
+
+@test "function added in commit detected as added" {
+    mkdir -p "$TEST_TMPDIR/git-add"
+    cd "$TEST_TMPDIR/git-add"
+    git init -q
+    git config user.email "test@test.com"
+    git config user.name "Test"
+    echo "def hello(): pass" > test.py
+    git add . && git commit -q -m "initial"
+    printf "def hello(): pass\ndef world(): pass\n" > test.py
+    git add . && git commit -q -m "add world"
+    run "$SCRIPTS_DIR/git-function-changes.sh" "2020-01-01" "$TEST_TMPDIR/git-add"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+funcs = {fn['function']: fn['change_type'] for fn in d['changed_functions'] if fn['file'] == 'test.py'}
+assert 'world' in funcs, f'expected world in changed functions, got {list(funcs.keys())}'
+assert funcs['world'] == 'added', f'expected world to be added, got {funcs[\"world\"]}'
+"
+}

@@ -41,3 +41,16 @@ teardown() { teardown_test_env; }
     is_list=$(echo "$output" | python3 -c "import sys,json; d=json.load(sys.stdin); print(type(d['errors']).__name__)")
     [ "$is_list" = "list" ]
 }
+
+@test "onboarding: output has all required top-level fields" {
+    run bash "$SCRIPTS_DIR/onboarding.sh" "$PLUGIN_ROOT"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+required = ['deps_installed', 'pat_verified', 'tier_detected', 'config', 'labels', 'ready', 'errors', 'skipped']
+missing = [k for k in required if k not in d]
+assert not missing, f'missing top-level fields: {missing}'
+print('ok')
+"
+}

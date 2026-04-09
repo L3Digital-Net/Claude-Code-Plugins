@@ -77,3 +77,39 @@ for r in data:
     [ "$status" -eq 1 ]
     [[ "$output" == *"Usage"* ]]
 }
+
+@test "read with --last 3 returns multiple records" {
+    echo '{"type":"preflight","seq":1}' | bash "$SCRIPTS_DIR/flight-log.sh" append >/dev/null
+    echo '{"type":"postflight","seq":2}' | bash "$SCRIPTS_DIR/flight-log.sh" append >/dev/null
+    echo '{"type":"abort","seq":3}' | bash "$SCRIPTS_DIR/flight-log.sh" append >/dev/null
+
+    run bash "$SCRIPTS_DIR/flight-log.sh" read --last 3
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+assert isinstance(data, list), 'expected array'
+assert len(data) == 3, f'expected 3 records, got {len(data)}'
+assert data[0]['seq'] == 1
+assert data[1]['seq'] == 2
+assert data[2]['seq'] == 3
+"
+}
+
+@test "query returns records with correct data fields" {
+    echo '{"type":"postflight","result":"nominal","host":"srv1"}' | bash "$SCRIPTS_DIR/flight-log.sh" append >/dev/null
+    echo '{"type":"abort","reason":"disk_full"}' | bash "$SCRIPTS_DIR/flight-log.sh" append >/dev/null
+
+    run bash "$SCRIPTS_DIR/flight-log.sh" query --type postflight
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+assert len(data) >= 1
+rec = data[0]
+assert rec['type'] == 'postflight'
+assert rec['result'] == 'nominal'
+assert rec['host'] == 'srv1'
+assert 'timestamp' in rec, 'missing timestamp field'
+"
+}

@@ -56,3 +56,65 @@ assert isinstance(data['all_passed'], bool), 'all_passed is not a boolean'
     [ "$status" -eq 1 ]
     [[ "$output" == *"Profile not found"* ]]
 }
+
+@test "with service health_endpoint: checks array has service_health entry" {
+    cat > "$FIXTURE_DIR/env_with_svc.json" << 'FIXTURE'
+{
+  "_schema_version": "1.0.0",
+  "test": {
+    "host": {"hostname": "localhost", "os_name": "Linux", "os_version": "6.0", "architecture": "x86_64", "kernel_version": "6.0.0", "virtualization_type": "bare_metal", "_discovery_note": null},
+    "network": {"topology": "flat", "private_bridge_or_overlay": null, "private_subnet": null, "vpn_tool": null, "firewall_tool": null, "_discovery_note": null},
+    "ingress": {"reverse_proxy_tool": null, "config_path": null, "access_model": null, "_discovery_note": null},
+    "ssl": {"cert_tool": null, "config_path": null, "renewal_mechanism": null, "_discovery_note": null},
+    "monitoring": {"metrics_tool": null, "metrics_status_check": null, "uptime_tool": null, "uptime_status_check": null, "log_aggregation_tool": null, "log_status_check": null, "_discovery_note": null},
+    "backup": {"backup_tool": null, "targets": null, "pre_dump_scripts": null, "last_run_check": null, "_discovery_note": null},
+    "secrets": {"approach": null, "canonical_location": null, "_discovery_note": null},
+    "security_tooling": {"fim_tool": null, "fim_baseline_update_method": null, "ips_tool": null, "ips_status_check": null, "_discovery_note": null},
+    "vcs": {"tool": null, "remote": null, "config_tracked_paths": null, "_discovery_note": null},
+    "services": [{"name": "test-svc", "host_address": "127.0.0.1", "ports": [22], "health_endpoint": "http://127.0.0.1:22/health", "access_tier": "private"}]
+  }
+}
+FIXTURE
+
+    run bash "$SCRIPTS_DIR/go-nogo-poll.sh" "$FIXTURE_DIR/env_with_svc.json"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+checks = data['checks']
+health_checks = [c for c in checks if c['check'] == 'service_health']
+assert len(health_checks) >= 1, f'expected service_health check, got checks: {[c[\"check\"] for c in checks]}'
+assert health_checks[0]['target'] == 'test-svc'
+"
+}
+
+@test "with firewall_tool set: checks array has firewall_active entry" {
+    cat > "$FIXTURE_DIR/env_with_fw.json" << 'FIXTURE'
+{
+  "_schema_version": "1.0.0",
+  "test": {
+    "host": {"hostname": "localhost", "os_name": "Linux", "os_version": "6.0", "architecture": "x86_64", "kernel_version": "6.0.0", "virtualization_type": "bare_metal", "_discovery_note": null},
+    "network": {"topology": "flat", "private_bridge_or_overlay": null, "private_subnet": null, "vpn_tool": null, "firewall_tool": "ufw", "_discovery_note": null},
+    "ingress": {"reverse_proxy_tool": null, "config_path": null, "access_model": null, "_discovery_note": null},
+    "ssl": {"cert_tool": null, "config_path": null, "renewal_mechanism": null, "_discovery_note": null},
+    "monitoring": {"metrics_tool": null, "metrics_status_check": null, "uptime_tool": null, "uptime_status_check": null, "log_aggregation_tool": null, "log_status_check": null, "_discovery_note": null},
+    "backup": {"backup_tool": null, "targets": null, "pre_dump_scripts": null, "last_run_check": null, "_discovery_note": null},
+    "secrets": {"approach": null, "canonical_location": null, "_discovery_note": null},
+    "security_tooling": {"fim_tool": null, "fim_baseline_update_method": null, "ips_tool": null, "ips_status_check": null, "_discovery_note": null},
+    "vcs": {"tool": null, "remote": null, "config_tracked_paths": null, "_discovery_note": null},
+    "services": [{"name": "test-svc", "host_address": "127.0.0.1", "ports": [22]}]
+  }
+}
+FIXTURE
+
+    run bash "$SCRIPTS_DIR/go-nogo-poll.sh" "$FIXTURE_DIR/env_with_fw.json"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+checks = data['checks']
+fw_checks = [c for c in checks if c['check'] == 'firewall_active']
+assert len(fw_checks) == 1, f'expected 1 firewall_active check, got {len(fw_checks)}: {[c[\"check\"] for c in checks]}'
+assert fw_checks[0]['target'] == 'ufw'
+"
+}

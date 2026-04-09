@@ -40,3 +40,31 @@ for f in d['findings']:
 print('ok')
 "
 }
+
+@test "check-readme-placeholders: any findings reference known placeholder patterns" {
+    run bash "$SCRIPTS_DIR/check-readme-placeholders.sh"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+# If there are findings, each detail must reference a known placeholder concept
+known_markers = ['TODO', 'FIXME', 'PLACEHOLDER', 'placeholder', 'template', 'ellipsis']
+for f in d['findings']:
+    detail = f['detail']
+    assert any(m.lower() in detail.lower() for m in known_markers), \
+        f'Finding detail does not reference a known placeholder pattern: {detail}'
+print('ok')
+"
+}
+
+@test "check-readme-placeholders: nominal README produces zero placeholder findings" {
+    run bash "$SCRIPTS_DIR/check-readme-placeholders.sh"
+    [ "$status" -eq 0 ]
+    count=$(echo "$output" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+matches = [f for f in d['findings'] if 'plugins/nominal/README.md' in f['path']]
+print(len(matches))
+")
+    [ "$count" -eq 0 ]
+}

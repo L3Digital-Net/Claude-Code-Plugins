@@ -123,3 +123,44 @@ EOF
     [[ "$issues" == *"repos_root"* ]]
     [[ "$issues" == *"machine_id"* ]]
 }
+
+@test "validate with valid config returns valid=true" {
+    # Create dirs that the validator checks for existence
+    mkdir -p "$TEST_TMPDIR/sync-path"
+    mkdir -p "$TEST_TMPDIR/repos-root"
+
+    cat > "$HOME/.claude/CLAUDE.md" << EOF
+<!-- claude-sync-config
+sync_path: $TEST_TMPDIR/sync-path
+repos_root: $TEST_TMPDIR/repos-root
+machine_id: testbox
+-->
+EOF
+
+    run bash "$SCRIPTS_DIR/config-block.sh" validate
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.valid')" = "true" ]
+    [ "$(echo "$output" | jq '.issues | length')" = "0" ]
+}
+
+@test "validate with missing required field returns valid=false" {
+    # Config block with sync_path and repos_root but no machine_id
+    mkdir -p "$TEST_TMPDIR/sync-path"
+    mkdir -p "$TEST_TMPDIR/repos-root"
+
+    cat > "$HOME/.claude/CLAUDE.md" << EOF
+<!-- claude-sync-config
+sync_path: $TEST_TMPDIR/sync-path
+repos_root: $TEST_TMPDIR/repos-root
+-->
+EOF
+
+    run bash "$SCRIPTS_DIR/config-block.sh" validate
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.valid')" = "false" ]
+    local issues
+    issues=$(echo "$output" | jq -r '.issues[]')
+    [[ "$issues" == *"machine_id"* ]]
+}

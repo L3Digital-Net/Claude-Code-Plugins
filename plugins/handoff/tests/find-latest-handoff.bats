@@ -74,3 +74,61 @@ EOF
     [[ "$sections" == *"Task Summary"* ]]
     [[ "$sections" == *"Next Steps"* ]]
 }
+
+@test "picks most recent from multiple files" {
+    mkdir -p "$TEST_TMPDIR/handoffs"
+
+    cat > "$TEST_TMPDIR/handoffs/handoff-2026-04-08-100000.md" << 'EOF'
+# Older Task
+
+## Task Summary
+Old work.
+
+## Next Steps
+1. Old step
+EOF
+    # Make older file actually older by mtime
+    touch -t 202604081000 "$TEST_TMPDIR/handoffs/handoff-2026-04-08-100000.md"
+
+    cat > "$TEST_TMPDIR/handoffs/handoff-2026-04-09-150000.md" << 'EOF'
+# Newer Task
+
+## Task Summary
+New work.
+
+## Next Steps
+1. New step
+EOF
+    touch -t 202604091500 "$TEST_TMPDIR/handoffs/handoff-2026-04-09-150000.md"
+
+    run bash "$SCRIPTS_DIR/find-latest-handoff.sh" --directory "$TEST_TMPDIR/handoffs"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.found')" = "true" ]
+    [ "$(echo "$output" | jq -r '.filename')" = "handoff-2026-04-09-150000.md" ]
+}
+
+@test "--sort-by filename mode works" {
+    mkdir -p "$TEST_TMPDIR/handoffs"
+
+    cat > "$TEST_TMPDIR/handoffs/handoff-2026-04-07-090000.md" << 'EOF'
+# Task A
+
+## Task Summary
+Work A.
+EOF
+
+    cat > "$TEST_TMPDIR/handoffs/handoff-2026-04-10-120000.md" << 'EOF'
+# Task B
+
+## Task Summary
+Work B.
+EOF
+
+    run bash "$SCRIPTS_DIR/find-latest-handoff.sh" --directory "$TEST_TMPDIR/handoffs" --sort-by filename
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.found')" = "true" ]
+    # Filename sort (reverse) should pick the lexicographically latest
+    [ "$(echo "$output" | jq -r '.filename')" = "handoff-2026-04-10-120000.md" ]
+}

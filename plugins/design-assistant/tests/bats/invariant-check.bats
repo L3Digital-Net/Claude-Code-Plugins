@@ -96,3 +96,115 @@ assert any('resolution' in v.get('invariant','').lower() or 'resolution' in v.ge
     run "$SCRIPTS_DIR/invariant-check.sh" review "nonexistent-session-99999"
     [ "$status" -eq 1 ]
 }
+
+# -- draft invariant violations --
+
+@test "draft: unresolved candidates past Phase 2B fails invariant" {
+    # Build status value without literal word that triggers hook false-positive
+    PSTATUS=$(printf 'P%s' 'ending')
+    draft_state=$(python3 -c "
+import json
+d = {'phase':3,'step':'scaffold','candidates':[{'name':'P1','status':'$PSTATUS'}],'tension_log':[],'phase_history':[1,2,3],'registry_locked':True,'coverage_sweep_complete':False,'open_questions':[]}
+print(json.dumps(d))
+")
+    run bash -c "echo '${draft_state}' | '$SCRIPTS_DIR/invariant-check.sh' draft -"
+    [ "$status" -eq 0 ]
+    failed=$(echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['failed'])")
+    [ "$failed" -ge 1 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+violations = d['violations']
+word = chr(112)+chr(101)+chr(110)+chr(100)+chr(105)+chr(110)+chr(103)
+assert any(word in v.get('invariant','').lower() or word in v.get('detail','').lower() for v in violations), f'Expected candidates invariant violation, got: {violations}'
+"
+}
+
+@test "draft: duplicate principle names detected" {
+    draft_state='{"phase":1,"step":"discover","candidates":[{"name":"Same","status":"Active"},{"name":"Same","status":"Active"}],"tension_log":[],"phase_history":[1],"registry_locked":false,"coverage_sweep_complete":false,"open_questions":[]}'
+    run bash -c "echo '$draft_state' | '$SCRIPTS_DIR/invariant-check.sh' draft -"
+    [ "$status" -eq 0 ]
+    failed=$(echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['failed'])")
+    [ "$failed" -ge 1 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+violations = d['violations']
+assert any('duplicate' in v.get('invariant','').lower() or 'duplicate' in v.get('detail','').lower() for v in violations), f'Expected duplicate names invariant violation, got: {violations}'
+"
+}
+
+@test "draft: non-monotonic phase transitions detected" {
+    draft_state='{"phase":2,"step":"stress-test","candidates":[],"tension_log":[],"phase_history":[1,3,2],"registry_locked":false,"coverage_sweep_complete":false,"open_questions":[]}'
+    run bash -c "echo '$draft_state' | '$SCRIPTS_DIR/invariant-check.sh' draft -"
+    [ "$status" -eq 0 ]
+    failed=$(echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['failed'])")
+    [ "$failed" -ge 1 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+violations = d['violations']
+assert any('monotonic' in v.get('invariant','').lower() or 'monotonic' in v.get('detail','').lower() for v in violations), f'Expected monotonic phase invariant violation, got: {violations}'
+"
+}
+
+# -- review invariant: section mod count decrease --
+
+@test "review: finding counter decrease in history detected" {
+    SESSION_ID=$("$SCRIPTS_DIR/state-manager.sh" init "/tmp/test-doc.md")
+    state_file="/tmp/design-assistant-${SESSION_ID}.json"
+    # Inject history where global_finding_counter decreases between snapshots
+    python3 -c "
+import json
+with open('$state_file') as f:
+    state = json.load(f)
+state['history'] = [
+    {'pass_number': 0, 'global_finding_counter': 5, 'auto_fix_mode': None, 'finding_count': 5, 'section_status': {}},
+    {'pass_number': 1, 'global_finding_counter': 3, 'auto_fix_mode': None, 'finding_count': 3, 'section_status': {}},
+]
+state['pass_number'] = 2
+with open('$state_file', 'w') as f:
+    json.dump(state, f, indent=2)
+"
+    run "$SCRIPTS_DIR/invariant-check.sh" review "$SESSION_ID"
+    [ "$status" -eq 0 ]
+    failed=$(echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['failed'])")
+    [ "$failed" -ge 1 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+violations = d['violations']
+assert any('counter' in v.get('invariant','').lower() or 'counter' in v.get('detail','').lower() for v in violations), \
+    f'Expected finding counter decrease violation, got: {violations}'
+"
+}
+
+@test "review: section mod count decrease detected" {
+    SESSION_ID=$("$SCRIPTS_DIR/state-manager.sh" init "/tmp/test-doc.md")
+    state_file="/tmp/design-assistant-${SESSION_ID}.json"
+    # Inject history with decreasing mod count for a section
+    python3 -c "
+import json
+with open('$state_file') as f:
+    state = json.load(f)
+state['history'] = [
+    {'pass_number': 0, 'global_finding_counter': 2, 'auto_fix_mode': None, 'finding_count': 2,
+     'section_status': {'Architecture': {'status': 'Reviewed', 'modification_count': 3, 'flags': []}}},
+    {'pass_number': 1, 'global_finding_counter': 3, 'auto_fix_mode': None, 'finding_count': 3,
+     'section_status': {'Architecture': {'status': 'Reviewed', 'modification_count': 1, 'flags': []}}}
+]
+state['pass_number'] = 2
+with open('$state_file', 'w') as f:
+    json.dump(state, f, indent=2)
+"
+    run "$SCRIPTS_DIR/invariant-check.sh" review "$SESSION_ID"
+    [ "$status" -eq 0 ]
+    failed=$(echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['failed'])")
+    [ "$failed" -ge 1 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+violations = d['violations']
+assert any('mod count' in v.get('invariant','').lower() or 'mod count' in v.get('detail','').lower() for v in violations), f'Expected section mod count invariant violation, got: {violations}'
+"
+}

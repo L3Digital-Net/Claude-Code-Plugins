@@ -114,6 +114,36 @@ assert d['gaps'][0]['id'] == 'gap-2'
 "
 }
 
+@test "malformed JSON in status file: read exits 1 with error" {
+    cd "$TEST_TMPDIR"
+    mkdir -p "$TEST_TMPDIR/docs/testing"
+    echo "this is not valid json {{{" > "$TEST_TMPDIR/docs/testing/TEST_STATUS.json"
+    run "$SCRIPTS_DIR/test-status-update.sh" read
+    [ "$status" -eq 1 ]
+    # stderr should contain an error about malformed JSON
+    echo "$output" | python3 -c "
+import sys
+text = sys.stdin.read()
+assert 'malformed' in text.lower() or 'error' in text.lower(), f'expected error message, got: {text}'
+"
+}
+
+@test "read on missing file returns template with null last_analysis" {
+    cd "$TEST_TMPDIR"
+    # Ensure no status file exists
+    rm -f "$TEST_TMPDIR/docs/testing/TEST_STATUS.json"
+    run "$SCRIPTS_DIR/test-status-update.sh" read
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['last_analysis'] is None, f'expected null last_analysis, got {d[\"last_analysis\"]}'
+assert d['project_type'] is None, f'expected null project_type, got {d[\"project_type\"]}'
+assert d['gaps'] == [], f'expected empty gaps, got {d[\"gaps\"]}'
+assert d['history'] == [], f'expected empty history, got {d[\"history\"]}'
+"
+}
+
 @test "invalid subcommand exits 1" {
     cd "$TEST_TMPDIR"
     run "$SCRIPTS_DIR/test-status-update.sh" bogus

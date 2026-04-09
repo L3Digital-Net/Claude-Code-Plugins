@@ -33,9 +33,9 @@ GIT_OUTPUT=$(git log --since="$SINCE_DATE" -p -- "$SCOPE" 2>&1) || {
   exit 0
 }
 
-export SINCE_DATE EXTENSIONS
+export SINCE_DATE EXTENSIONS GIT_OUTPUT
 
-echo "$GIT_OUTPUT" | $PYTHON << 'PYEOF'
+$PYTHON << 'PYEOF'
 import json, os, re, sys
 
 extensions = os.environ.get("EXTENSIONS", "")
@@ -59,7 +59,7 @@ FUNC_PATTERNS = {
     ".java": re.compile(r"(?:public|private|protected)\s+(?:static\s+)?(?:\w+\s+)+(\w+)\s*\("),
 }
 
-diff_text = sys.stdin.read()
+diff_text = os.environ.get("GIT_OUTPUT", "")
 current_file = None
 added_funcs = {}   # file -> set of func names in + lines
 removed_funcs = {} # file -> set of func names in - lines

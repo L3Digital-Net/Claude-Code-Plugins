@@ -114,6 +114,88 @@ assert 'package.json' in d['markers_found']
 "
 }
 
+@test "Python with django in pyproject.toml deps: detects python-django" {
+    mkdir -p "$TEST_TMPDIR/django-proj"
+    cat > "$TEST_TMPDIR/django-proj/pyproject.toml" <<'EOF'
+[project]
+dependencies = ["django", "django-rest-framework"]
+EOF
+    run "$SCRIPTS_DIR/detect-project.sh" "$TEST_TMPDIR/django-proj"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['project_type'] == 'python-django', f'expected python-django, got {d[\"project_type\"]}'
+assert d['confidence'] == 'high'
+"
+}
+
+@test "Python with pyside6 in pyproject.toml deps: detects python-pyside6" {
+    mkdir -p "$TEST_TMPDIR/qt-proj"
+    cat > "$TEST_TMPDIR/qt-proj/pyproject.toml" <<'EOF'
+[project]
+dependencies = ["pyside6"]
+EOF
+    run "$SCRIPTS_DIR/detect-project.sh" "$TEST_TMPDIR/qt-proj"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['project_type'] == 'python-pyside6', f'expected python-pyside6, got {d[\"project_type\"]}'
+assert d['confidence'] == 'high'
+"
+}
+
+@test "Python with hacs.json present: detects home-assistant" {
+    mkdir -p "$TEST_TMPDIR/ha-proj"
+    cat > "$TEST_TMPDIR/ha-proj/pyproject.toml" <<'EOF'
+[project]
+dependencies = []
+EOF
+    echo '{}' > "$TEST_TMPDIR/ha-proj/hacs.json"
+    run "$SCRIPTS_DIR/detect-project.sh" "$TEST_TMPDIR/ha-proj"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['project_type'] == 'home-assistant', f'expected home-assistant, got {d[\"project_type\"]}'
+"
+}
+
+@test "Generic Python (no framework markers): confidence is medium" {
+    mkdir -p "$TEST_TMPDIR/generic-py"
+    cat > "$TEST_TMPDIR/generic-py/pyproject.toml" <<'EOF'
+[project]
+dependencies = ["requests", "click"]
+EOF
+    run "$SCRIPTS_DIR/detect-project.sh" "$TEST_TMPDIR/generic-py"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['project_type'] == 'python', f'expected python, got {d[\"project_type\"]}'
+assert d['confidence'] == 'medium', f'expected medium, got {d[\"confidence\"]}'
+"
+}
+
+@test "Cargo.toml present: detects rust" {
+    mkdir -p "$TEST_TMPDIR/rust-proj"
+    cat > "$TEST_TMPDIR/rust-proj/Cargo.toml" <<'EOF'
+[package]
+name = "my-crate"
+version = "0.1.0"
+EOF
+    run "$SCRIPTS_DIR/detect-project.sh" "$TEST_TMPDIR/rust-proj"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['project_type'] == 'rust', f'expected rust, got {d[\"project_type\"]}'
+assert d['confidence'] == 'high'
+assert 'Cargo.toml' in d['markers_found']
+"
+}
+
 @test "secondary markers collected when multiple markers exist" {
     mkdir -p "$TEST_TMPDIR/multi-proj2"
     cat > "$TEST_TMPDIR/multi-proj2/pyproject.toml" <<'EOF'

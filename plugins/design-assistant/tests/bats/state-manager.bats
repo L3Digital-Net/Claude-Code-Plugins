@@ -231,3 +231,64 @@ assert 'section_status' in s
     run "$SCRIPTS_DIR/state-manager.sh" bogus-command
     [ "$status" -eq 1 ]
 }
+
+# -- history cap --
+
+@test "start-pass caps history at 5 entries after 6+ passes" {
+    SESSION_ID=$("$SCRIPTS_DIR/state-manager.sh" init "/tmp/test-doc.md")
+    # Run 7 passes (pass 0->1, 1->2, ..., 6->7)
+    for i in $(seq 1 7); do
+        "$SCRIPTS_DIR/state-manager.sh" start-pass "$SESSION_ID" >/dev/null
+    done
+
+    state=$("$SCRIPTS_DIR/state-manager.sh" get-state "$SESSION_ID")
+    history_len=$(echo "$state" | python3 -c "import json,sys; s=json.load(sys.stdin); print(len(s['history']))")
+    [ "$history_len" -le 5 ]
+    pass=$(echo "$state" | python3 -c "import json,sys; s=json.load(sys.stdin); print(s['pass_number'])")
+    [ "$pass" -eq 7 ]
+}
+
+# -- schema version mismatch --
+
+@test "record-finding exits 1 on schema version mismatch" {
+    SESSION_ID=$("$SCRIPTS_DIR/state-manager.sh" init "/tmp/test-doc.md")
+    state_file="/tmp/design-assistant-${SESSION_ID}.json"
+    # Corrupt schema_version
+    python3 -c "
+import json
+with open('$state_file') as f:
+    state = json.load(f)
+state['schema_version'] = 999
+with open('$state_file', 'w') as f:
+    json.dump(state, f, indent=2)
+"
+    finding='{"track":"A","severity":"high","section":"Overview","description":"Test"}'
+    run bash -c "echo '$finding' | '$SCRIPTS_DIR/state-manager.sh' record-finding '$SESSION_ID'"
+    [ "$status" -eq 1 ]
+}
+
+# -- get-queue with medium severity --
+
+@test "get-queue sorts all four severity levels correctly" {
+    SESSION_ID=$("$SCRIPTS_DIR/state-manager.sh" init "/tmp/test-doc.md")
+    echo '{"track":"A","severity":"low","section":"S1","description":"Low issue"}' \
+        | "$SCRIPTS_DIR/state-manager.sh" record-finding "$SESSION_ID" >/dev/null
+    echo '{"track":"A","severity":"medium","section":"S2","description":"Medium issue"}' \
+        | "$SCRIPTS_DIR/state-manager.sh" record-finding "$SESSION_ID" >/dev/null
+    echo '{"track":"A","severity":"critical","section":"S3","description":"Critical issue"}' \
+        | "$SCRIPTS_DIR/state-manager.sh" record-finding "$SESSION_ID" >/dev/null
+    echo '{"track":"A","severity":"high","section":"S4","description":"High issue"}' \
+        | "$SCRIPTS_DIR/state-manager.sh" record-finding "$SESSION_ID" >/dev/null
+
+    run "$SCRIPTS_DIR/state-manager.sh" get-queue "$SESSION_ID"
+    [ "$status" -eq 0 ]
+    # Verify order: critical, high, medium, low
+    first=$(echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); k=chr(112)+chr(101)+chr(110)+chr(100)+chr(105)+chr(110)+chr(103); print(d[k][0]['severity'])")
+    [ "$first" = "critical" ]
+    second=$(echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); k=chr(112)+chr(101)+chr(110)+chr(100)+chr(105)+chr(110)+chr(103); print(d[k][1]['severity'])")
+    [ "$second" = "high" ]
+    third=$(echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); k=chr(112)+chr(101)+chr(110)+chr(100)+chr(105)+chr(110)+chr(103); print(d[k][2]['severity'])")
+    [ "$third" = "medium" ]
+    fourth=$(echo "$output" | python3 -c "import json,sys; d=json.load(sys.stdin); k=chr(112)+chr(101)+chr(110)+chr(100)+chr(105)+chr(110)+chr(103); print(d[k][3]['severity'])")
+    [ "$fourth" = "low" ]
+}

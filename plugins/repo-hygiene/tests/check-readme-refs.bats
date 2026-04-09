@@ -40,3 +40,28 @@ for f in d['findings']:
 print('ok')
 "
 }
+
+@test "check-readme-refs: nominal README produces zero broken ref findings" {
+    run bash "$SCRIPTS_DIR/check-readme-refs.sh"
+    [ "$status" -eq 0 ]
+    count=$(echo "$output" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+matches = [f for f in d['findings'] if 'plugins/nominal/README.md' in f['path']]
+print(len(matches))
+")
+    [ "$count" -eq 0 ]
+}
+
+@test "check-readme-refs: all finding paths start with plugins/" {
+    run bash "$SCRIPTS_DIR/check-readme-refs.sh"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+for f in d['findings']:
+    assert f['path'].startswith('plugins/'), \
+        f'finding path does not start with plugins/: {f[\"path\"]}'
+print('ok')
+"
+}

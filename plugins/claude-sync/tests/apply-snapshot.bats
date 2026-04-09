@@ -66,3 +66,53 @@ teardown() {
     # Summary should show updated count
     [ "$(echo "$output" | jq '.summary.updated')" -ge 1 ]
 }
+
+@test "plugins category merges installed_plugins.json" {
+    # Set up local installed_plugins.json with plugin-a
+    mkdir -p "$HOME/.claude/plugins"
+    echo '{"plugin-a": ["marketplace-1"]}' > "$HOME/.claude/plugins/installed_plugins.json"
+
+    # Set up snapshot with plugin-b
+    local snap="$TEST_TMPDIR/snapshot"
+    mkdir -p "$snap/plugins"
+    echo '{"plugin-b": ["marketplace-2"]}' > "$snap/plugins/installed_plugins.json"
+    # Make snapshot file newer
+    touch -t 203001010000 "$snap/plugins/installed_plugins.json"
+
+    run bash "$SCRIPTS_DIR/apply-snapshot.sh" "$snap" plugins
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+
+    # Should report a merge action
+    [ "$(echo "$output" | jq -r '.actions[] | select(.action=="merged") | .action')" = "merged" ]
+
+    # The merged file should contain both plugins
+    local merged
+    merged=$(cat "$HOME/.claude/plugins/installed_plugins.json")
+    [ "$(echo "$merged" | jq 'has("plugin-a")')" = "true" ]
+    [ "$(echo "$merged" | jq 'has("plugin-b")')" = "true" ]
+}
+
+@test "local newer file is skipped" {
+    # Set up local file that is NEWER than the snapshot
+    mkdir -p "$HOME/.claude"
+    echo '{"local": true}' > "$HOME/.claude/settings.json"
+    touch -t 203512310000 "$HOME/.claude/settings.json"
+
+    # Set up snapshot with older file
+    local snap="$TEST_TMPDIR/snapshot"
+    mkdir -p "$snap/claude"
+    echo '{"snapshot": true}' > "$snap/claude/settings.json"
+    touch -t 202001010000 "$snap/claude/settings.json"
+
+    run bash "$SCRIPTS_DIR/apply-snapshot.sh" "$snap" settings
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+
+    # Action should be skipped with reason "local newer"
+    [ "$(echo "$output" | jq -r '.actions[0].action')" = "skipped" ]
+    [[ "$(echo "$output" | jq -r '.actions[0].reason')" == *"local newer"* ]]
+
+    # Local file should be unchanged
+    [[ "$(cat "$HOME/.claude/settings.json")" == *'"local"'* ]]
+}

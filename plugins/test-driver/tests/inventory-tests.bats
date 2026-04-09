@@ -78,6 +78,70 @@ for cat in ('unit', 'integration', 'e2e'):
 "
 }
 
+@test "pytest marker in file content categorizes as that marker type" {
+    mkdir -p "$TEST_TMPDIR/marker-tests"
+    cat > "$TEST_TMPDIR/marker-tests/test_slow.py" <<'EOF'
+import pytest
+
+@pytest.mark.integration
+def test_db_connection():
+    assert True
+EOF
+    run "$SCRIPTS_DIR/inventory-tests.sh" python "$TEST_TMPDIR/marker-tests"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['total_files'] == 1
+# The marker @pytest.mark.integration should categorize this as integration
+f = d['test_files'][0]
+assert f['category'] == 'integration', f'expected integration from marker, got {f[\"category\"]}'
+assert d['by_category']['integration']['files'] == 1
+"
+}
+
+@test "file named test_integration_foo.py categorized as integration" {
+    mkdir -p "$TEST_TMPDIR/integ-tests"
+    cat > "$TEST_TMPDIR/integ-tests/test_integration_foo.py" <<'EOF'
+def test_api_call():
+    assert True
+EOF
+    run "$SCRIPTS_DIR/inventory-tests.sh" python "$TEST_TMPDIR/integ-tests"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['total_files'] == 1
+f = d['test_files'][0]
+assert f['category'] == 'integration', f'expected integration from filename, got {f[\"category\"]}'
+"
+}
+
+@test "typescript test files detected" {
+    mkdir -p "$TEST_TMPDIR/ts-tests"
+    cat > "$TEST_TMPDIR/ts-tests/app.test.ts" <<'EOF'
+import { expect } from 'vitest';
+
+it('works', () => {
+    expect(true).toBe(true);
+});
+
+test('also works', () => {
+    expect(1).toBe(1);
+});
+EOF
+    run "$SCRIPTS_DIR/inventory-tests.sh" typescript "$TEST_TMPDIR/ts-tests"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+assert d['total_files'] == 1, f'expected 1 test file, got {d[\"total_files\"]}'
+assert d['total_tests'] == 2, f'expected 2 tests (it + test), got {d[\"total_tests\"]}'
+paths = [f['path'] for f in d['test_files']]
+assert any('app.test.ts' in p for p in paths), f'expected app.test.ts in {paths}'
+"
+}
+
 @test "output is valid JSON with required fields" {
     mkdir -p "$TEST_TMPDIR/json-check"
     run "$SCRIPTS_DIR/inventory-tests.sh" python "$TEST_TMPDIR/json-check"

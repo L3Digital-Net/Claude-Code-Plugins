@@ -66,3 +66,41 @@ assert data['error'] == 'something broke'
     [ "$status" -eq 1 ]
     [[ "$output" == *"Profile not found"* ]]
 }
+
+@test "load_profile with valid JSON file returns the JSON content" {
+    echo '{"foo": "bar", "num": 42}' > "$TEST_TMPDIR/valid_profile.json"
+    run bash -c "source '$SCRIPTS_DIR/_common.sh' && load_profile '$TEST_TMPDIR/valid_profile.json'"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+assert data['foo'] == 'bar', f'foo mismatch: {data[\"foo\"]}'
+assert data['num'] == 42, f'num mismatch: {data[\"num\"]}'
+"
+}
+
+@test "load_profile with malformed JSON exits 1" {
+    echo 'not valid json {{{' > "$TEST_TMPDIR/bad_profile.json"
+    run bash -c "source '$SCRIPTS_DIR/_common.sh' && load_profile '$TEST_TMPDIR/bad_profile.json' 2>&1"
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"Invalid environment.json"* ]]
+}
+
+@test "run_check with empty command returns error" {
+    run bash -c "source '$SCRIPTS_DIR/_common.sh' && run_check '' 2>&1"
+    [ "$status" -ne 0 ]
+}
+
+@test "check_result with multiline evidence produces valid JSON" {
+    run bash -c 'source "'"$SCRIPTS_DIR"'/_common.sh" && printf "line one\nline two\nline three" | check_result "multi_check" "pass"'
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+assert data['name'] == 'multi_check'
+assert data['status'] == 'pass'
+assert 'line one' in data['evidence']
+assert 'line two' in data['evidence']
+assert 'line three' in data['evidence']
+"
+}

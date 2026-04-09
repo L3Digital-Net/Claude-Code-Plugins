@@ -66,13 +66,14 @@ def coerce(val):
     return val
 
 def parse_yaml(text):
-    root, stack = {}, [(0, root)]
+    root = {}
+    stack = [(0, root)]
     for raw in text.split("\n"):
         s = raw.rstrip()
         if not s or s.lstrip().startswith("#"): continue
         indent = len(s) - len(s.lstrip())
         stripped = s.strip()
-        while len(stack) > 1 and stack[-1][0] >= indent:
+        while len(stack) > 1 and stack[-1][0] > indent:
             stack.pop()
         parent = stack[-1][1]
         if stripped.startswith("- "):

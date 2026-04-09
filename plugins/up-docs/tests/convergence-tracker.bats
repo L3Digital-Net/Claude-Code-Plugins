@@ -92,6 +92,55 @@ teardown() {
     [ "$(echo "$output" | jq '.phases | length')" = "0" ]
 }
 
+@test "oscillation detection with oscillating data" {
+    bash "$SCRIPTS_DIR/convergence-tracker.sh" init
+    bash "$SCRIPTS_DIR/convergence-tracker.sh" start-phase 1
+
+    # iter 1: finding with key "X" present (objects with .key for finding_keys)
+    echo '{"findings":[{"key":"X"}],"fixes_applied":1}' | bash "$SCRIPTS_DIR/convergence-tracker.sh" record-iteration 1
+    # iter 2: finding "X" absent
+    echo '{"findings":[],"fixes_applied":0}' | bash "$SCRIPTS_DIR/convergence-tracker.sh" record-iteration 1
+    # iter 3: finding "X" reappears
+    echo '{"findings":[{"key":"X"}],"fixes_applied":1}' | bash "$SCRIPTS_DIR/convergence-tracker.sh" record-iteration 1
+
+    run bash "$SCRIPTS_DIR/convergence-tracker.sh" check-oscillation 1
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.oscillating')" = "true" ]
+}
+
+@test "max_iterations_reached status" {
+    bash "$SCRIPTS_DIR/convergence-tracker.sh" init
+    bash "$SCRIPTS_DIR/convergence-tracker.sh" start-phase 1
+
+    # Record 10 iterations each with findings (max_iterations defaults to 10)
+    for i in $(seq 1 10); do
+        echo "{\"findings\":[\"issue-$i\"],\"fixes_applied\":1}" \
+          | bash "$SCRIPTS_DIR/convergence-tracker.sh" record-iteration 1
+    done
+
+    run bash "$SCRIPTS_DIR/convergence-tracker.sh" check-convergence 1
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.max_iterations_reached')" = "true" ]
+    [ "$(echo "$output" | jq -r '.converged')" = "false" ]
+}
+
+@test "check-convergence updates phase status to converged" {
+    bash "$SCRIPTS_DIR/convergence-tracker.sh" init
+    bash "$SCRIPTS_DIR/convergence-tracker.sh" start-phase 1
+    echo '{"findings":[],"fixes_applied":0}' | bash "$SCRIPTS_DIR/convergence-tracker.sh" record-iteration 1
+
+    # Trigger convergence check which should update internal state
+    bash "$SCRIPTS_DIR/convergence-tracker.sh" check-convergence 1
+
+    # Now verify via status that the phase is marked converged
+    run bash "$SCRIPTS_DIR/convergence-tracker.sh" status
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.phases["1"].status')" = "converged" ]
+}
+
 @test "invalid subcommand exits 1" {
     run bash "$SCRIPTS_DIR/convergence-tracker.sh" bogus-command
     [ "$status" -eq 1 ]

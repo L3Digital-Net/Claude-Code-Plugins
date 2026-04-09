@@ -31,3 +31,31 @@ See [the section](#hello-world) for details.
     echo "$output" | jq -e . >/dev/null 2>&1
     [ "$(echo "$output" | jq '.total_links')" = "0" ]
 }
+
+@test "detects autolinks" {
+    local md='Check out <https://example.com> for more info.'
+    run bash -c "echo '$md' | bash \"$SCRIPTS_DIR/link-audit.sh\" -"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq '.total_links')" -ge 1 ]
+}
+
+@test "detects broken internal anchor" {
+    local md='# Existing Heading
+
+See [link](#nonexistent) for details.
+'
+    run bash -c "echo '$md' | bash \"$SCRIPTS_DIR/link-audit.sh\" -"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq '.internal.broken | length')" -ge 1 ]
+    [ "$(echo "$output" | jq -r '.internal.broken[0].target')" = "nonexistent" ]
+}
+
+@test "classifies internal relative links as needs_verification" {
+    local md='See [link](./page) for details.'
+    run bash -c "echo '$md' | bash \"$SCRIPTS_DIR/link-audit.sh\" -"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq '.internal.needs_verification | length')" -ge 1 ]
+}

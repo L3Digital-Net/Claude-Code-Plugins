@@ -40,3 +40,32 @@ for f in d['findings']:
 print('ok')
 "
 }
+
+@test "check-readme-structure: findings have valid severity values" {
+    run bash "$SCRIPTS_DIR/check-readme-structure.sh"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+for f in d['findings']:
+    assert f['severity'] in ('warn', 'info'), f'invalid severity: {f[\"severity\"]}'
+print('ok')
+"
+}
+
+@test "check-readme-structure: check field is readme-structure and findings are well-formed" {
+    run bash "$SCRIPTS_DIR/check-readme-structure.sh"
+    [ "$status" -eq 0 ]
+    echo "$output" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+assert d['check'] == 'readme-structure', 'wrong check name'
+# Every finding must have all four required fields with correct types
+for f in d['findings']:
+    assert isinstance(f['severity'], str), f'severity not str: {f}'
+    assert isinstance(f['path'], str), f'path not str: {f}'
+    assert isinstance(f['detail'], str), f'detail not str: {f}'
+    assert isinstance(f['auto_fix'], bool), f'auto_fix not bool: {f}'
+print('ok')
+"
+}
