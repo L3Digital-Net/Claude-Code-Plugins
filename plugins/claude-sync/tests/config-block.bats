@@ -1,0 +1,125 @@
+#!/usr/bin/env bats
+load bats-helpers
+
+setup() {
+    setup_test_env
+    export REAL_HOME="$HOME"
+    export HOME="$TEST_TMPDIR/fakehome"
+    mkdir -p "$HOME/.claude"
+}
+
+teardown() {
+    export HOME="$REAL_HOME"
+    teardown_test_env
+}
+
+@test "read with no CLAUDE.md returns block_found=false" {
+    run bash "$SCRIPTS_DIR/config-block.sh" read
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.block_found')" = "false" ]
+}
+
+@test "read with valid config block returns parsed JSON with all fields" {
+    cat > "$HOME/.claude/CLAUDE.md" << 'EOF'
+# My Config
+
+<!-- claude-sync-config
+sync_path: /mnt/share/sync
+repos_root: /home/user/projects
+machine_id: testbox
+exclude:
+  - .credentials.json
+  - statsig/
+-->
+
+Other stuff here.
+EOF
+
+    run bash "$SCRIPTS_DIR/config-block.sh" read
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.block_found')" = "true" ]
+    [ "$(echo "$output" | jq -r '.sync_path')" = "/mnt/share/sync" ]
+    [ "$(echo "$output" | jq -r '.repos_root')" = "/home/user/projects" ]
+    [ "$(echo "$output" | jq -r '.machine_id')" = "testbox" ]
+    [ "$(echo "$output" | jq '.exclude | length')" = "2" ]
+}
+
+@test "write creates config block" {
+    run bash -c 'echo "{\"sync_path\":\"/mnt/share\",\"repos_root\":\"/home/user/projects\",\"machine_id\":\"box1\"}" | bash "$SCRIPTS_DIR/config-block.sh" write'
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.block_found')" = "true" ]
+
+    # Verify file was actually written
+    [ -f "$HOME/.claude/CLAUDE.md" ]
+    grep -q "claude-sync-config" "$HOME/.claude/CLAUDE.md"
+}
+
+@test "update changes a single key" {
+    cat > "$HOME/.claude/CLAUDE.md" << 'EOF'
+<!-- claude-sync-config
+sync_path: /old/path
+machine_id: box1
+-->
+EOF
+
+    run bash "$SCRIPTS_DIR/config-block.sh" update sync_path /new/path
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.sync_path')" = "/new/path" ]
+    # machine_id should be preserved
+    [ "$(echo "$output" | jq -r '.machine_id')" = "box1" ]
+}
+
+@test "add-exclude appends to exclude list" {
+    cat > "$HOME/.claude/CLAUDE.md" << 'EOF'
+<!-- claude-sync-config
+sync_path: /mnt/share
+exclude:
+  - .credentials.json
+-->
+EOF
+
+    run bash "$SCRIPTS_DIR/config-block.sh" add-exclude "statsig/"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq '.exclude | length')" = "2" ]
+    [[ "$(echo "$output" | jq -r '.exclude[1]')" == "statsig/" ]]
+}
+
+@test "remove-exclude removes from exclude list" {
+    cat > "$HOME/.claude/CLAUDE.md" << 'EOF'
+<!-- claude-sync-config
+sync_path: /mnt/share
+exclude:
+  - .credentials.json
+  - statsig/
+-->
+EOF
+
+    run bash "$SCRIPTS_DIR/config-block.sh" remove-exclude "statsig/"
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq '.exclude | length')" = "1" ]
+    [ "$(echo "$output" | jq -r '.exclude[0]')" = ".credentials.json" ]
+}
+
+@test "validate with missing required fields returns valid=false" {
+    cat > "$HOME/.claude/CLAUDE.md" << 'EOF'
+<!-- claude-sync-config
+sync_path: /mnt/share
+-->
+EOF
+
+    run bash "$SCRIPTS_DIR/config-block.sh" validate
+    [ "$status" -eq 0 ]
+    echo "$output" | jq -e . >/dev/null 2>&1
+    [ "$(echo "$output" | jq -r '.valid')" = "false" ]
+    # Should mention missing repos_root and machine_id
+    local issues
+    issues=$(echo "$output" | jq -r '.issues[]')
+    [[ "$issues" == *"repos_root"* ]]
+    [[ "$issues" == *"machine_id"* ]]
+}

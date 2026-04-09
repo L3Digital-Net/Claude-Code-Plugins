@@ -13,8 +13,13 @@ set -euo pipefail
 PYTHON=$(command -v python3 2>/dev/null || command -v python 2>/dev/null) \
   || { echo '{"error":"python3 not found"}' >&2; exit 1; }
 
+# Capture stdin before the heredoc consumes it — piped JSON would otherwise
+# be lost because the heredoc replaces stdin for the python process.
+INPUT_JSON=$(cat)
+export INPUT_JSON
+
 $PYTHON << 'PYEOF'
-import json, re, sys
+import json, re, sys, os
 
 STOP_WORDS = {
     "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
@@ -65,7 +70,7 @@ def match_item(item, sections, open_questions):
     return "uncovered", None, "none"
 
 try:
-    data = json.load(sys.stdin)
+    data = json.loads(os.environ.get("INPUT_JSON", ""))
 except (json.JSONDecodeError, ValueError) as e:
     print(json.dumps({"error": f"Invalid JSON input: {e}"}), file=sys.stderr)
     sys.exit(1)
