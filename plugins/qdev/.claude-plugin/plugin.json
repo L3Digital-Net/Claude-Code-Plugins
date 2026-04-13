@@ -1,0 +1,10 @@
+{
+  "name": "qdev",
+  "version": "1.0.0",
+  "description": "Research-first quality review and spec sync across the development lifecycle. Two slash commands: /quality-review runs web research then an iterative gap/consistency fix loop until convergence, /spec-update brings a spec file up to date with the current implementation.",
+  "author": {
+    "name": "L3DigitalNet",
+    "url": "https://github.com/L3DigitalNet"
+  },
+  "homepage": "https://github.com/L3DigitalNet/Claude-Code-Plugins/tree/main/plugins/qdev"
+}
