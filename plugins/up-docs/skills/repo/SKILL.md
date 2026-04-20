@@ -1,64 +1,39 @@
 ---
 name: up-repo
-description: "Update repository documentation (README.md, docs/, CLAUDE.md) based on session changes. This skill should be used when the user runs /up-docs:repo."
+description: "Update repository documentation (README.md, docs/, CLAUDE.md) based on session changes by dispatching the up-docs-propagate-repo sub-agent. This skill should be used when the user runs /up-docs:repo."
 argument-hint: ""
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash
+allowed-tools: Read, Bash, Agent
 ---
 
 # /up-docs:repo
 
-Update the active repository's documentation files to reflect work done in the current session.
+Update the active repo's docs via the `up-docs-propagate-repo` sub-agent (Haiku).
 
 ## Workflow
 
-### 1. Assess Session Context
-
-Gather what changed during the session:
+### 1. Gather Session Context
 
 ```bash
 bash ${CLAUDE_PLUGIN_ROOT}/scripts/context-gather.sh
 ```
 
-Also consider the conversation history: files discussed, features implemented, bugs fixed, configuration changes made. Build a mental model of what the session accomplished.
+Combine with conversation history.
 
-### 2. Locate Documentation Files
+### 2. Build the Session-Change Summary
 
-Read the project CLAUDE.md for any `## Documentation` section that specifies which files to update.
+Read `${CLAUDE_PLUGIN_ROOT}/templates/session-change-summary.md` for the canonical format. Produce a concrete summary following that template — name exact keys/values/paths, not vague "updated config" language.
 
-If no explicit mapping exists, discover documentation files:
+### 3. Dispatch `up-docs-propagate-repo`
 
-```bash
-# Find all markdown docs in standard locations
-find . -maxdepth 1 -name "*.md" -type f
-find ./docs -name "*.md" -type f 2>/dev/null
-```
+Invoke the sub-agent via the Agent tool with `subagent_type: "up-docs-propagate-repo"`. The prompt has the session-change summary at the stable front, followed by any repo-specific context (CLAUDE.md `## Documentation` section if present).
 
-Common targets: `README.md`, `CLAUDE.md`, `CHANGELOG.md`, `docs/*.md`, and any other `.md` files at the project root or in `docs/`.
+### 4. Pass the Sub-agent's Output Through
 
-### 3. Read and Evaluate Each File
+The sub-agent returns a markdown table conforming to `templates/summary-report.md` single-layer "Repo" format. Emit it as the skill's final output. Do not make your own edits — the sub-agent did the work.
 
-Read every candidate documentation file. For each one, determine whether the session's changes make any part of it stale or incomplete.
+If the sub-agent fails entirely (MCP timeout, spawn error), report a single-row table noting the failure with a one-sentence reason.
 
-Evaluation criteria:
-- Does the file describe features, commands, or configuration that changed this session?
-- Are there sections that reference files, functions, or behavior that no longer match?
-- Is anything new from this session missing from the documentation?
+## Notes
 
-Skip files that are clearly unaffected by the session's work.
-
-### 4. Draft and Apply Updates
-
-For each file that needs changes:
-- Read the file's current content in full
-- Preserve the existing tone, structure, and formatting
-- Make targeted edits; do not rewrite sections that are still accurate
-- Add new content where the session introduced something not yet documented
-- Remove or correct content that the session's changes have invalidated
-
-Do not add boilerplate, badges, or sections that the file doesn't already have. Match the document's existing conventions.
-
-### 5. Summary Report
-
-Read `${CLAUDE_PLUGIN_ROOT}/templates/summary-report.md` for the output format.
-
-Emit the summary report using the **Repo** layer format. Every file examined gets a row in the table, including files where no changes were needed.
+- This skill no longer reads or edits files directly. All file work happens inside the sub-agent's isolated context, which keeps the main session's context window slim.
+- Layer boundaries (what belongs in repo docs vs wiki vs Notion) are inlined in the sub-agent's system prompt — not duplicated here.

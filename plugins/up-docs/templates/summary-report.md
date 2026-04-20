@@ -13,10 +13,10 @@ Use this template for the final output of every /up-docs command.
 
 | # | Page/File | Action | Summary of Changes |
 |---|-----------|--------|---------------------|
-| 1 | path/or/title | Created/Updated/No change needed | Brief description |
+| 1 | path/or/title | Created/Updated/No change needed/FAILED | Brief description |
 | 2 | ... | ... | ... |
 
-**Totals:** N updated | N created | N unchanged
+**Totals:** N updated | N created | N unchanged | N failed
 ```
 
 ## Rules
@@ -24,7 +24,8 @@ Use this template for the final output of every /up-docs command.
 - "Layer" is one of: Repo, Wiki, Notion, or All (with sub-sections per layer)
 - "Context" derives from git diff and session activity, not user input
 - Every page or file examined gets a row, even if no change was needed
-- Action is exactly one of: Created, Updated, No change needed
+- Action is exactly one of: Created, Updated, No change needed, FAILED
+- FAILED rows carry a one-sentence reason (e.g., "MCP timeout; retry exhausted") so the orchestrator can surface it clearly in the combined report
 - Summary of Changes is one sentence max
 - For /up-docs:all, emit one table per layer under its own heading
 - Totals line goes at the bottom of each table
@@ -61,3 +62,7 @@ Use this template for the final output of every /up-docs command.
 
 **Totals:** ...
 ```
+
+## Escalation Block (appended only when the drift auditor triggers it)
+
+When `/up-docs:all` or `/up-docs:drift` includes an auditor-generated escalation, append the block verbatim below the drift findings table. See `templates/drift-finding.md` for the canonical escalation format.
