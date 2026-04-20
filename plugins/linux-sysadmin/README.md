@@ -96,6 +96,14 @@ The `/sysadmin` command walks through:
 
 Each guide lives in `guides/{topic}/guide.md` with an optional `references/` subdirectory for annotated configs, cheatsheets, and documentation links.
 
+## Hooks
+
+All hooks are registered declaratively via `hooks/hooks.json` — no runtime setup needed.
+
+| Hook | Event | What it does |
+|------|-------|-------------|
+| `sysadmin-context.sh` | SessionStart | Detects whether the session's working directory is a sysadmin path (currently `/home/chris` exact or any subdirectory of `/home/chris/git-luminous3d/homelab`). When it matches, injects a one-line context reminder telling Claude to invoke the `linux-sysadmin:sysadmin` skill before running service commands. Silent outside sysadmin paths; 5-second timeout. |
+
 ## Design Decisions
 
 - **Skills over MCP**: The predecessor plugin (`linux-sysadmin-mcp`) was a TypeScript MCP server with 18 tools. It was replaced because Claude's Bash tool plus skill-provided knowledge achieves the same outcomes without the build step, runtime process, or MCP overhead.

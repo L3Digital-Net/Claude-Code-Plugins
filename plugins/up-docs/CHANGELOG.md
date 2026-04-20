@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.0] - 2026-04-20
+
+### Added
+- `up-docs-propagate-repo` agent now performs **handoff.md pruning** and **stale-file candidate detection** on every run as routine maintenance:
+  - **Handoff pruning:** `docs/handoff.md` "Last Updated" section retains at most the 5 most recent entries — older entries are pruned (session outcomes live in git log + CHANGELOGs already). "Bugs Found And Fixed" is explicitly non-prunable (persistent log). Pruning rules for "What Is Deployed", "Architecture", "Gotchas" require demonstrable staleness, not age alone.
+  - **Stale file scan:** globs `docs/superpowers/plans/`, `docs/superpowers/specs/`, `docs/plans/`, `docs/specs/`, and ISO-8601-prefixed files under `docs/` for candidates. A file is flagged only when ALL three hold: (a) contains a completion marker (`Status: ✅ Complete`, `DO NOT EXECUTE`, `superseded by`, etc.); (b) referenced work is shipped/abandoned per CHANGELOG evidence; (c) older than 60 days. Active plans, templates, handoff/conventions/CLAUDE/README/AGENTS, and persistent logs are never flagged.
+  - **Permission-gated deletion:** agent surfaces candidates in a new `## Stale File Candidates` section of its output; it never executes `rm` or `git rm`. The `/up-docs:repo` and `/up-docs:all` skills pick up the list, present it via `AskUserQuestion` (multi-select), and run `git rm` only on explicitly-approved paths. No-op when zero candidates.
+- `up-docs-propagate-repo` guardrails explicitly forbid destructive bash operations (`rm`, `git rm`, `mv` of delete-marked files, truncating redirects). Deletion remains a skill+user responsibility.
+- `/up-docs:repo` and `/up-docs:all` gain `AskUserQuestion` in their `allowed-tools` list and a new Step 5/6 for stale-candidate review.
+
+### Changed
+- `up-docs-audit-drift` output-format block now explicitly enumerates the five required `stats` keys (`total_findings`, `by_layer`, `high_confidence`, `unverifiable`, `destructive_fixes_required`) and states that `unverifiable` must always be emitted, even when zero. Prior `<output_format>` listed the key in its example but a `/up-docs:all` run still emitted the legacy 4-key shape — the few-shot gradient from single-finding examples without stats blocks pulled the model toward pre-training defaults. Explicit enumeration pins the schema.
+
+
 ## [0.5.1] - 2026-04-20
 
 ### Fixed

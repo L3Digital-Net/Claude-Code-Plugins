@@ -2,7 +2,7 @@
 name: up-repo
 description: "Update repository documentation (README.md, docs/, CLAUDE.md) based on session changes by dispatching the up-docs-propagate-repo sub-agent. This skill should be used when the user runs /up-docs:repo."
 argument-hint: ""
-allowed-tools: Read, Bash, Agent
+allowed-tools: Read, Bash, Agent, AskUserQuestion
 ---
 
 # /up-docs:repo
@@ -33,11 +33,24 @@ The sub-agent returns a markdown table conforming to `templates/summary-report.m
 
 If the sub-agent fails entirely (MCP timeout, spawn error), report a single-row table noting the failure with a one-sentence reason.
 
-### 5. Confirm Updates + Emit Handoff Brief
+### 5. Review Stale File Candidates (conditional)
 
-After the sub-agent's table is displayed, emit both of these in the skill's final output:
+If the sub-agent's output includes a `## Stale File Candidates` section, present the listed paths to the user via `AskUserQuestion` and execute deletions only on explicit approval:
 
-**(a) Explicit update confirmation.** One or two lines summarizing the table: files changed vs. files audited-but-unchanged. Example: `"Updated: docs/handoff.md, docs/conventions.md. Audited no-change: README.md, CLAUDE.md."`
+1. Parse the candidate rows from the sub-agent's markdown table. Each row has a path, reason, and confidence.
+2. Build an `AskUserQuestion` with `multiSelect: true`, one option per candidate (up to 4 — if more candidates than 4, batch in subsequent questions or use the first 4 with a "Delete 4; rerun to review remaining" label on the 4th option).
+3. Each option label is the filename (basename, not full path, for readability); description carries the reason + confidence verbatim from the agent.
+4. For every path the user selects, run `git rm <path>` (do NOT use plain `rm` — staying inside git keeps history recoverable). Report what was deleted.
+5. For paths the user does NOT select, leave them alone — no follow-up, no retry.
+6. If the user cancels the question entirely, skip deletions and continue to Step 6.
+
+If the sub-agent emitted zero stale candidates (or omitted the section entirely), skip Step 5 silently.
+
+### 6. Confirm Updates + Emit Handoff Brief
+
+After the sub-agent's table is displayed (and after any Step 5 deletions), emit both of these in the skill's final output:
+
+**(a) Explicit update confirmation.** One or two lines summarizing the table: files changed vs. files audited-but-unchanged vs. files deleted (if any). Example: `"Updated: docs/handoff.md, docs/conventions.md. Deleted: 2 stale plans (user-approved). Audited no-change: README.md, CLAUDE.md."`
 
 **(b) Handoff for Next Session brief.** Read `docs/handoff.md` (if present) and emit a compact next-session brief using this structure:
 
@@ -63,4 +76,5 @@ Keep it scannable — no narrative prose, no full-file dump. If `docs/handoff.md
 
 - This skill no longer reads or edits files directly. All file work happens inside the sub-agent's isolated context, which keeps the main session's context window slim.
 - Layer boundaries (what belongs in repo docs vs wiki vs Notion) are inlined in the sub-agent's system prompt — not duplicated here.
-- The handoff brief in Step 5 is a READ-only excerpt of the updated `docs/handoff.md`; the skill does not edit the file at this stage.
+- The handoff brief in Step 6 is a READ-only excerpt of the updated `docs/handoff.md`; the skill does not edit the file at this stage.
+- Step 5 stale-file deletion uses `git rm` (not plain `rm`) so deletions stay in git history and can be reverted. The skill never deletes without explicit `AskUserQuestion` consent, even for candidates the agent marked `high` confidence.
