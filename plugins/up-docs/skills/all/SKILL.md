@@ -79,6 +79,32 @@ Produce one combined report: a heading per layer, each with its own table and to
 
 Do not re-fetch pages or files. Do not make your own edits. Your job after dispatching is pure collation.
 
+### 6. Confirm Updates + Emit Handoff Brief
+
+After the combined report is displayed, emit both of these as the final section of the skill's output:
+
+**(a) Explicit update confirmation.** One or two lines per layer summarizing what changed vs. what was audited-but-unchanged. Example: `"Repo: updated docs/handoff.md, docs/conventions.md. Wiki: updated 2 pages (Authentik, Monitoring). Notion: no change."`
+
+**(b) Handoff for Next Session brief.** Read `docs/handoff.md` (if present) and emit a compact next-session brief using this structure:
+
+```markdown
+## 📋 Handoff for Next Session
+
+**Last work:** <top Last Updated line, verbatim or condensed to one sentence>
+
+**Currently deployed:**
+- <What Is Deployed bullets — one per row, name + version + state>
+
+**Open items — what remains:**
+- <What Remains bullets — unchanged>
+
+**Open bugs:** <"None" if Bugs Found And Fixed log has no unresolved items, otherwise list them>
+
+**Gotchas worth carrying forward:** <one sentence pulling the top 2–3 Gotchas>
+```
+
+Keep it scannable — no narrative prose, no full-file dump. If `docs/handoff.md` does not exist, skip this subsection silently. The brief is a READ-only excerpt of the already-updated handoff file; do not re-edit.
+
 ## Layer Boundaries (reference)
 
 | Layer | Content Level | Example |
