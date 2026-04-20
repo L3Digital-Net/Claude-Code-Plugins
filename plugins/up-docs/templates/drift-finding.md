@@ -14,9 +14,9 @@ Canonical format for findings emitted by the `up-docs-audit-drift` sub-agent. Em
       "page_id": "<Outline/Notion page ID, or null for repo>",
       "stale_line": "<exact text as it currently appears>",
       "should_say": "<what it should be, based on live state or session summary>",
-      "confidence": "low | medium | high",
+      "confidence": "low | medium | high | unverifiable",
       "destructive_fix": false,
-      "evidence": "<command or reference that produced ground truth>"
+      "evidence": "<command or reference that produced ground truth — NEVER fabricate>"
     }
   ],
   "escalation": {
@@ -27,6 +27,7 @@ Canonical format for findings emitted by the `up-docs-audit-drift` sub-agent. Em
     "total_findings": 0,
     "by_layer": {"repo": 0, "wiki": 0, "notion": 0},
     "high_confidence": 0,
+    "unverifiable": 0,
     "destructive_fixes_required": 0
   }
 }
@@ -42,9 +43,9 @@ Canonical format for findings emitted by the `up-docs-audit-drift` sub-agent. Em
 | `page_id` | Machine ID for wiki/Notion; `null` for repo. Used by downstream propagators to target the right page. |
 | `stale_line` | Exact text currently in the doc. Do not paraphrase. This is what a propagator will match against. |
 | `should_say` | What the line should be. If unknown (low confidence), copy `stale_line` and note in `evidence`. |
-| `confidence` | `"high"` = verified against live state; `"medium"` = verified against another doc or the session summary; `"low"` = unverified but smells wrong. |
+| `confidence` | `"high"` = verified against live state; `"medium"` = verified against another doc or the session summary; `"low"` = unverified but smells wrong; `"unverifiable"` = verification command was attempted and failed (use when you would otherwise have been tempted to fabricate). |
 | `destructive_fix` | `true` if the fix would require page deletion, collection reorg, or anything that can't be cleanly undone. |
-| `evidence` | The command/URL/page-ID that produced ground truth. Empty string only for low-confidence findings. |
+| `evidence` | Exact verbatim output of the verification command that produced ground truth — never summarized, never paraphrased, never inferred. If the command failed (non-zero exit, empty output, "No such file" error): set `confidence` to `"unverifiable"` and write `"Command failed: <exact error>"` here. Empty string is allowed only for `"low"` confidence findings where no command was attempted (e.g., host unreachable). **Never fabricate this field** — a finding with invented evidence is worse than no finding. See the agent prompt's `<verification_discipline>` block. |
 
 ## Markdown Form (rendered for user)
 

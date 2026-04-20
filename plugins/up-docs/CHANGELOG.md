@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.1] - 2026-04-20
+
+### Fixed
+- `up-docs-audit-drift` agent no longer fabricates verification evidence. The agent prompt now has a dedicated `<verification_discipline>` block defining two sanctioned responses when a verification command fails (omit the finding, or record with `"confidence": "unverifiable"` and put the literal error text in `evidence`). Added a worked example covering the "No such file or directory" case that previously led to invented findings (Hermes v0.8.0 → v1.0.0 fabrication reported 2026-04-20). Confidence enum extended to `"high" | "medium" | "low" | "unverifiable"`, and stats block gained an `unverifiable` counter.
+- `templates/drift-finding.md` `evidence` field rule rewritten with explicit guard: verbatim output only, `"Command failed: <error>"` when verification fails, never fabricate. Confidence enum updated to match.
+
+
 ## [0.5.0] - 2026-04-20
 
 ### Added
