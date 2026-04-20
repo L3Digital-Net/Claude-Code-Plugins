@@ -33,7 +33,34 @@ The sub-agent returns a markdown table conforming to `templates/summary-report.m
 
 If the sub-agent fails entirely (MCP timeout, spawn error), report a single-row table noting the failure with a one-sentence reason.
 
+### 5. Confirm Updates + Emit Handoff Brief
+
+After the sub-agent's table is displayed, emit both of these in the skill's final output:
+
+**(a) Explicit update confirmation.** One or two lines summarizing the table: files changed vs. files audited-but-unchanged. Example: `"Updated: docs/handoff.md, docs/conventions.md. Audited no-change: README.md, CLAUDE.md."`
+
+**(b) Handoff for Next Session brief.** Read `docs/handoff.md` (if present) and emit a compact next-session brief using this structure:
+
+```markdown
+## 📋 Handoff for Next Session
+
+**Last work:** <top Last Updated line, verbatim or condensed to one sentence>
+
+**Currently deployed:**
+- <What Is Deployed bullets — one per row, name + version + state>
+
+**Open items — what remains:**
+- <What Remains bullets — unchanged>
+
+**Open bugs:** <"None" if Bugs Found And Fixed log has no unresolved items, otherwise list them>
+
+**Gotchas worth carrying forward:** <one sentence pulling the top 2–3 Gotchas>
+```
+
+Keep it scannable — no narrative prose, no full-file dump. If `docs/handoff.md` does not exist, skip this subsection silently (the repo has not adopted the handoff pattern yet).
+
 ## Notes
 
 - This skill no longer reads or edits files directly. All file work happens inside the sub-agent's isolated context, which keeps the main session's context window slim.
 - Layer boundaries (what belongs in repo docs vs wiki vs Notion) are inlined in the sub-agent's system prompt — not duplicated here.
+- The handoff brief in Step 5 is a READ-only excerpt of the updated `docs/handoff.md`; the skill does not edit the file at this stage.
