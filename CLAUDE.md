@@ -31,6 +31,7 @@ Claude-Code-Plugins/
 ├── .claude-plugin/marketplace.json   # Marketplace catalog
 ├── .github/workflows/                # CI: codeql, ha-dev-plugin-tests, plugin-test-harness-ci
 ├── plugins/
+│   ├── claude-sync/                  # Claude Code environment sync across workstations
 │   ├── design-assistant/             # Design document authoring and review
 │   ├── docs-manager/                 # Documentation lifecycle management (legacy)
 │   ├── github-repo-manager/          # Conversational GitHub repo maintenance
@@ -41,6 +42,7 @@ Claude-Code-Plugins/
 │   ├── opus-context/                 # 1M context window optimizer for Opus 4.6
 │   ├── plugin-test-harness/          # Iterative test/fix/reload loop (TypeScript)
 │   ├── python-dev/                   # Python development skills (11 domain skills)
+│   ├── qdev/                         # Development quality toolkit (research, review, deps-audit, doc-sync)
 │   ├── qt-suite/                     # Qt development and testing toolkit
 │   ├── release-pipeline/             # Autonomous release pipeline
 │   ├── repo-hygiene/                 # Autonomous repo maintenance sweep
