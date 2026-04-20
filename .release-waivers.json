@@ -111,6 +111,11 @@
       "reason": "Markdown-only plugin — 2 skill files with no executable code to test"
     },
     {
+      "check": "missing_tests",
+      "plugin": "qdev",
+      "reason": "Markdown-only plugin — skill and agent collection with no executable code to test"
+    },
+    {
       "check": "protected_branch",
       "plugin": "*",
       "reason": "Repo owner commits directly to main via local branch protection hooks — no PR workflow"
