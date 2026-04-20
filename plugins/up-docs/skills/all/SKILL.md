@@ -49,11 +49,13 @@ Field rules (from the template):
 
 Invoke the three propagator sub-agents **in a single message with three Agent tool calls** so they run concurrently (the tool was called `Task` before Claude Code v2.1.63 and still accepts that name as an alias). Each receives the session-change summary as the stable front of its prompt; layer-specific detail goes at the end (cache-friendly structure).
 
-| Sub-agent | Purpose |
-|-----------|---------|
-| `up-docs-propagate-repo` | Updates README.md, docs/, CLAUDE.md |
-| `up-docs-propagate-wiki` | Updates Outline pages at implementation-reference level |
-| `up-docs-propagate-notion` | Updates Notion at strategic/organizational level |
+| Sub-agent — pass as `subagent_type` | Purpose |
+|-------------------------------------|---------|
+| `up-docs:up-docs-propagate-repo` | Updates README.md, docs/, CLAUDE.md |
+| `up-docs:up-docs-propagate-wiki` | Updates Outline pages at implementation-reference level |
+| `up-docs:up-docs-propagate-notion` | Updates Notion at strategic/organizational level |
+
+The `up-docs:` prefix is mandatory — plugin-defined agents are only addressable through their plugin namespace. Calling `Agent` with the bare name (e.g. `"up-docs-propagate-repo"`) returns "Agent type not found".
 
 Each sub-agent returns a single-layer markdown table per `templates/summary-report.md`.
 
@@ -63,7 +65,7 @@ If a propagator returns a FAILED row or errors out entirely, record the failure 
 
 ### 4. Dispatch Drift Auditor (sequentially, after propagators)
 
-Once all three propagators return, invoke `up-docs-audit-drift` via the Agent tool. Pass it the same session-change summary plus the three propagator reports (so the auditor knows what was already fixed and does not re-report those items).
+Once all three propagators return, invoke the auditor via the Agent tool with `subagent_type: "up-docs:up-docs-audit-drift"`. Pass it the same session-change summary plus the three propagator reports (so the auditor knows what was already fixed and does not re-report those items).
 
 The auditor returns **both** a JSON findings block and a markdown findings table. It is read-only: it does not fix.
 

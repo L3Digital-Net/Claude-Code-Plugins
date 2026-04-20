@@ -25,7 +25,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/templates/session-change-summary.md` for the canonic
 
 ### 3. Dispatch `up-docs-propagate-repo`
 
-Invoke the sub-agent via the Agent tool with `subagent_type: "up-docs-propagate-repo"`. The prompt has the session-change summary at the stable front, followed by any repo-specific context (CLAUDE.md `## Documentation` section if present).
+Invoke the sub-agent via the Agent tool with `subagent_type: "up-docs:up-docs-propagate-repo"` (the `up-docs:` prefix is required — plugin-defined agents are only addressable through their plugin namespace). The prompt has the session-change summary at the stable front, followed by any repo-specific context (CLAUDE.md `## Documentation` section if present).
 
 ### 4. Pass the Sub-agent's Output Through
 
