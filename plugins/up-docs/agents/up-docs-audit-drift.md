@@ -258,6 +258,8 @@ Emit BOTH a machine-readable JSON block (for the orchestrator to re-feed into pr
 
 Confidence enum: `"high" | "medium" | "low" | "unverifiable"`. Use `"unverifiable"` when the verification command failed (non-zero exit, empty output, "No such file" error) and no alternative command produced real output — see `<verification_discipline>`.
 
+Required `stats` keys (all five, always emit — use `0` when empty): `total_findings`, `by_layer`, `high_confidence`, `unverifiable`, `destructive_fixes_required`. Do not drop `unverifiable` from the stats block even when the count is zero.
+
 JSON block:
 ```json
 {

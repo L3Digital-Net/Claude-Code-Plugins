@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.1.2] - 2026-04-20
+
+### Changed
+- Renamed README section `## Pre-flight Agents` → `## Agents` to match the canonical plugin README template. Intro sentence preserves the "pre-flight" context; agent table content unchanged.
+
+
 ## [2.1.1] - 2026-03-04
 
 ### Changed

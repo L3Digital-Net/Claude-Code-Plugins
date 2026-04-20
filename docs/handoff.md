@@ -4,6 +4,7 @@
 
 ## Last Updated
 
+- 2026-04-20 — Polish/cleanup pass: release-pipeline 2.1.2 (README section rename `Pre-flight Agents` → `Agents`), linux-sysadmin 2.1.2 (README `## Hooks` section added), up-docs 0.6.0 (new handoff.md pruning + permission-gated stale-file scan in propagate-repo; drift auditor stats enum pinned to five required keys). Confirmed qdev stays.
 - 2026-04-20 — Released up-docs 0.5.1 (fixed `up-docs-audit-drift` evidence fabrication — added `<verification_discipline>` block with sanctioned omit/unverifiable responses when verification commands fail; "unverifiable" confidence value added; template evidence-field guard strengthened).
 - 2026-04-20 — Released up-docs 0.5.0 (mandatory handoff.md + conventions.md audit in propagate-repo; repo-doc human/LLM audience split codified; Handoff for Next Session brief emitted by `/up-docs:repo` and `/up-docs:all`). Added PLUGIN-001 convention (plugin-namespaced `subagent_type`) and expanded DOC-001 to make human/LLM audience split explicit.
 - 2026-04-20 — Released up-docs 0.4.1 (fixed plugin-namespaced subagent_type in five skills to resolve "Agent type not found" errors). Prior: Released up-docs 0.4.0, home-assistant-dev 2.2.6, plugin-test-harness 0.7.4, qdev 1.2.1; added repo docs scaffold; ran `/up-docs:all` (verified sub-agent architecture + 3 drift fixes applied); ran `/hygiene` (qdev added to root README table/section/tree).
@@ -22,16 +23,16 @@
 
 | Plugin | Version | Status |
 |--------|---------|--------|
-| up-docs | 0.5.1 | Released; audit-drift agent no longer fabricates verification evidence — new `<verification_discipline>` block with omit/unverifiable escape paths; template evidence-field guard tightened. Prior 0.5.0: mandatory handoff.md + conventions.md audit in propagate-repo; human/LLM audience split; Handoff-for-Next-Session brief. GitHub release tag: `up-docs/v0.5.1` |
+| up-docs | 0.6.0 | Released; propagate-repo agent now performs handoff.md pruning (retain most recent 5 Last Updated entries; Bugs Found And Fixed never pruned) and permission-gated stale-file scan (plans/specs/dated `.md` with completion markers + shipped work + >60 days → surfaced as candidates; skill asks via AskUserQuestion; deletion only on explicit consent via `git rm`). Includes drift-auditor stats-key enum pinning. Prior 0.5.1: verification_discipline; evidence-field guard. Prior 0.5.0: mandatory handoff+conventions audit; audience split; Handoff-for-Next-Session brief. GitHub release tag: `up-docs/v0.6.0` |
 | home-assistant-dev | 2.2.6 | Released; stale version refs in DESIGN_DOCUMENT.md fixed. GitHub release tag: `home-assistant-dev/v2.2.6` |
 | plugin-test-harness | 0.7.4 | Released; TypeScript config fixes (tsconfig types, jest transform). 50 tests now pass. GitHub release tag: `plugin-test-harness/v0.7.4` |
-| qdev | 1.2.1 | Released; first-ever release (no prior tags). Added `missing_tests` waiver. GitHub release tag: `qdev/v1.2.1` |
+| qdev | 1.2.1 | Released; first-ever release (no prior tags). Added `missing_tests` waiver. Kept in marketplace (user confirmed useful 2026-04-20). GitHub release tag: `qdev/v1.2.1` |
+| release-pipeline | 2.1.2 | Released; README section rename for template compliance. GitHub release tag: `release-pipeline/v2.1.2` |
+| linux-sysadmin | 2.1.2 | Released; README `## Hooks` section added documenting the SessionStart context-injection hook. GitHub release tag: `linux-sysadmin/v2.1.2` |
 
 ## What Remains
 
 - Monitor plugin-test-harness CI stability after TypeScript config fixes (jest transform improvements may affect other test suites).
-- qdev requires ongoing maintenance (low activity, no tests, markdown-only) — consider if it should be kept or archived.
-- release-pipeline and linux-sysadmin READMEs each need a short table section added (Agents and Hooks respectively); see hygiene sweep notes in session context.
 
 ## Bugs Found And Fixed
 

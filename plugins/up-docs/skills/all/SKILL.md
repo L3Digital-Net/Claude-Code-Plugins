@@ -2,7 +2,7 @@
 name: up-all
 description: "Update all three documentation layers (repo, wiki, Notion) via parallel sub-agent propagation, then run drift audit. This skill should be used when the user runs /up-docs:all."
 argument-hint: ""
-allowed-tools: Read, Bash, Agent
+allowed-tools: Read, Bash, Agent, AskUserQuestion
 ---
 
 # /up-docs:all
@@ -79,9 +79,22 @@ Produce one combined report: a heading per layer, each with its own table and to
 
 Do not re-fetch pages or files. Do not make your own edits. Your job after dispatching is pure collation.
 
-### 6. Confirm Updates + Emit Handoff Brief
+### 6. Review Stale File Candidates (conditional)
 
-After the combined report is displayed, emit both of these as the final section of the skill's output:
+If the repo propagator's report includes a `## Stale File Candidates` section, present the listed paths to the user via `AskUserQuestion` and execute deletions only on explicit approval:
+
+1. Parse the candidate rows from the repo propagator's output. Each row has a path, reason, and confidence.
+2. Build an `AskUserQuestion` with `multiSelect: true`, one option per candidate (up to 4 — if more, batch in subsequent questions).
+3. Each option label is the filename basename; description carries the reason + confidence verbatim.
+4. For every path the user selects, run `git rm <path>`. Report what was deleted.
+5. Paths the user does not select are left alone.
+6. If the user cancels, skip deletions and continue to Step 7.
+
+If the repo propagator emitted zero stale candidates, skip Step 6 silently.
+
+### 7. Confirm Updates + Emit Handoff Brief
+
+After the combined report is displayed (and after any Step 6 deletions), emit both of these as the final section of the skill's output:
 
 **(a) Explicit update confirmation.** One or two lines per layer summarizing what changed vs. what was audited-but-unchanged. Example: `"Repo: updated docs/handoff.md, docs/conventions.md. Wiki: updated 2 pages (Authentik, Monitoring). Notion: no change."`
 

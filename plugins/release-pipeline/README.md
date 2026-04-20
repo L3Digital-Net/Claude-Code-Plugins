@@ -96,9 +96,9 @@ Natural language triggers also route to the menu: "merge to main", "cut a releas
 | Dry Run | Always | Simulate a full release (version bump preview, changelog preview) without committing, tagging, or pushing. |
 | Changelog Preview | Always | Generate and display the changelog entry without writing it. |
 
-## Pre-flight Agents
+## Agents
 
-Three agents run in parallel before any release operation (Phase 1). All three must report PASS or WARN to proceed.
+Three pre-flight agents run in parallel before any release operation (Phase 1). All three must report PASS or WARN to proceed.
 
 | Agent | Model | Role |
 |-------|-------|------|
