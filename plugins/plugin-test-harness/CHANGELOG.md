@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.7.4] - 2026-04-20
+
+### Changed
+- npm audit fix - resolve hono, path-to-regexp CVEs
+
+### Fixed
+- unblock 3 plugin releases
+
+
 ## [0.7.3] - 2026-04-07
 
 ### Changed
