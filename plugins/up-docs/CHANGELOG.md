@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.1] - 2026-04-20
+
+### Fixed
+- Orchestrator and wrapper skills now pass the plugin-namespaced `subagent_type` (`up-docs:up-docs-propagate-repo`, etc.) to the Agent tool. Previous bare-name strings (`up-docs-propagate-repo`) caused "Agent type not found" errors because Claude Code only addresses plugin-defined agents through their plugin namespace. Affected: `skills/all/SKILL.md`, `skills/repo/SKILL.md`, `skills/wiki/SKILL.md`, `skills/notion/SKILL.md`, `skills/drift/SKILL.md`.
+
+
 ## [0.4.0] - 2026-04-19
 
 ### Added

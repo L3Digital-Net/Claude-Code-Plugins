@@ -25,7 +25,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/templates/session-change-summary.md` for the canonic
 
 ### 3. Dispatch `up-docs-propagate-wiki`
 
-Invoke the sub-agent via the Agent tool with `subagent_type: "up-docs-propagate-wiki"`. Put the session-change summary at the stable front of the prompt; add wiki-specific context (CLAUDE.md `## Documentation` collection mapping, if present) at the end for cache-friendliness.
+Invoke the sub-agent via the Agent tool with `subagent_type: "up-docs:up-docs-propagate-wiki"` (the `up-docs:` prefix is required — plugin-defined agents are only addressable through their plugin namespace). Put the session-change summary at the stable front of the prompt; add wiki-specific context (CLAUDE.md `## Documentation` collection mapping, if present) at the end for cache-friendliness.
 
 ### 4. Pass the Sub-agent's Output Through
 

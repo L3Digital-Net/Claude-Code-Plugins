@@ -38,7 +38,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/templates/session-change-summary.md` for the canonic
 
 ### 3. Dispatch `up-docs-audit-drift`
 
-Invoke via the Agent tool with `subagent_type: "up-docs-audit-drift"`. The prompt:
+Invoke via the Agent tool with `subagent_type: "up-docs:up-docs-audit-drift"` (the `up-docs:` prefix is required — plugin-defined agents are only addressable through their plugin namespace). The prompt:
 - Session-change summary at the stable front
 - Collection scope argument (if provided) at the end
 - The reference docs `skills/drift/references/convergence-tracking.md` and `skills/drift/references/server-inspection.md` are read by the sub-agent itself; do not duplicate their content into the prompt.
