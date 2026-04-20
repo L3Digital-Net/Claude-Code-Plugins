@@ -2,6 +2,15 @@
 
 All notable changes to the Home Assistant Development Plugin are documented here.
 
+## [2.2.6] - 2026-04-20
+
+### Changed
+- npm audit fix - resolve hono, path-to-regexp CVEs
+
+### Fixed
+- unblock 3 plugin releases
+
+
 ## [2.2.5] - 2026-04-07
 
 ### Changed
