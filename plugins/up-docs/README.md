@@ -4,7 +4,7 @@ Update documentation across three layers (repo, Outline wiki, Notion) based on w
 
 ## Summary
 
-Documentation lives in three places with different purposes: repo-local files capture project-specific details, the Outline wiki holds implementation-level reference material, and Notion maintains strategic context and organizational knowledge. Keeping all three in sync after a work session means explaining the same layering rules every time. up-docs encodes those rules into five slash commands: four for targeted updates that infer changes from session context, and one for comprehensive drift analysis that SSHes into live infrastructure, syncs the wiki, resolves contradictions, and verifies links before updating Notion.
+Documentation lives in three places with different purposes: repo-local files capture project-specific details, the Outline wiki holds implementation-level reference material, and Notion maintains strategic context and organizational knowledge. Keeping all three in sync after a work session means explaining the same layering rules every time. up-docs encodes those rules into five slash commands, each of which dispatches a dedicated sub-agent on the model tier that fits its workload: Haiku for propagation (mechanical edits scoped to an explicit change list) and Sonnet for drift detection (search + infer against live state).
 
 ## Principles
 
@@ -38,33 +38,44 @@ claude --plugin-dir ./plugins/up-docs
 
 ## How It Works
 
-### Session Update Commands
+### /up-docs:all Orchestration
 
 ```mermaid
 flowchart TD
-    User([User]) -->|"/up-docs:repo<br/>/up-docs:wiki<br/>/up-docs:notion<br/>/up-docs:all"| Assess[Assess session context<br/>git diff + conversation]
-    Assess --> Mapping[Read CLAUDE.md<br/>for doc mapping]
-    Mapping --> Repo{Repo layer?}
-    Repo -->|yes| RepoUpdate[Find and update<br/>README, docs/, CLAUDE.md]
-    Repo -->|no| Wiki{Wiki layer?}
-    RepoUpdate --> Wiki
-    Wiki -->|yes| WikiUpdate[Search Outline,<br/>update implementation docs]
-    Wiki -->|no| Notion{Notion layer?}
-    WikiUpdate --> Notion
-    Notion -->|yes| NotionUpdate[Search Notion,<br/>update strategic context]
-    Notion -->|no| Summary((Summary report))
-    NotionUpdate --> Summary
+    User([User]) -->|"/up-docs:all"| Orchestrator[Orchestrator skill<br/>gather context + build<br/>session-change summary]
+    Orchestrator --> Dispatch[Parallel dispatch<br/>via Agent tool]
+    Dispatch --> Repo[up-docs-propagate-repo<br/>Haiku]
+    Dispatch --> Wiki[up-docs-propagate-wiki<br/>Haiku]
+    Dispatch --> Notion[up-docs-propagate-notion<br/>Haiku]
+    Repo --> Audit[up-docs-audit-drift<br/>Sonnet]
+    Wiki --> Audit
+    Notion --> Audit
+    Audit --> Report((Combined report:<br/>3 layer tables +<br/>drift findings))
+```
+
+### Individual Commands
+
+```mermaid
+flowchart TD
+    User([User]) -->|"/up-docs:repo<br/>/up-docs:wiki<br/>/up-docs:notion"| Wrapper[Thin wrapper skill<br/>builds session-change summary]
+    Wrapper --> Agent[Single propagator sub-agent<br/>Haiku, isolated context]
+    Agent --> Table((Single-layer<br/>summary table))
 ```
 
 ### Drift Analysis
 
 ```mermaid
 flowchart TD
-    User([User]) -->|"/up-docs:drift [collection]"| P1[Phase 1: Infrastructure → Wiki<br/>SSH inspect, compare, update]
-    P1 -->|converged| P2[Phase 2: Wiki Consistency<br/>Cross-reference, resolve contradictions]
-    P2 -->|converged| P3[Phase 3: Link Integrity<br/>Verify links, fix broken, enrich]
-    P3 -->|converged| P4[Phase 4: Notion Sync<br/>Update strategic layer]
-    P4 --> Report((Drift Analysis Report))
+    User([User]) -->|"/up-docs:drift [collection]"| Wrapper2[Thin wrapper skill<br/>builds session-change summary]
+    Wrapper2 --> Auditor[up-docs-audit-drift<br/>Sonnet, read-only]
+    Auditor --> P1[Phase 1: Infrastructure → Wiki]
+    Auditor --> P2[Phase 2: Wiki Consistency]
+    Auditor --> P3[Phase 3: Link Integrity]
+    Auditor --> P4[Phase 4: Notion Relevance]
+    P1 --> Findings((JSON findings +<br/>markdown table +<br/>optional escalation))
+    P2 --> Findings
+    P3 --> Findings
+    P4 --> Findings
 ```
 
 ## Usage
@@ -97,13 +108,24 @@ The mapping is intentionally loose. It points to the general area and lets Claud
 
 ## Skills
 
-| Skill | Invoked by |
-|-------|------------|
-| `repo` | `/up-docs:repo` or `/up-docs:all` |
-| `wiki` | `/up-docs:wiki` or `/up-docs:all` |
-| `notion` | `/up-docs:notion` or `/up-docs:all` |
-| `all` | `/up-docs:all` |
-| `drift` | `/up-docs:drift` |
+| Skill | Role | Invoked by |
+|-------|------|------------|
+| `all` | Orchestrator — builds session-change summary, dispatches propagators in parallel, then drift auditor | `/up-docs:all` |
+| `repo` | Thin wrapper, dispatches `up-docs-propagate-repo` | `/up-docs:repo` |
+| `wiki` | Thin wrapper, dispatches `up-docs-propagate-wiki` | `/up-docs:wiki` |
+| `notion` | Thin wrapper, dispatches `up-docs-propagate-notion` | `/up-docs:notion` |
+| `drift` | Thin wrapper, dispatches `up-docs-audit-drift` | `/up-docs:drift` |
+
+## Sub-agents
+
+| Agent | Model | Role |
+|-------|-------|------|
+| `up-docs-propagate-repo` | Haiku | Mechanical edits to README.md, docs/, CLAUDE.md scoped to the session-change summary |
+| `up-docs-propagate-wiki` | Haiku | Mechanical edits to Outline pages at implementation-reference level |
+| `up-docs-propagate-notion` | Haiku | Mechanical edits to Notion at strategic/organizational level; never writes configs or procedures |
+| `up-docs-audit-drift` | Sonnet | Read-only drift scan across all three layers with live-state verification; never auto-fixes |
+
+Per-agent `model:` frontmatter overrides the caller's model tier, so propagation runs on Haiku (≈ 1/10 Opus cost) even when the orchestrator was invoked from an Opus session.
 
 ## Planned Features
 
@@ -116,6 +138,7 @@ The mapping is intentionally loose. It points to the general area and lets Claud
 - Notion and Outline MCP servers must be accessible from the current environment. Air-gapped systems can only use `/up-docs:repo`.
 - `/up-docs:drift` requires SSH access to all documented hosts. Unreachable hosts are logged and skipped, not fatal.
 - Drift analysis is designed for Opus 4.6 with 1M context. Running on smaller context models may cause truncation on large wiki collections.
+- **Claude Code version sensitivity (MCP + Haiku):** Claude Code v2.1.92 had a bug where Haiku's internal title-generation probe could block session-wide MCP tool loading ([anthropics/claude-code#44290](https://github.com/anthropics/claude-code/issues/44290), now closed). On affected versions, `up-docs-propagate-wiki`, `up-docs-propagate-notion`, and `up-docs-audit-drift` may show FAILED rows because their MCP tools never load. Mitigation: upgrade Claude Code past the fix, or fall back to `/up-docs:repo` which uses no MCP tools.
 
 ## Links
 

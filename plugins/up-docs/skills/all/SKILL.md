@@ -1,64 +1,98 @@
 ---
 name: up-all
-description: "Update all three documentation layers (repo, wiki, Notion) sequentially from the current session. This skill should be used when the user runs /up-docs:all."
+description: "Update all three documentation layers (repo, wiki, Notion) via parallel sub-agent propagation, then run drift audit. This skill should be used when the user runs /up-docs:all."
 argument-hint: ""
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, mcp__plugin_mcp-outline_mcp-outline__search_documents, mcp__plugin_mcp-outline_mcp-outline__read_document, mcp__plugin_mcp-outline_mcp-outline__update_document, mcp__plugin_mcp-outline_mcp-outline__create_document, mcp__plugin_mcp-outline_mcp-outline__list_collections, mcp__plugin_mcp-outline_mcp-outline__get_collection_structure, mcp__plugin_Notion_notion__notion-search, mcp__plugin_Notion_notion__notion-fetch, mcp__plugin_Notion_notion__notion-update-page, mcp__plugin_Notion_notion__notion-create-pages
+allowed-tools: Read, Bash, Agent
 ---
 
 # /up-docs:all
 
-Update all three documentation layers in sequence: Repo, then Wiki, then Notion.
+Orchestrates up-docs: gather session context, build a canonical session-change summary, dispatch three propagator sub-agents in parallel (Haiku), then run the drift auditor (Sonnet), and collate all output into a single combined report.
+
+## Architecture
+
+```
+This skill (orchestrator, inherits caller model)
+  │
+  ├─ run context-gather.sh once
+  ├─ assemble canonical session-change summary
+  │
+  ├─▶ up-docs-propagate-repo     (Haiku, parallel)
+  ├─▶ up-docs-propagate-wiki     (Haiku, parallel)
+  ├─▶ up-docs-propagate-notion   (Haiku, parallel)
+  │
+  ├─▶ up-docs-audit-drift        (Sonnet, after propagators complete)
+  │
+  └─ collate reports → emit combined summary
+```
 
 ## Workflow
 
-### 1. Assess Session Context (once)
-
-Gather the session's changes up front, since all three layers draw from the same context:
+### 1. Gather Session Context (once)
 
 ```bash
 bash ${CLAUDE_PLUGIN_ROOT}/scripts/context-gather.sh
 ```
 
-Combine with conversation history. Build a complete picture of what the session accomplished.
+Combine with conversation history.
 
-### 2. Update Repo Docs
+### 2. Build the Canonical Session-Change Summary
 
-Follow the full procedure from `${CLAUDE_PLUGIN_ROOT}/skills/repo/SKILL.md`:
-- Locate documentation files (README.md, docs/, CLAUDE.md)
-- Read and evaluate each file against session changes
-- Apply targeted updates where needed
-- Track results for the summary
+Read the template at `${CLAUDE_PLUGIN_ROOT}/templates/session-change-summary.md` and produce a concrete summary following that format. This artifact is the **single critical input** to every sub-agent — garbage in, garbage out. Spend main-agent tokens to produce it well.
 
-### 3. Update Wiki (Outline)
+Field rules (from the template):
+- One numbered item per semantically independent change.
+- Name exact keys/values/paths — not "updated config" but "`BAO_ADDR=127.0.0.1` → `100.90.121.89` in `/usr/local/bin/backup-dumps.sh`".
+- Every item includes {Change, Reason, Affected area, Files touched, Verifiable against}.
 
-Follow the full procedure from `${CLAUDE_PLUGIN_ROOT}/skills/wiki/SKILL.md`:
-- Find the Outline mapping from CLAUDE.md or by searching
-- Read current wiki pages
-- Apply implementation-level updates
-- Track results for the summary
+### 3. Dispatch Propagators in Parallel
 
-### 4. Update Notion
+Invoke the three propagator sub-agents **in a single message with three Agent tool calls** so they run concurrently (the tool was called `Task` before Claude Code v2.1.63 and still accepts that name as an alias). Each receives the session-change summary as the stable front of its prompt; layer-specific detail goes at the end (cache-friendly structure).
 
-Follow the full procedure from `${CLAUDE_PLUGIN_ROOT}/skills/notion/SKILL.md` (and read `${CLAUDE_PLUGIN_ROOT}/skills/notion/references/notion-guidelines.md` before making changes):
-- Find the Notion mapping from CLAUDE.md or by searching
-- Fetch current pages
-- Apply strategic/organizational updates
-- Track results for the summary
+| Sub-agent | Purpose |
+|-----------|---------|
+| `up-docs-propagate-repo` | Updates README.md, docs/, CLAUDE.md |
+| `up-docs-propagate-wiki` | Updates Outline pages at implementation-reference level |
+| `up-docs-propagate-notion` | Updates Notion at strategic/organizational level |
 
-### 5. Combined Summary Report
+Each sub-agent returns a single-layer markdown table per `templates/summary-report.md`.
 
-Read `${CLAUDE_PLUGIN_ROOT}/templates/summary-report.md` for the output format.
+#### Failure handling
 
-Emit one combined report using the **/up-docs:all** format: a heading per layer, each with its own table and totals line.
+If a propagator returns a FAILED row or errors out entirely, record the failure in the combined report as a clear "layer not updated due to <reason>" row for that layer. Do not retry across sub-agents and do not abort the other layers — propagation is independent by design.
 
-## Layer Boundaries
+### 4. Dispatch Drift Auditor (sequentially, after propagators)
 
-Each layer gets the right kind of content:
+Once all three propagators return, invoke `up-docs-audit-drift` via the Agent tool. Pass it the same session-change summary plus the three propagator reports (so the auditor knows what was already fixed and does not re-report those items).
+
+The auditor returns **both** a JSON findings block and a markdown findings table. It is read-only: it does not fix.
+
+If the auditor emits an `⚠ ESCALATION RECOMMENDED` block, include it in the combined report verbatim.
+
+### 5. Collate and Emit Combined Report
+
+Read `${CLAUDE_PLUGIN_ROOT}/templates/summary-report.md` for the `/up-docs:all` format.
+
+Produce one combined report: a heading per layer, each with its own table and totals line, followed by the drift findings table and (if present) the escalation block.
+
+Do not re-fetch pages or files. Do not make your own edits. Your job after dispatching is pure collation.
+
+## Layer Boundaries (reference)
 
 | Layer | Content Level | Example |
 |-------|--------------|---------|
-| Repo | Project-specific docs | "Added `--verbose` flag to the CLI" |
+| Repo | Project-specific | "Added `--verbose` flag to the CLI" |
 | Wiki | Implementation reference | "Authentik OIDC client config for the new service" |
 | Notion | Strategic/organizational | "New monitoring service added to the homelab stack" |
 
-If information only belongs in one layer, update only that layer. Not every session change needs to propagate to all three.
+Each sub-agent enforces its own layer boundary via the guidelines inlined in its system prompt. You don't need to re-enforce here — just trust the sub-agent reports and collate.
+
+## When to Offer Opus Escalation
+
+The drift auditor will flag escalation when any of these hold:
+- Findings count > 10
+- Any affected doc is > 1000 lines
+- Cross-layer contradictions detected
+- A fix would require destructive action
+
+When an escalation block appears in the auditor output, include it in the combined report **but do not auto-invoke anything**. The user decides whether to re-run with Opus.

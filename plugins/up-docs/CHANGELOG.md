@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.0] - 2026-04-19
+
+### Added
+- Four sub-agents under `agents/`: `up-docs-propagate-repo`, `up-docs-propagate-wiki`, `up-docs-propagate-notion` (all Haiku), and `up-docs-audit-drift` (Sonnet). Each runs in its own context window with per-agent `model:` frontmatter overriding the caller's model tier.
+- `templates/session-change-summary.md` — canonical format for the orchestrator's numbered change list; the single critical artifact consumed by every sub-agent.
+- `templates/drift-finding.md` — dual-form (JSON + markdown) output contract for the drift auditor, including escalation triggers.
+
+### Changed
+- `/up-docs:all` orchestrates rather than executes: builds the session-change summary, dispatches three propagators in parallel via the Agent tool (formerly Task; renamed in Claude Code v2.1.63), then sequentially dispatches the drift auditor. Main-agent context stays slim — sub-agents read and edit pages in their own isolated contexts.
+- `/up-docs:repo`, `/up-docs:wiki`, `/up-docs:notion`, `/up-docs:drift` are now thin wrappers that dispatch their single matching sub-agent. Layer guidelines and Notion content rules are inlined into sub-agent system prompts (no runtime `Read` on `references/notion-guidelines.md` from the propagator).
+- Cost model: propagation runs on Haiku (≈ 1/10 the cost of Opus) while preserving Sonnet-quality drift detection. Parallel dispatch reduces wall time to `max(repo, wiki, notion)` instead of their sum.
+
+### Fixed
+- Opus escalation is now surfaced as an advisory block in the combined report rather than silently consuming Opus budget on routine drift passes. User decides whether to re-run with Opus.
+- Agent prompts rewritten for Anthropic canonical patterns: XML tag structure (`<role>`, `<task>`, `<guardrails>`, `<examples>`, `<output_format>`), 5 worked few-shot examples per agent, canonical "Never speculate about X you have not read" grounding language, and commit-to-approach anti-flip-flop guidance. Particularly beneficial for the 3 Haiku propagators, which are more example-dependent than Sonnet.
+- Drift auditor prompt now cross-checks propagator reports before emitting findings, preventing double-dispatch on a re-propagation pass.
+
+
 ## [0.3.0] - 2026-04-09
 
 ### Added
