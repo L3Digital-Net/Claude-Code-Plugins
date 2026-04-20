@@ -4,7 +4,7 @@
 
 ## Last Updated
 
-- 2026-04-20 — Released up-docs 0.4.0 (sub-agent architecture), home-assistant-dev 2.2.6 (version sync), plugin-test-harness 0.7.4 (TypeScript config fixes), and qdev 1.2.1 (first release); added repo docs scaffold (handoff.md, conventions.md).
+- 2026-04-20 — Released up-docs 0.4.0, home-assistant-dev 2.2.6, plugin-test-harness 0.7.4, qdev 1.2.1; added repo docs scaffold; ran `/up-docs:all` (verified sub-agent architecture + 3 drift fixes applied); ran `/hygiene` (qdev added to root README table/section/tree).
 
 ## Session Instructions
 
@@ -27,9 +27,9 @@
 
 ## What Remains
 
-- Verify up-docs sub-agents propagate correctly in next session (test `/up-docs:all` on a real repo with known changes).
 - Monitor plugin-test-harness CI stability after TypeScript config fixes (jest transform improvements may affect other test suites).
-- qdev requires ongoing maintenance (low activity, no tests, marked as markdown-only) — consider if it should be kept or archived.
+- qdev requires ongoing maintenance (low activity, no tests, markdown-only) — consider if it should be kept or archived.
+- release-pipeline and linux-sysadmin READMEs each need a short table section added (Agents and Hooks respectively); see hygiene sweep notes in session context.
 
 ## Bugs Found And Fixed
 
