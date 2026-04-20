@@ -60,9 +60,10 @@ installed plugins at the start of each session.
 | [Release Pipeline](#release-pipeline) | Commands + Skills | `/release` | Semver releases with pre-flight checks and changelog generation |
 | [Repo Hygiene](#repo-hygiene) | Commands | `/hygiene` | Autonomous maintenance sweep for .gitignore, manifests, and READMEs |
 | [Qt Suite](#qt-suite) | MCP + Commands + Skills + Agents | `/qt-suite:scaffold`, `/qt-suite:coverage`, `/qt-suite:visual` | Complete Qt development and testing toolkit: proactive agents, 16 skills, scaffolding, and headless GUI testing |
+| [qdev](#qdev) | Skills | `/research`, `/quality-review`, `/deps-audit`, `/doc-sync`, `/spec-update` | Development quality toolkit: pre-build research sweeps, convergence-loop quality reviews, CVE dependency audits, and inline doc sync |
 | [Opus Context](#opus-context) | Skills + Hooks | always-on | Teaches Opus 4.6 to use its full 1M context window instead of conservative small-model defaults |
 | [Test Driver](#test-driver) | Commands + Skills | `/test-driver:analyze`, `/test-driver:status` | Proactive testing via gap analysis, convergence loops, and persistent status tracking |
-| [Up Docs](#up-docs) | Skills | `/up-docs:repo`, `/up-docs:wiki`, `/up-docs:notion`, `/up-docs:all`, `/up-docs:drift` | Update documentation across three layers from session context, plus full infrastructure drift analysis |
+| [Up Docs](#up-docs) | Skills + Agents | `/up-docs:repo`, `/up-docs:wiki`, `/up-docs:notion`, `/up-docs:all`, `/up-docs:drift` | Update documentation across three layers via dispatched sub-agents (Haiku propagators + Sonnet drift auditor) from session context, plus full infrastructure drift analysis |
 
 ## Principles
 
@@ -423,6 +424,29 @@ requiring explicit approval.
 
 ---
 
+### qdev
+
+**Development quality toolkit**: five skills covering the full dev cycle from initial research through delivery.
+
+**Features:**
+
+- `/research`: sweeps current libraries, APIs, and best practices before you build
+- `/quality-review`: iterates to convergence, running checks until findings drop to zero
+- `/deps-audit`: scans dependency manifests for known CVEs and outdated packages
+- `/doc-sync`: aligns inline documentation with current implementation
+- `/spec-update`: propagates code changes back to the specification document
+
+**Install:**
+
+```bash
+/plugin install qdev@l3digitalnet-plugins
+```
+
+**Learn more:**
+[plugins/qdev/README.md](plugins/qdev/README.md)
+
+---
+
 ### Opus Context
 
 **1M context window optimizer for Opus 4.6**: always-on behavioral rules that override
@@ -473,15 +497,14 @@ iterates through a convergence loop until everything passes.
 
 ### Up Docs
 
-**Three-layer documentation updater**: infers what changed during a session and updates
-repo docs, Outline wiki, and Notion at the right level of detail for each layer. Also
-provides comprehensive drift analysis that SSHes into live infrastructure.
+**Three-layer documentation updater via sub-agent dispatch**: infers what changed during a session and updates repo docs, Outline wiki, and Notion at the right level of detail for each layer. Also provides comprehensive drift analysis that SSHes into live infrastructure.
 
 **Features:**
 
-- `/up-docs:repo`, `/up-docs:wiki`, `/up-docs:notion`, `/up-docs:all`: targeted updates from session context
+- Parallel sub-agent architecture: three Haiku propagators (repo, wiki, notion) run in isolated context windows for cost efficiency (~1/10 Opus cost), while Sonnet audit ensures drift detection quality
+- `/up-docs:repo`, `/up-docs:wiki`, `/up-docs:notion`, `/up-docs:all`: dispatch targeted propagators from session context
 - `/up-docs:drift`: four-phase convergence loop that gathers live server state via SSH, syncs the Outline wiki, resolves internal contradictions, verifies and enriches links, then updates Notion
-- Designed for Opus 4.6 with 1M context for large-scale wiki analysis
+- Wall-clock time to completion reduced to `max(repo, wiki, notion)` via parallel dispatch; sequential drift audit phases protect data integrity
 
 **Install:**
 
@@ -556,6 +579,7 @@ Claude-Code-Plugins/
 │   ├── plugin-test-harness/     # Iterative plugin testing framework
 │   ├── python-dev/              # Python development skills (11 domain skills)
 │   ├── qt-suite/                # Qt development and testing toolkit (agents, skills, MCP)
+│   ├── qdev/                    # Development quality toolkit (research, reviews, dep audits)
 │   ├── release-pipeline/        # Autonomous release pipeline
 │   ├── repo-hygiene/            # Autonomous repo maintenance sweep
 │   ├── test-driver/             # Proactive testing via gap analysis and convergence
