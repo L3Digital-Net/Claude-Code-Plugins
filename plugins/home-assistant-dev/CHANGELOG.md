@@ -2,6 +2,12 @@
 
 All notable changes to the Home Assistant Development Plugin are documented here.
 
+## [2.2.7] - 2026-04-23
+
+### Changed
+
+- `ha-integration-reviewer` agent downgraded from Sonnet to Haiku. The review checklist is structural (manifest fields, config_flow presence, coordinator usage, type annotations) — mechanical pattern-matching with no inference required. Roughly 40% reduction in per-review token cost when invoked from Opus sessions.
+
 ## [2.2.6] - 2026-04-20
 
 ### Changed

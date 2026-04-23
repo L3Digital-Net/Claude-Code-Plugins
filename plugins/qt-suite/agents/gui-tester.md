@@ -41,7 +41,9 @@ description: >
   </commentary>
   </example>
 
-model: inherit
+model: sonnet
+# sonnet chosen: multi-step Qt Pilot MCP interactions need reasoning budget, but not Opus —
+# each step is a deterministic launch/click/screenshot/verify cycle. Inherit from Opus was wasteful.
 color: cyan
 tools: ["Read", "Write", "Bash", "Glob"]
 ---
