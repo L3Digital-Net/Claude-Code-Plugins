@@ -6,6 +6,7 @@ Short, scannable pattern library for future LLM sessions. Check this file before
 
 | ID | Title | Applies when |
 | --- | --- | --- |
+| ARCH-001 | Thin command + fat agent | a plugin command needs to invoke expensive operations (file I/O, web research, iterative loops) |
 | DOC-001 | Doc audience split | editing any repo doc — determines prose style vs LLM-first style |
 | DOC-002 | Session start | starting work in this repo |
 | DOC-003 | Convention changes | adding or revising a repo convention |
@@ -34,6 +35,38 @@ LLM-facing (terse, scannable, tables > prose, no narrative framing):
 - `plugins/up-docs/agents/up-docs-propagate-repo.md` `<writing_style>` block
 
 **Related:** DOC-002, DOC-003
+
+## ARCH-001. Thin command + fat agent
+
+**Applies when:** a plugin command needs to invoke expensive operations — file I/O, multi-source web research, iterative convergence loops, or pattern-matching across many files.
+
+**Rule:** Implement the command as a thin dispatcher (30-50 lines) that calls an Agent via the Agent tool, passing session context and user input; implement the actual work in a sibling agent with explicit `model:` (haiku for mechanical, sonnet for reasoning). Commands own user interaction only; agents own all data access and iteration.
+
+```yaml
+# commands/qdev-review.md — thin dispatcher (30 lines)
+/qdev:quality-review target.py
+├─ Call Agent: qdev:qdev-quality-reviewer
+│  (receives: user input, prior findings, iteration count)
+│  (returns: findings JSON + convergence status)
+└─ AskUserQuestion: approve/revise/skip per finding
+
+# agents/qdev-quality-reviewer.md — fat agent (200+ lines, explicit model: sonnet)
+- Does all the work: file reads, pattern matching, multi-pass iteration
+- No AskUserQuestion calls; returns structured findings only
+- Model set explicitly per workload (haiku = mechanical, sonnet = reasoning)
+```
+
+**Why:** Commands that held research results, file contents, and iteration state in Opus context burned 15-22K tokens per invocation. Splitting separates concerns: commands handle user interaction (trivial) while agents handle work (and can run cheaper). Agents are stateless (no persistent context pressure); iteration state flows as JSON between Agent returns. For convergence-loop work, agents need the model tier for consistency/reasoning — sonnet over haiku for multi-pass quality audits. Mechanical work (manifest parsing, CVE lookups, docstring generation) downgrades to haiku. Pattern established across qdev, repo-hygiene, python-dev, and generalizes to any research-heavy or iterative plugin command.
+
+**Sources:**
+- `plugins/qdev/commands/deps-audit.md` (thin orchestrator, 40 lines)
+- `plugins/qdev/agents/qdev-deps-auditor.md` (haiku agent, 180 lines)
+- `plugins/repo-hygiene/commands/hygiene.md` (Step 1 inline; Step 2 dispatches agent)
+- `plugins/python-dev/commands/python-code-review.md` (thin dispatcher, 45 lines)
+- `plugins/python-dev/agents/python-code-reviewer.md` (sonnet agent, 200+ lines)
+- Session summary: plugin delegation migration (2026-04-23)
+
+**Related:** PLUGIN-001, DOC-001
 
 ## DOC-002. Session start
 
