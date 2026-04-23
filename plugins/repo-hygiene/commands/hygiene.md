@@ -1,6 +1,6 @@
 ---
-description: Autonomous maintenance sweep: validates .gitignore patterns, manifest paths, plugin state consistency, stale uncommitted changes, README freshness (leaf-to-root with implementation cross-reference), and docs/ accuracy.
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion
+description: Autonomous maintenance sweep: validates .gitignore patterns, manifest paths, plugin state consistency, stale uncommitted changes. Dispatches hygiene-semantic-auditor (Haiku) for README freshness and docs/ accuracy.
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion, Agent
 ---
 
 # /hygiene [--dry-run]
@@ -61,71 +61,19 @@ Collect all `findings` arrays. Tag each finding with its `check` field value.
 
 After collecting, emit: `Step 1 complete: N finding(s) from 7 scripts.` (where N is the total count across all seven scripts)
 
-## Step 2: Semantic README and Docs Scan (Check 3 — inline)
+## Step 2: Semantic README and Docs Scan (subagent)
 
-**If `IS_CLAUDE_PLUGIN_REPO` is `false`**: skip this step entirely. Collect zero findings for Check 3 and proceed to Step 3. Steps 2a–2c reference `plugins/`, `docs/plugin-readme-template.md`, and `.claude-plugin/marketplace.json` — structures that only exist in Claude Code plugin marketplace repos.
+**If `IS_CLAUDE_PLUGIN_REPO` is `false`**: skip this step entirely. Collect zero findings for Check 3 and proceed to Step 3. The semantic checks reference `plugins/`, `docs/plugin-readme-template.md`, and `.claude-plugin/marketplace.json` — structures that only exist in Claude Code plugin marketplace repos.
 
-**If `IS_CLAUDE_PLUGIN_REPO` is `true`**: perform this scan in **leaf-to-root order**: process plugin READMEs first (2a), then the root README.md (2b), then docs/ files (2c). This ordering ensures child artifacts are verified before the parent documents that reference them.
+**If `IS_CLAUDE_PLUGIN_REPO` is `true`**: dispatch the `hygiene-semantic-auditor` subagent (Haiku). The agent performs the full leaf-to-root scan (plugin READMEs → root README → docs/) and returns a JSON findings array in the same schema as the Step 1 scripts.
 
-**Standard finding schema** (used throughout Steps 2a–2c unless noted): `auto_fix: false`, `fix_cmd: null`. Sub-checks below specify only the variable fields: `check`, `severity`, `path`, and `detail`.
+Use the `Agent` tool with `subagent_type: hygiene-semantic-auditor` and a prompt like:
 
-### Step 2a: Plugin READMEs (leaf level)
+> Audit the repo at `$REPO_ROOT`. Run steps 2a/2b/2c per your task spec and return the JSON findings array. Read-only — do not Edit any file.
 
-For each plugin directory under `plugins/` that has a `README.md`, in alphabetical order, read the README and all implementation files in the plugin directory, then apply the following checks:
+Parse the returned JSON. Extract the `findings` array and merge into the unified findings list from Step 1. If the agent returns an `error` field (e.g. marketplace.json missing), surface it and continue with Step 1 findings only.
 
-1. **Template placeholder detection** — Check for any text that appears to be unmodified from `docs/plugin-readme-template.md`, such as literal strings: `One-sentence description`, `Feature one`, `Feature two`, `Issue title`, `/command-name`, `skill-name`, `agent-name`, `Principle Name`, `Step one`, `Step two`, `Step three`. For each placeholder found:
-   - `check: "readme-freshness"`, `severity: "warn"`, `path: "plugins/<name>/README.md"`, `detail: "Contains unmodified template placeholder: '<placeholder text>' — replace with actual content (see docs/plugin-readme-template.md)"`, `auto_fix: false`, `fix_cmd: null`
-
-2. **Structural conformance** — Check that all required sections from `docs/plugin-readme-template.md` are present. Required headings (any level): `Summary`, `Principles`, `Requirements`, `Installation`, `How It Works`, `Usage`, `Planned Features`, `Known Issues`, `Links`. For each missing required section, add a finding:
-   - `check: "readme-freshness"`, `severity: "warn"`, `path: "plugins/<name>/README.md"`, `detail: "Missing required section '<section name>' (see docs/plugin-readme-template.md)"`, `auto_fix: false`, `fix_cmd: null`
-
-3. **Implementation cross-reference** — For each component type declared in the README, verify the corresponding file or directory exists on disk. Extract entries from table rows using backtick-delimited identifiers:
-
-   - **Commands table** (`## Commands` section): for each `` `/command-name` `` entry, strip the leading `/` and check that `plugins/<name>/commands/command-name.md` or `plugins/<name>/commands/command-name/` exists.
-   - **Skills table** (`## Skills` section): for each `` `skill-name` `` entry, check that `plugins/<name>/skills/skill-name/SKILL.md` or `plugins/<name>/skills/skill-name.md` exists.
-   - **Agents table** (`## Agents` section): for each `` `agent-name` `` entry, check that `plugins/<name>/agents/agent-name.md` or `plugins/<name>/agents/agent-name/` exists.
-   - **Hooks table** (`## Hooks` section): for each `` `script-name.sh` `` entry, check that the script exists at `plugins/<name>/hooks/script-name.sh` or `plugins/<name>/scripts/script-name.sh`. Also verify that `plugins/<name>/hooks/hooks.json` exists whenever any hook scripts are listed.
-   - **Tools table** (`## Tools` section): presence of a Tools section implies an MCP server — check that `plugins/<name>/.mcp.json` exists.
-
-   For each declared entry whose corresponding file does not exist:
-   - `check: "readme-freshness"`, `severity: "warn"`, `path: "plugins/<name>/README.md"`, `detail: "README declares <type> '<identifier>' but <expected_path> not found on disk"`, `auto_fix: false`, `fix_cmd: null`
-
-4. **Known Issues staleness** — Extract the `Known Issues` section. For each bullet item, scan the plugin's actual implementation files (scripts, hooks, commands) for evidence the issue has been fixed. If the codebase evidence clearly suggests the issue is no longer present, add a finding:
-   - `check: "readme-freshness"`, `severity: "warn"`, `path: "plugins/<name>/README.md"`, `detail: "Known Issue '<first 80 chars>' may be stale — implementation evidence suggests it is resolved"`, `auto_fix: false`, `fix_cmd: null`
-
-5. **Principles vs. codebase** — Extract the `Principles` or `Design Principles` section. For each principle, check if it is obviously contradicted by the current codebase (e.g., "no external network calls" but the plugin makes HTTP requests; "single-file command" but there are agents/ and scripts/). Only flag clear contradictions, not minor drift. Add findings with the same format as above.
-
-6. **Em dash overuse** — Count all occurrences of `—` (U+2014 em dash) in the README. If the count is 3 or more, add a finding. The `**Term** — description` pattern is the most common source and should become `**Term**: description`. Prose uses (` — ` between clauses) should be replaced with a comma, a period, or a restructured sentence. Em dashes are a strong signal of AI-generated text and degrade perceived writing quality.
-   - `check: "readme-freshness"`, `severity: "warn"`, `path: "plugins/<name>/README.md"`, `detail: "Contains N em dashes (—) — replace '**Term** — desc' with '**Term**: desc' and prose '—' with commas or periods"`, `auto_fix: false`, `fix_cmd: null`
-
-### Step 2b: Root README.md (root level)
-
-Read `README.md` at the repo root.
-
-1. **Plugin coverage** — For each plugin listed in `.claude-plugin/marketplace.json`, check that the plugin `name` appears somewhere in the root README. For each missing plugin reference:
-   - `check: "readme-freshness"`, `severity: "warn"`, `path: "README.md"`, `detail: "Root README.md does not mention plugin '<name>' — add it to the plugin list or table"`, `auto_fix: false`, `fix_cmd: null`
-
-2. **Plugin list present** — If the root README contains no plugin list, table, or section that inventories available plugins, add a finding:
-   - `check: "readme-freshness"`, `severity: "warn"`, `path: "README.md"`, `detail: "Root README.md has no plugin inventory table or list — add a summary of available plugins"`, `auto_fix: false`, `fix_cmd: null`
-
-### Step 2c: docs/ accuracy check
-
-For each Markdown file in `docs/` (skip `docs/plans/` entirely):
-
-1. Read the file.
-
-2. **Broken path references** — Extract all of the following reference patterns:
-   - Fenced code block content that contains repo-relative paths starting with `plugins/`, `scripts/`, `docs/`, or `.claude-plugin/`
-   - Inline code spans containing `.sh`, `.md`, `.json`, or `.ts` file references that include a `/`
-   - Markdown link targets that are relative paths (not starting with `http`)
-
-   For each extracted path, check whether it exists in the repo relative to `REPO_ROOT`. For each that does not exist:
-   - `check: "docs-accuracy"`, `severity: "warn"`, `path: "docs/<filename>"`, `detail: "References '<path>' which does not exist on disk — may be stale or renamed"`, `auto_fix: false`, `fix_cmd: null`
-
-3. **Plugin name references** — Scan for bare plugin directory names that appear to reference plugin directories (e.g., `plugin-test-harness`, `repo-hygiene`, `linux-sysadmin-mcp`). Check that each referenced plugin still exists as a directory under `plugins/`. For any removed plugin references:
-   - `check: "docs-accuracy"`, `severity: "warn"`, `path: "docs/<filename>"`, `detail: "References plugin '<name>' which does not exist under plugins/ — may be removed or renamed"`, `auto_fix: false`, `fix_cmd: null`
-
-Add all findings from Steps 2a, 2b, and 2c to the unified findings list.
+Why a subagent: step 2 reads every plugin README (~500 lines each × 17 plugins), the root README, and every docs/ file, plus the marketplace.json and template — a read-heavy pass that added ~15K tokens per run to the Opus context. Haiku handles the pattern-matching cleanly and returns only the structured findings.
 
 ## Step 3: Classify Findings
 
