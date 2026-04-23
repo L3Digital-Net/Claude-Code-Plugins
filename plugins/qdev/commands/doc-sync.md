@@ -1,119 +1,72 @@
 ---
 name: doc-sync
-description: Sync inline documentation with current function signatures and behavior. Proposes additions for undocumented functions and updates for stale docs before writing anything.
+description: Sync inline documentation with current function signatures via qdev-doc-syncer subagent (Haiku). Propose before apply.
 argument-hint: "[optional: path to file or directory]"
 allowed-tools:
-  - Read
-  - Glob
-  - Grep
-  - Bash
-  - Edit
+  - Agent
   - AskUserQuestion
 ---
 
 # /qdev:doc-sync
 
-Bring inline code documentation in sync with the current implementation.
+Bring inline code documentation in sync with current function signatures by dispatching the `qdev-doc-syncer` subagent.
 
-## Step 1: Establish Scope
+## Why this is a subagent
 
-If `$ARGUMENTS` is provided, use it as the target path.
+Enumerating public symbols + reading function bodies + generating docstrings across a source tree is mechanical translation work. Running it in Opus costs ~12K tokens per sync. Haiku handles signature-to-docstring mapping cleanly; the subagent keeps raw source content out of the Opus context.
 
-Otherwise, scan for source files:
+## How to run it
 
-```bash
-find . -type f \( \
-  -name "*.py" -o -name "*.ts" -o -name "*.tsx" \
-  -o -name "*.js" -o -name "*.jsx" \
-  -o -name "*.go" -o -name "*.rs" \
-\) \
-  -not -path "*/.git/*" \
-  -not -path "*/node_modules/*" \
-  -not -path "*/__pycache__/*" \
-  -not -path "*/.venv/*" \
-  -not -path "*/dist/*" \
-  -not -path "*/build/*" | sort
-```
+1. Determine the scope. If `$ARGUMENTS` is provided, use it. Otherwise, default to `./` (or `src/` if present at repo root).
 
-Read each file found. If the total count of undocumented public functions across all files exceeds 25, use `AskUserQuestion`:
-- header: `"Scope"`
-- question: `"Found N undocumented public functions across M files. How would you like to proceed?"`
-- options:
-  1. label: `"All N functions"`, description: `"Document everything found"`
-  2. label: `"Exported/public only"`, description: `"Focus on the public API surface"`
-  3. label: `"Specify a path"`, description: `"I'll narrow the scope to a file or directory"`
+2. Dispatch `qdev-doc-syncer` in **dry-run mode first** so the user can review proposals before any edits.
 
-If `"Specify a path"` is chosen: ask `"Which file or directory should I focus on?"` as a follow-up open-ended question, then re-run Step 1 scoped to that path.
+   Use the `Agent` tool with `subagent_type: qdev-doc-syncer` and a prompt like:
 
-## Step 2: Detect Documentation Convention
+   > Sync inline docs in `<scope>`. Set dry_run=true. Inventory, classify (Missing / Stale / Current / manual-review-needed), and return the proposals table. Do not apply any edits in this run.
 
-From the source files, identify the style already in use:
+## After the dry-run returns
 
-- **Python**: detect Google style (`Args:\n    param: desc`), NumPy style (`Parameters\n---`), or reStructuredText (`:param name:`). Default to Google style if none found.
-- **TypeScript / JavaScript**: detect JSDoc (`@param`, `@returns`) or TSDoc. Default to JSDoc.
-- **Go**: standard doc comment (plain line comment directly before the declaration).
-- **Rust**: `///` line comments or `/** */` block comments. Default to `///`.
+1. If the response shows zero Missing/Stale symbols, emit:
+   ```
+   ✓ All public functions are documented and up to date.
+   ```
+   and stop.
 
-Note the detected convention. All generated documentation must follow it.
+2. If the proposals count is >25, use `AskUserQuestion` to narrow scope first:
+   - question: `"Found N proposed doc changes across M files. How would you like to proceed?"`
+   - options:
+     1. label: `"Apply all N"`, description: `"Accept all proposals without individual review"`
+     2. label: `"Public-surface only"`, description: `"Filter to exported/public API"`
+     3. label: `"Narrow to a path"`, description: `"I'll specify a subdirectory"`
+     4. label: `"Review each one"`, description: `"Approve or skip each proposal"`
+     5. label: `"Cancel"`, description: `"Make no changes"`
 
-## Step 3: Inventory and Analyze
+3. If the proposals count is ≤25, skip the scope-narrowing prompt and go straight to:
+   - question: `"Apply the N proposed doc changes?"`
+   - options:
+     1. label: `"Apply all"`, description: `"Apply all proposals"`
+     2. label: `"Review each one"`, description: `"Approve each individually"`
+     3. label: `"Cancel"`, description: `"Make no changes"`
 
-For each source file in scope, identify:
+4. Based on the choice:
 
-**ADD** — public functions, methods, classes, and exported types with no doc comment. For Python, exclude `__init__` unless it has non-trivial parameters beyond `self`. For TypeScript/JavaScript, focus on exported declarations. For Go and Rust, focus on exported (capitalized) identifiers.
+   - **Apply all / Apply all N:** re-dispatch the subagent with `dry_run=false` and the same scope. Present the applied-edits summary.
 
-**UPDATE** — documented functions where the current signature does not match the docs:
-- A parameter exists in the signature but is missing from the docs (or vice versa)
-- A parameter name has been renamed since the doc was written
-- A `@returns` or return description contradicts the current return type annotation
-- The doc references a parameter or behavior that no longer exists in the function
+   - **Public-surface only / Narrow to a path:** re-dispatch the subagent with `dry_run=false` and the narrowed scope.
 
-For each `ADD` finding, generate the complete proposed doc comment now, before Step 4. Use the function signature, parameter types, return type, and function body to infer intent. Write the full comment in the detected convention.
+   - **Review each one:** for each proposal, use `AskUserQuestion`:
+     - header: `"Change [N/Total]"`
+     - question: `"[ADD | UPDATE] <file>:<symbol>\n\n<full proposed doc comment>"`
+     - options:
+       1. label: `"Apply"`, description: `"Insert or replace this doc comment"`
+       2. label: `"Skip"`, description: `"Leave unchanged"`
 
-For each `UPDATE` finding, generate the corrected version of the existing doc comment.
+     Apply approved changes via `Edit` in this session (do not re-dispatch the agent for individual edits).
 
-## Step 4: Propose Changes
+   - **Cancel:** emit `No changes made.` and stop.
 
-Before writing anything, present the full list:
-
-```
-Proposed doc changes (N changes across M files):
-  [ADD]     <file>:<line> — <function_name>: <one-line description of what will be added>
-  [UPDATE]  <file>:<line> — <function_name>: <what is stale and how it will be corrected>
-```
-
-If there are no changes, emit:
-
-```
-All public functions are documented and up to date.
-```
-
-and stop.
-
-Otherwise, use `AskUserQuestion`:
-- question: `"How would you like to review these N proposed doc changes?"`
-- options:
-  1. label: `"Approve all"`, description: `"Apply all N changes without individual review"`
-  2. label: `"Review each one"`, description: `"Approve or skip each change individually"`
-  3. label: `"Cancel"`, description: `"Make no changes"`
-
-If `"Cancel"` is chosen: emit `No changes made.` and stop.
-
-For `"Review each one"`, present each proposed change with `AskUserQuestion`:
-- header: `"Change [N/Total]"`
-- question: `"[ADD | UPDATE] <file>:<function_name>\n\n<full proposed doc comment>"`
-- options:
-  1. label: `"Apply"`, description: `"Insert or replace this doc comment"`
-  2. label: `"Skip"`, description: `"Leave this function unchanged"`
-
-## Step 5: Apply and Summarize
-
-Apply all approved changes using the `Edit` tool. For `ADD`: insert the new doc comment immediately before the function or class declaration. For `UPDATE`: replace the existing doc comment in place. Never rewrite the function body.
-
-After all edits, emit:
-
-```
-Doc sync complete: N added, N updated.
-```
-
-If no changes were approved (all skipped or zero approvals), emit `No changes applied.` instead.
+5. Final summary:
+   ```
+   Doc sync complete: N added, M updated, K skipped.
+   ```

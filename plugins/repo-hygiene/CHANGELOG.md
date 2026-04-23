@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.4.0] - 2026-04-23
+
+### Changed
+
+- `/hygiene` Step 2 (semantic audit of plugin READMEs, root README, and `docs/`) now dispatches the `hygiene-semantic-auditor` subagent (Haiku) instead of reading all those files in the Opus context. Step 1 (seven parallel mechanical scripts) is unchanged — those are sub-second and benefit from immediate in-session failure escalation. Estimated ~15K tokens saved per hygiene run when invoked from Opus sessions.
+
+### Added
+
+- `plugins/repo-hygiene/agents/hygiene-semantic-auditor.md` — Haiku agent for read-only structural README/docs audit. Returns findings in the same JSON schema as the Step 1 scripts so the command merges them into a single unified findings list.
+
 ## [1.3.0] - 2026-04-09
 
 ### Added

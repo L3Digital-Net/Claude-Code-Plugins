@@ -32,7 +32,9 @@ description: >
   </commentary>
   </example>
 
-model: inherit
+model: sonnet
+# sonnet chosen: test generation from coverage gaps is code synthesis against a spec
+# (gap description + source file). Sonnet is the right tier; Opus via inherit was overkill.
 color: green
 tools: ["Read", "Write", "Glob", "Grep", "Bash"]
 ---

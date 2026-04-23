@@ -67,6 +67,12 @@ The review works through all 11 domains and emits a prioritized summary at the e
 |---------|-------------|
 | `/python-code-review [path]` | Run a comprehensive quality audit across all 11 Python domains. Path is optional (defaults to current directory). Accepts a file, directory, or glob pattern. |
 
+## Agents
+
+| Agent | Model | Purpose |
+|-------|-------|---------|
+| `python-code-reviewer` | Sonnet | Runs all 11 domain audits (anti-patterns, type safety, design, style, resources, resilience, configuration, observability, testing, async, background jobs) and returns a prioritized findings report. Read-only; dispatched by `/python-code-review`. |
+
 ## Skills
 
 All 11 skills load automatically when the AI determines they apply to the current context. No explicit invocation needed.

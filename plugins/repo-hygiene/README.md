@@ -91,6 +91,12 @@ Any file changes made by the sweep (auto-fixes and approved edits) are committed
 | `/hygiene` | Run the full maintenance sweep and apply safe fixes |
 | `/hygiene --dry-run` | Show all findings and planned actions without modifying anything |
 
+## Agents
+
+| Agent | Model | Purpose |
+|---|---|---|
+| `hygiene-semantic-auditor` | Haiku | Reads plugin READMEs, root README, and `docs/` files; returns a JSON findings array covering template placeholders, structural conformance, implementation cross-refs, stale Known Issues, Principles contradictions, em dash overuse, root plugin coverage, and broken docs/ references. Read-only; the command applies approved fixes. Dispatched by Step 2 when the repo is a Claude Code plugin marketplace. |
+
 ## Checks
 
 The plugin detects the repository type at startup and skips checks that require a Claude Code plugin marketplace layout. Checks marked **conditional** run only when `.claude-plugin/marketplace.json` is present at the repo root.

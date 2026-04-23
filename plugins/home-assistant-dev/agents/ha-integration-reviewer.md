@@ -2,7 +2,9 @@
 name: ha-integration-reviewer
 description: Home Assistant integration code reviewer. Use PROACTIVELY after writing or modifying integration code. Reviews against Integration Quality Scale standards.
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: haiku
+# haiku chosen: review checklist is structural (manifest fields, config_flow presence,
+# coordinator usage, type annotations) — all mechanical pattern-matching, no inference.
 skills:
   - ha-quality-review
   - ha-testing
