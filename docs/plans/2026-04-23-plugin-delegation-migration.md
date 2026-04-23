@@ -919,7 +919,13 @@ EOF
 
 ---
 
-## Phase 4: nominal:postflight Delegation
+## Phase 4: nominal:postflight Delegation — **SKIPPED 2026-04-23**
+
+**Reason skipped:** Re-reading the command revealed three hard constraints the scan missed: (1) rule #4 mandates real-time per-domain output, no buffering; (2) Step 3 has per-anomaly `AskUserQuestion` between domains with fix-forward that can halt execution; (3) cascade halt must stop immediately. Naive delegation breaks all three. Delegation was possible only with a UX behavior change (batch execution + post-hoc anomaly walk), and estimated savings dropped from ~8K to ~3-5K. User chose to skip.
+
+---
+
+## Phase 4 (ORIGINAL — not executed)
 
 **Scope:** Create `nominal-systems-verifier` Haiku agent. Rewrite `/nominal:postflight` to dispatch the 11-domain verification to the agent, keeping the interactive anomaly prompts and flight-log construction inline.
 
@@ -1093,7 +1099,13 @@ EOF
 
 ---
 
-## Phase 5: test-driver Gap Analyzer
+## Phase 5: test-driver Gap Analyzer — **SKIPPED 2026-04-23**
+
+**Reason skipped:** The target command `plugins/test-driver/commands/analyze.md` has an explicit `opus-context alignment` comment stating: "Read source files fully ... The function-level enumeration in step 4 is the foundation of accurate gap detection — skipping it collapses the analysis to file-level mapping, which dramatically under-reports gaps." Step 3.4 explicitly says "this step stays with Claude." The command author already decided this work belongs in Opus context and documented why; the scan missed that decision. User chose to respect the existing design.
+
+---
+
+## Phase 5 (ORIGINAL — not executed)
 
 **Scope:** Create `test-driver-gap-analyzer` Sonnet agent. Rewrite the analysis portion of `/test-driver:analyze` (the source-file inventory + function enumeration + gap map) to dispatch to the agent.
 

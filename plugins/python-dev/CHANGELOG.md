@@ -4,6 +4,16 @@ All notable changes to the python-dev plugin are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-04-23
+
+### Changed
+
+- `/python-code-review` is now a thin orchestrator that dispatches the new `python-code-reviewer` subagent (Sonnet) instead of walking Opus through 11 domain audits inline. The 11 domain rules moved from the command body into the agent prompt. Estimated ~20K tokens saved per review when invoked from Opus sessions.
+
+### Added
+
+- `plugins/python-dev/agents/python-code-reviewer.md` — Sonnet agent that runs all 11 domain passes (anti-patterns, type safety, design, style, resources, resilience, configuration, observability, testing, async, background jobs) and returns a prioritized findings report.
+
 ## [1.0.1] - 2026-03-04
 
 ### Changed

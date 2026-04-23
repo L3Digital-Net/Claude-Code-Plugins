@@ -107,8 +107,8 @@
     },
     {
       "name": "python-dev",
-      "description": "11 Python development skills covering async patterns, anti-patterns, type safety, testing, resilience, observability, configuration, design patterns, resource management, code style, and background jobs. Includes /python-code-review for comprehensive code audits across all domains.",
-      "version": "1.0.1",
+      "description": "11 Python development skills covering async patterns, anti-patterns, type safety, testing, resilience, observability, configuration, design patterns, resource management, code style, and background jobs. Includes /python-code-review for comprehensive code audits across all domains via the python-code-reviewer subagent (Sonnet).",
+      "version": "1.1.0",
       "author": {
         "name": "L3DigitalNet",
         "url": "https://github.com/L3DigitalNet"
