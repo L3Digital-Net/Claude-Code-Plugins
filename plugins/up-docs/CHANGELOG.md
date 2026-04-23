@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.1] - 2026-04-23
+
+### Fixed
+
+- `up-docs-propagate-notion` agent no longer fabricates version strings, identifiers, paths, or other load-bearing values when composing Notion prose. Added a dedicated `<verification_discipline>` block mirroring the pattern already applied to `up-docs-audit-drift` in 0.5.1: every fact written to Notion must come verbatim from the session-change summary or a just-retrieved `notion-fetch` result. Copy-paste discipline is mandatory; reconstruction from pattern or memory is forbidden. Includes sanctioned escape paths (omit missing detail, skip edit as "No change needed") when a value is not in the summary. Triggered by a 2026-04-23 `/up-docs:all` run that wrote three fabricated plugin version numbers (`2.3.0`, `2.2.0`, `3.1.0` instead of `2.2.7`, `1.4.0`, `1.1.0`) into the Claude Code Plugins page — drift auditor caught the discrepancy on the same run.
+
 ## [0.6.0] - 2026-04-20
 
 ### Added
