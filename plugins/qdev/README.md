@@ -102,10 +102,18 @@ Invoke at any stage of a development project. Pass a path to target a specific f
 | Command | Description |
 |---------|-------------|
 | `/qdev:research` | Dual-source research sweep covering docs, practices, footguns, and existing tools |
-| `/qdev:quality-review` | Research-first iterative quality review until convergence |
-| `/qdev:deps-audit` | Dependency security and freshness audit across all package manifests |
-| `/qdev:doc-sync` | Sync inline documentation with current function signatures and behavior |
+| `/qdev:quality-review` | Research-first iterative quality review until convergence (dispatches `qdev-quality-reviewer`) |
+| `/qdev:deps-audit` | Dependency security and freshness audit across all package manifests (dispatches `qdev-deps-auditor`) |
+| `/qdev:doc-sync` | Sync inline documentation with current function signatures (dispatches `qdev-doc-syncer`) |
 | `/qdev:spec-update` | One-shot sync of a spec file to match current implementation |
+
+## Agents
+
+| Agent | Model | Purpose |
+|-------|-------|---------|
+| `qdev-deps-auditor` | Haiku | Manifest discovery + per-dep CVE/version research via dual-source web search. Read-only. |
+| `qdev-quality-reviewer` | Sonnet | Research-first iterative review with pass loop + oscillation detection. Applies auto-fixes; surfaces needs-approval findings for the command to drive. |
+| `qdev-doc-syncer` | Haiku | Public-symbol inventory + docstring generation matching the codebase's convention. Dry-run and apply modes. |
 
 ### `/qdev:research [topic]`
 
