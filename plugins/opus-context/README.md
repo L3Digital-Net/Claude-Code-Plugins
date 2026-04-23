@@ -51,21 +51,15 @@ flowchart TD
 
 ## Usage
 
-This skill is always-on. It activates automatically via skill description matching whenever Claude Code processes a task. No manual invocation needed.
+Activation is mechanical. The SessionStart hook reads `SKILL.md`, strips its frontmatter, and emits it as `hookSpecificOutput.additionalContext` — which Claude Code injects into baseline session context. Every turn sees the rules. No manual invocation needed.
 
-Optional CLAUDE.md reinforcement (add to your global `~/.claude/CLAUDE.md`):
-
-```markdown
-## Context Management
-
-When running on Opus 4.6 (1M context), always consult the `opus-context:deep-context` skill for file reading, delegation, and pre-loading decisions.
-```
+Manual `Skill(opus-context:deep-context)` invocation remains available to reload the rules mid-session if needed.
 
 ## Skills
 
 | Skill | Loaded when |
 |-------|-------------|
-| `deep-context` | Always, via broad description matching. Governs file reading, subagent delegation, and pre-loading decisions. |
+| `deep-context` | Injected at every SessionStart via hook. Always present in baseline context for the whole session. |
 
 ## Hooks
 
@@ -73,11 +67,13 @@ All hooks are registered declaratively via `hooks/hooks.json`.
 
 | Hook | Event | What it does |
 |------|-------|-------------|
-| `session-start.sh` | SessionStart | Prints a terminal banner confirming 1M context mode is active. Terminal-only; does not inject into AI context. |
+| `session-start.sh` | SessionStart | Reads `SKILL.md`, emits its body as `additionalContext` JSON so the rules enter baseline context. Echoes a confirmation to the terminal on stderr. |
 
 ## Design Decisions
 
-- **Always-on via description, not SessionStart injection**: SessionStart hook stdout goes to the terminal, not AI context. The skill's broad `description` field is the primary activation mechanism, with optional CLAUDE.md reinforcement as a second trigger path.
+- **Mechanical injection over behavioral description matching**: description-based auto-invocation was unreliable — the model had to decide to call the `Skill` tool based on prompt heuristics, and it often didn't. The SessionStart hook now writes the rules directly into context via the `additionalContext` JSON field, guaranteeing they are present on every turn.
+
+- **SKILL.md is the single source of truth**: the hook reads the skill file at runtime rather than duplicating its contents in the shell script, so there is no drift between what's injected and what an explicit `Skill` invocation would load.
 
 - **Heuristic budget thresholds instead of percentages**: Claude can't measure its exact context usage. Budget awareness uses observable signals (file count, conversation length, compaction events) instead of precise percentages.
 
