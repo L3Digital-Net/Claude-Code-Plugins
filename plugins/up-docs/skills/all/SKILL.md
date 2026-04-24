@@ -96,27 +96,34 @@ If the repo propagator emitted zero stale candidates, skip Step 6 silently.
 
 After the combined report is displayed (and after any Step 6 deletions), emit both of these as the final section of the skill's output:
 
-**(a) Explicit update confirmation.** One or two lines per layer summarizing what changed vs. what was audited-but-unchanged. Example: `"Repo: updated docs/handoff.md, docs/conventions.md. Wiki: updated 2 pages (Authentik, Monitoring). Notion: no change."`
+**(a) Explicit update confirmation.** One or two lines per layer summarizing what changed vs. what was audited-but-unchanged. Example: `"Repo: updated docs/state.md, docs/deployed.md, docs/bugs/016-*.md, docs/sessions/2026-04.md. Wiki: updated 2 pages (Authentik, Monitoring). Notion: no change."`
 
-**(b) Handoff for Next Session brief.** Read `docs/handoff.md` (if present) and emit a compact next-session brief using this structure:
+**(b) Handoff for Next Session brief.** Detect the repo's handoff layout and source from the corresponding files:
+
+- **V2 (handoff-system-v2, post-2026-04-24):** `docs/state.md` exists. Read it + `docs/deployed.md` + `docs/bugs/INDEX.md`.
+- **V1 (legacy):** `docs/handoff.md` exists (and no `docs/state.md`). Read it.
+- **NONE:** neither file exists. Skip this subsection silently.
+
+Emit the brief using this structure (fields sourced per layout):
 
 ```markdown
 ## 📋 Handoff for Next Session
 
-**Last work:** <top Last Updated line, verbatim or condensed to one sentence>
+**Last work:** <V2: top row of docs/sessions/<current-month>.md | V1: top Last Updated line>
 
 **Currently deployed:**
-- <What Is Deployed bullets — one per row, name + version + state>
+- <V2: docs/deployed.md rows, one per row, name + version + state>
+- <V1: docs/handoff.md What Is Deployed bullets>
 
 **Open items — what remains:**
-- <What Remains bullets — unchanged>
+- <V2: docs/deployed.md ## What Remains bullets | V1: docs/handoff.md What Remains bullets>
 
-**Open bugs:** <"None" if Bugs Found And Fixed log has no unresolved items, otherwise list them>
+**Active incidents:** <V2: docs/state.md Session Instructions 🔴/🟡/🟢 block | V1: skip>
 
-**Gotchas worth carrying forward:** <one sentence pulling the top 2–3 Gotchas>
+**Open bugs:** <V2: docs/bugs/INDEX.md rows with status != fixed | V1: docs/handoff.md Bugs table with unresolved items. "None" if all are fixed.>
 ```
 
-Keep it scannable — no narrative prose, no full-file dump. If `docs/handoff.md` does not exist, skip this subsection silently. The brief is a READ-only excerpt of the already-updated handoff file; do not re-edit.
+Keep it scannable — no narrative prose, no full-file dump. If neither layout is present, skip this subsection silently. The brief is a READ-only excerpt of the already-updated state files; do not re-edit.
 
 ## Layer Boundaries (reference)
 

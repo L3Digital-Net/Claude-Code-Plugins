@@ -50,31 +50,39 @@ If the sub-agent emitted zero stale candidates (or omitted the section entirely)
 
 After the sub-agent's table is displayed (and after any Step 5 deletions), emit both of these in the skill's final output:
 
-**(a) Explicit update confirmation.** One or two lines summarizing the table: files changed vs. files audited-but-unchanged vs. files deleted (if any). Example: `"Updated: docs/handoff.md, docs/conventions.md. Deleted: 2 stale plans (user-approved). Audited no-change: README.md, CLAUDE.md."`
+**(a) Explicit update confirmation.** One or two lines summarizing the table: files changed vs. files audited-but-unchanged vs. files deleted (if any). Example: `"Updated: docs/state.md, docs/deployed.md, docs/bugs/016-*.md, docs/sessions/2026-04.md. Deleted: 2 stale plans (user-approved). Audited no-change: README.md, CLAUDE.md."`
 
-**(b) Handoff for Next Session brief.** Read `docs/handoff.md` (if present) and emit a compact next-session brief using this structure:
+**(b) Handoff for Next Session brief.** Detect the repo's handoff layout and source from the corresponding files:
+
+- **V2 (handoff-system-v2, post-2026-04-24):** `docs/state.md` exists. Read it + `docs/deployed.md` + `docs/bugs/INDEX.md`.
+- **V1 (legacy):** `docs/handoff.md` exists (and no `docs/state.md`). Read it.
+- **NONE:** neither file exists. Skip this subsection silently.
+
+Emit the brief using this structure (fields sourced per layout):
 
 ```markdown
 ## 📋 Handoff for Next Session
 
-**Last work:** <top Last Updated line, verbatim or condensed to one sentence>
+**Last work:** <V2: top row of docs/sessions/<current-month>.md | V1: top Last Updated line>
 
 **Currently deployed:**
-- <What Is Deployed bullets — one per row, name + version + state>
+- <V2: docs/deployed.md rows, one per row, name + version + state>
+- <V1: docs/handoff.md What Is Deployed bullets>
 
 **Open items — what remains:**
-- <What Remains bullets — unchanged>
+- <V2: docs/deployed.md ## What Remains bullets | V1: docs/handoff.md What Remains bullets>
 
-**Open bugs:** <"None" if Bugs Found And Fixed log has no unresolved items, otherwise list them>
+**Active incidents:** <V2: docs/state.md Session Instructions 🔴/🟡/🟢 block | V1: skip>
 
-**Gotchas worth carrying forward:** <one sentence pulling the top 2–3 Gotchas>
+**Open bugs:** <V2: docs/bugs/INDEX.md rows with status != fixed | V1: docs/handoff.md Bugs table with unresolved items. "None" if all are fixed.>
 ```
 
-Keep it scannable — no narrative prose, no full-file dump. If `docs/handoff.md` does not exist, skip this subsection silently (the repo has not adopted the handoff pattern yet).
+Keep it scannable — no narrative prose, no full-file dump. If neither layout is present, skip this subsection silently (the repo has not adopted the handoff pattern yet).
 
 ## Notes
 
 - This skill no longer reads or edits files directly. All file work happens inside the sub-agent's isolated context, which keeps the main session's context window slim.
 - Layer boundaries (what belongs in repo docs vs wiki vs Notion) are inlined in the sub-agent's system prompt — not duplicated here.
-- The handoff brief in Step 6 is a READ-only excerpt of the updated `docs/handoff.md`; the skill does not edit the file at this stage.
+- The handoff brief in Step 6 is a READ-only excerpt of the already-updated state files; the skill does not edit them at this stage.
 - Step 5 stale-file deletion uses `git rm` (not plain `rm`) so deletions stay in git history and can be reverted. The skill never deletes without explicit `AskUserQuestion` consent, even for candidates the agent marked `high` confidence.
+- **Handoff layout detection is probe-based, not flag-based.** The sub-agent detects V1/V2/NONE via file existence (`docs/state.md` present = V2; `docs/handoff.md` present without state.md = V1); this skill's Step 6 uses the same probe. No CLI flag needed.

@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.7.0] - 2026-04-24
+
+### Changed
+
+- **Handoff-system-v2 adaptation.** `up-docs-propagate-repo`, `/up-docs:repo`, and `/up-docs:all` now target the post-2026-04-24 handoff layout (`docs/state.md` + `docs/deployed.md` + `docs/architecture.md` + `docs/credentials.md` + `docs/sessions/<YYYY-MM>.md` + `docs/bugs/<NNN>-*.md` + `docs/conventions.md` + `.claude/rules/*.md`) while preserving full backward compatibility with the legacy `docs/handoff.md` layout via probe-based detection. Rationale: 23 repos in the author's fleet migrated to v2 during the 2026-04-24 batch (pre/post reduction 91.1% aggregate); the plugin now matches.
+
+  - **Layout detection:** agent probes `docs/state.md` first. If present → V2; if absent and `docs/handoff.md` present → V1 legacy; otherwise NONE. No CLI flag or user input required.
+  - **V2 mandatory-audit rewrite:** `docs/state.md` (`**Last updated:**` + `🔴/🟡/🟢` active-incidents block under `## Session Instructions`, 2 KB hard cap), `docs/deployed.md` (deployment-truth rows + What Remains), `docs/architecture.md` (system graph, optional), `docs/credentials.md` (secret paths, optional), `docs/sessions/<current-month>.md` (append row with ≤20-word headline + commit SHAs + bug refs; update INDEX.md row count), `docs/bugs/<NNN>-<slug>.md` (create one per session-fixed bug with frontmatter; run `docs/bugs/_regen_index.py` after), `docs/conventions.md` (numbered skeleton; full rule body may live in `.claude/rules/` after Phase 5 of migration), `.claude/rules/<topic>.md` (path-scoped behavioral rules, ≤200 lines per file), `CLAUDE.md` (usually no-change post-migration — pure index).
+  - **V1 legacy fallback:** repos that haven't run the v2 migration still work. Agent falls back to the pre-0.7.0 audit (`docs/handoff.md` + `docs/conventions.md`) and includes an advisory note in its output suggesting the migration.
+  - **Handoff brief (Step 6/7 in skills) upgraded:** sources fields from the matching layout. V2 brief pulls Last-work from `docs/sessions/<current-month>.md`, deployed from `docs/deployed.md`, active incidents from `docs/state.md`, open bugs from `docs/bugs/INDEX.md` (rows with `status != fixed`). V1 brief unchanged. NONE skips the brief silently.
+  - **Append-only bug KB rule codified:** creating a new bug file uses `max(existing_ids) + 1`; editing or renumbering prior bug files is forbidden. Supersession handled via `supersedes:` / `superseded_by:` frontmatter fields, both files kept.
+  - **Stale-file scan NEVER-flag list** extended to include v2 files (`docs/state.md`, `docs/deployed.md`, `docs/architecture.md`, `docs/credentials.md`, `docs/specs-plans.md`), the `docs/sessions/` and `docs/bugs/` directories (persistent logs), and everything under `.claude/` (plugin-lifecycle-managed).
+  - **`python3 docs/bugs/_regen_index.py`** is a sanctioned Bash call in the agent's guardrails (only destructive-adjacent operation allowed; rewrites `docs/bugs/INDEX.md` idempotently from frontmatter).
+
+- `templates/drift-finding.md` example row updated: `docs/handoff.md` → `docs/deployed.md` to reflect the new layout's deployed-truth file.
+
+### Notes
+
+Rule-body migration decision per repo:
+
+- **Phase 5 run (rule bodies in `.claude/rules/`):** extend the matching rules file; leave `docs/conventions.md` pointer unchanged.
+- **Phase 5 deferred (real conventions.md still full-body):** append to `docs/conventions.md` using the six-field schema + Quick Reference row.
+- **Template DOC-001/002/003 conventions.md:** extend `docs/conventions.md` for now; Phase 5 backfill will migrate to rules later.
+
+The plugin does not enforce one or the other — it adapts to what exists.
+
 ## [0.6.1] - 2026-04-23
 
 ### Fixed
