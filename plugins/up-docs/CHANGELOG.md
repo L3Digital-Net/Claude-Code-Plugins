@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.7.1] - 2026-04-24
+
+### Fixed
+
+- `up-docs-propagate-repo` agent now audits **`AGENTS.md`** and **`AGENTS.reviews.md`** as mandatory targets on every run (same discipline as `CLAUDE.md`). These are Codex CLI's equivalent of `CLAUDE.md`; v0.7.0's mandatory-audit list omitted them, so a V2 migration could leave their "Session handoff: docs/handoff.md" pointers unchanged — Codex sessions would then try to read a deleted file. Discovered by the drift auditor on the homelab `/up-docs:all` run that ran immediately after v0.7.0 shipped. The auditor caught 4 findings; 2 of them were these two files.
+- `up-docs-propagate-repo` V2 mandatory-audit block gains a **post-split self-reference check**: after Phase 1 has moved content from `docs/handoff.md` into `docs/state.md` (and siblings), grep the new files for literal `docs/handoff.md` strings. Pre-migration Session Instructions text frequently contained self-references like "Check `docs/handoff.md` (this file)" that became stale after the file was renamed to `state.md`. The check covers `state.md`, `deployed.md`, `architecture.md`, `credentials.md` — any of which may have inherited handoff.md references from their source sections. Fix in-place. Drift auditor caught this on homelab (`docs/state.md:11` was the offender).
+- Stale-file-scan NEVER-flag list extended to include `AGENTS.reviews.md` (was only `AGENTS.md` in v0.7.0).
+
+### Notes
+
+Both fixes traced to the same root cause — v0.7.0's mandatory-audit list was modeled on Claude Code's file set (`CLAUDE.md` + `docs/`) and didn't account for Codex-specific files or self-reference drift from renames. Neither was caught in v0.7.0's example block, which kept the gaps invisible until a real-world `/up-docs:all` invocation exercised the full audit path.
+
 ## [0.7.0] - 2026-04-24
 
 ### Changed

@@ -39,7 +39,8 @@ You are the repo-layer documentation propagator for the up-docs orchestrator. Yo
      find ./docs -maxdepth 2 -name "*.md" -type f 2>/dev/null
      ls .claude/rules/*.md 2>/dev/null
      ```
-   - Common targets: `README.md`, `CLAUDE.md`, `CHANGELOG.md`, `docs/*.md`, `docs/sessions/*.md`, `docs/bugs/*.md`, `.claude/rules/*.md`.
+   - Common targets: `README.md`, `CLAUDE.md`, `AGENTS.md`, `AGENTS.reviews.md`, `CHANGELOG.md`, `docs/*.md`, `docs/sessions/*.md`, `docs/bugs/*.md`, `.claude/rules/*.md`.
+   - **`AGENTS.md` + `AGENTS.reviews.md` audit parity note:** these are the Codex CLI equivalents of `CLAUDE.md`. When either exists, treat it with the same audit discipline as `CLAUDE.md` — update the session-handoff pointer to match the detected handoff layout (V2 → `docs/state.md`, V1 → `docs/handoff.md`). An outdated pointer in AGENTS.md leaves Codex sessions reading a deleted file. This was caught by the drift auditor on 2026-04-24 after v0.7.0's mandatory-audit list omitted AGENTS.md.
 
 2. Read every candidate file in full before editing.
 
@@ -113,6 +114,12 @@ You are the repo-layer documentation propagator for the up-docs orchestrator. Yo
 
    - **`CLAUDE.md`** — audit every run; usually "No change needed" (CLAUDE.md is a pure index after migration). Update ONLY if the session added a new `docs/<thing>.md` that deserves a pointer in the "Document layout" list.
 
+   - **`AGENTS.md`** (if exists) — Codex CLI equivalent of CLAUDE.md. Audit the top-of-file session-handoff pointer: it should reference `docs/state.md` (V2) or `docs/handoff.md` (V1), matching the detected layout. Common drift: the line still says `` [`docs/handoff.md`](docs/handoff.md) `` after migration to V2, leaving Codex sessions reading a deleted file. Fix to: `` **Session state:** detect layout first. V2: read `docs/state.md`, then this file, then conventions; V1: read `docs/handoff.md`, then this file, then conventions. `` (or the full V2 pointer list for more prominent repos).
+
+   - **`AGENTS.reviews.md`** (if exists) — Codex review-specific instructions. Audit the review-rules block for any `docs/handoff.md` reference. Fix to cite `docs/state.md` (or add V1/V2 detection guidance) when the layout is V2.
+
+   - **Post-split self-reference check (V2 repos only):** after Phase 1 has split `docs/handoff.md` into `docs/state.md`, grep `docs/state.md` for literal `docs/handoff.md` strings. The pre-migration Session Instructions text frequently contained self-references like "Check `docs/handoff.md` (this file)" that become stale after the split (the file is now state.md, not handoff.md). Repeat the grep for `docs/deployed.md`, `docs/architecture.md`, `docs/credentials.md` — any of these may have inherited handoff.md references from their source sections. Fix in-place.
+
    **If V1 (legacy `docs/handoff.md` still present):** the repo pre-dates the handoff-system-v2 migration. Fall back to the legacy audit:
 
    - **`docs/handoff.md`** — walk each required section against the session-change summary:
@@ -122,6 +129,7 @@ You are the repo-layer documentation propagator for the up-docs orchestrator. Yo
      - **Bugs Found And Fixed:** append a new numbered entry for each session-fixed bug. **Never delete or renumber prior entries.**
      - **Architecture / Credentials / Gotchas:** update only if the session changed them.
    - **`docs/conventions.md`** — if the session produced a durable new pattern, add a new six-field convention + Quick Reference row.
+   - **`AGENTS.md` / `AGENTS.reviews.md`** (if present) — audit the session-handoff pointer; in V1 it should read `docs/handoff.md`. No-change is the common outcome unless the session broke a pointer.
    - Note in your output: *"Repo uses legacy v1 handoff layout — consider running handoff-system-v2 migration (plan in /mnt/share/ or equivalent)."*
 
    **If NONE (neither state.md nor handoff.md exists):** the repo has no session-continuity spine. Skip the mandatory audit. Note in your output: "No docs/state.md or docs/handoff.md present — repo has not adopted the handoff pattern."
@@ -144,7 +152,7 @@ You are the repo-layer documentation propagator for the up-docs orchestrator. Yo
    **NEVER flag as stale:**
    - Active / in-progress plans or specs (no completion marker).
    - Template files (`*-template.md`, files under `templates/`).
-   - `docs/state.md`, `docs/deployed.md`, `docs/architecture.md`, `docs/credentials.md`, `docs/conventions.md`, `docs/specs-plans.md`, `docs/handoff.md` (legacy), `CLAUDE.md`, `README.md`, `AGENTS.md`.
+   - `docs/state.md`, `docs/deployed.md`, `docs/architecture.md`, `docs/credentials.md`, `docs/conventions.md`, `docs/specs-plans.md`, `docs/handoff.md` (legacy), `CLAUDE.md`, `README.md`, `AGENTS.md`, `AGENTS.reviews.md`.
    - Anything under `docs/sessions/` or `docs/bugs/` (persistent logs by contract).
    - Anything under `.claude/` (hooks, rules, settings — lifecycle-managed by the plugin system).
    - Files referenced by active documentation (grep the rest of `docs/` for the filename first).

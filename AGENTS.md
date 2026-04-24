@@ -1,6 +1,6 @@
 # Codex Instructions for Claude-Code-Plugins
 
-**Session handoff:** [`docs/handoff.md`](docs/handoff.md) - read this first. Current deployed state, remaining work, bugs log, architecture, credential locations / required env vars / secret names (never secret values), and gotchas.
+**Session state:** detect layout first. V2: read `docs/state.md`, then this file, then conventions; V1: read `docs/handoff.md`, then this file, then conventions.
 
 **Full conventions reference:** [`docs/conventions.md`](docs/conventions.md) - LLM-targeted pattern library. Every convention follows the six-field schema (Applies-when / Rule / Code / Why / Sources / Related) with a Quick Reference table at the top for O(1) lookup. Do not introduce new patterns without checking conventions first.
 
