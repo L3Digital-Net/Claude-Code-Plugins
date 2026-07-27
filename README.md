@@ -1,6 +1,6 @@
 # Claude Code Plugins Marketplace
 
-A Claude Code plugin marketplace. Plugins cover the full development lifecycle: release automation, Home Assistant integration dev, Qt UI development, deep web research, three-layer documentation propagation, and Python tooling standardization.
+A Claude Code plugin marketplace. Plugins cover the full development lifecycle: release automation, Home Assistant integration dev, Qt UI development, three-layer documentation propagation, and Python tooling standardization.
 
 ## Table of Contents
 
@@ -11,7 +11,7 @@ A Claude Code plugin marketplace. Plugins cover the full development lifecycle: 
   - [Principles](#principles)
     - [Home Assistant Dev](#home-assistant-dev)
     - [Qt Suite](#qt-suite)
-    - [qdev](#qdev)
+    - [qdev](#qdev) (retired)
     - [Up Docs](#up-docs)
     - [uv-strict-python](#uv-strict-python)
   - [Testing \& Validation](#testing--validation)
@@ -65,7 +65,7 @@ When auto-update is enabled, Claude Code refreshes the marketplace catalog and u
 | Plugin | Type | Command | Description |
 | --- | --- | --- | --- |
 | [Home Assistant Dev](#home-assistant-dev) | Commands + Skills + MCP | varies | Full HA integration development toolkit with 27 skills |
-| [qdev](#qdev) | Commands + Agents | `/research` | Deep web research for development decisions: dual-source sweeps with Context7 docs gating, persisted as cited reports under `docs/research/` |
+| [qdev](#qdev) _(retired)_ | Commands + Agents | `/research` | Retired — no longer installable; superseded by the `qdev-research` skill |
 | [Qt Suite](#qt-suite) | MCP + Commands + Skills + Agents | `/qt-suite:scaffold`, `/qt-suite:coverage`, `/qt-suite:visual` | Complete Qt development and testing toolkit: proactive agents, 16 skills, scaffolding, and headless GUI testing |
 | [Up Docs](#up-docs) | Skills + Agents | `/up-docs:repo`, `/up-docs:wiki`, `/up-docs:notion`, `/up-docs:all`, `/up-docs:drift` | Update documentation across three layers via dispatched sub-agents (all Sonnet: repo, wiki, Notion propagators & drift auditor) from session context, plus full infrastructure drift analysis |
 | [uv-strict-python](#uv-strict-python) | Skills | (AI-invoked) | Configures Python projects to the Python Tooling SSOT Standard (uv, Ruff, BasedPyright strict, pytest+coverage, pip-audit) |
@@ -137,19 +137,15 @@ These principles apply across all plugins in this collection. Individual plugins
 
 ### qdev
 
-**Deep web research**: a single user-initiated command that sweeps current sources before you design or build.
+> **Retired.** `qdev` is no longer offered by this marketplace and cannot be installed. It has been removed from `.claude-plugin/marketplace.json`; the source under `plugins/qdev/` is retained for reference and history only.
+>
+> Its capability is superseded by the `qdev-research` skill, which covers the same dual-source research sweep without the plugin packaging.
 
-**Features:**
+**What it did**: a single user-initiated command that swept current sources before you design or build.
 
 - `/research`: dual-source sweep (Tavily-first recall, Brave/Serper cross-checks, Context7 docs gating, footgun corroboration) persisted as a cited, frontmatter-indexed report under `docs/research/`
 
-**Install:**
-
-```bash
-/plugin install qdev@l3digitalnet-plugins
-```
-
-**Learn more:** [plugins/qdev/README.md](plugins/qdev/README.md)
+**Source (reference only):** [plugins/qdev/README.md](plugins/qdev/README.md)
 
 ---
 
@@ -258,7 +254,7 @@ Claude-Code-Plugins/
 │   └── marketplace.json        # Marketplace catalog
 ├── plugins/                     # All plugin implementations (6 plugins)
 │   ├── home-assistant-dev/      # Home Assistant integration dev toolkit
-│   ├── qdev/                    # Deep web research (research sweeps via qdev-researcher)
+│   ├── qdev/                    # Retired — source retained, not in the marketplace manifest
 │   ├── qt-suite/                # Qt development and testing toolkit (agents, skills, MCP)
 │   ├── spec-pipeline/           # Spec-driven autonomous dev pipeline + specpipe validator
 │   ├── up-docs/                 # Three-layer documentation updater (repo, wiki, Notion)
