@@ -125,7 +125,7 @@ CI runs the full matrix automatically on push to `main`.
 3. Add `CHANGELOG.md` (Keep a Changelog format: Added, Changed, Fixed, Removed, Security)
 4. Create `README.md` from `docs/plugin-readme-template.md` — fill in all required sections; delete optional sections that don't apply
 5. Run `./scripts/validate-marketplace.sh`
-6. Commit + push directly to `main`. For tagged releases (version bump + changelog + tag + GitHub release), see BRANCH-001 / [BRANCH_PROTECTION.md](../../BRANCH_PROTECTION.md).
+6. Commit + push directly to `main`. For tagged releases, follow BRANCH-001 and the [repository agent instructions](../../AGENTS.md).
 
 **Updating a plugin — both files must change together:**
 
@@ -140,7 +140,7 @@ CI runs the full matrix automatically on push to `main`.
 git add <specific files> && git commit -m "..." && git push origin main
 ```
 
-For tagged plugin releases (version bump + changelog + tag `<name>/vX.Y.Z` + `gh release create`), see [BRANCH_PROTECTION.md](../../BRANCH_PROTECTION.md).
+For tagged plugin releases, follow BRANCH-001 and the [repository agent instructions](../../AGENTS.md).
 
 ## Key Architectural Patterns
 

@@ -1,0 +1,17 @@
+[project_standards]
+schema_version = "1.0"
+catalog = "5"
+
+[standards.agent-handoff]
+enabled = true
+version = "latest"
+config = { contract_version = "1.0", harnesses = ["claude-code", "codex"], startup = "automatic" }
+
+[standards.markdown-tooling]
+enabled = true
+version = "latest"
+config = { contract_version = "1.1", format_workflow_ownership = "consumer-owned", lint_workflow_ownership = "consumer-owned", markdownlint_config_ownership = "consumer-owned" }
+
+[standards.python-tooling]
+enabled = false
+version = "latest"

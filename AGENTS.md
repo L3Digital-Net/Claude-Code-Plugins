@@ -48,9 +48,33 @@ Do not claim completion if either command fails.
 - markdownlint owns Markdown structure. Do not disable a rule to silence a warning — fix the Markdown.
 - Do not edit `.prettierrc.json` or `.markdownlint.json` to bypass a check without a documented ADR exception.
 
-<!-- BEGIN agent-handoff managed instructions -->
-Use the repo-local `$agent-handoff` skill at startup and closeout.
-Do not reread `docs/handoff/state.md` when SessionStart already injected it.
-Keep current status and tasks in `docs/STATUS.md` and `docs/TODO.md`; route durable facts through `docs/handoff/`.
-At closeout, update only changed facts, preserve user-authored work, store credential references only, and run relevant validation.
-<!-- END agent-handoff managed instructions -->
+<!-- prettier-ignore-start -->
+
+<!-- BEGIN project-standards:agent-handoff -->
+<!-- markdownlint-disable MD025 -->
+# Agent Handoff
+
+Use the repo-local `agent-handoff` skill at session startup and closeout. Do not reread state already injected by SessionStart. Keep project knowledge inside this repository and store credential references only, never values.
+<!-- markdownlint-enable MD025 -->
+<!-- END project-standards:agent-handoff -->
+
+<!-- prettier-ignore-end -->
+
+<!-- prettier-ignore-start -->
+
+<!-- BEGIN project-standards:markdown-tooling -->
+<!-- markdownlint-disable MD025 -->
+# Markdown and structured-text tooling
+
+Prettier owns physical formatting and markdownlint owns Markdown structure. Do not add overlapping tools.
+
+Enabled checks: format, lint.
+Markdown scope: `**/*.md`.
+Structured-config scope: `**/*.json`, `**/*.jsonc`, `**/*.yml`, `**/*.yaml`.
+Lint additionally skips generated directories: `.pytest_cache/**`, `.ruff_cache/**`, `.venv/**`, `node_modules/**`.
+
+Run the enabled checks before claiming completion.
+<!-- markdownlint-enable MD025 -->
+<!-- END project-standards:markdown-tooling -->
+
+<!-- prettier-ignore-end -->

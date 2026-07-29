@@ -32,3 +32,5 @@ indent_size = 2
 # so do not strip them here, or the editor and Prettier would disagree on save.
 [*.md]
 trim_trailing_whitespace = false
+indent_size = 2
+indent_style = space

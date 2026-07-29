@@ -4,7 +4,7 @@
 
 - Run the `spec-pipeline` live smoke test after plugin installation and cache sync.
 - Obtain the user's decision on deprecating the two source skills in `agent-configs`.
-- Work the remaining `docs/TODO.md` agent queue: uv-strict-python LSP verify + project-standards reconcile, HA MCP CI. (qdev research-index generator closed 2026-07-10 — v2.0.4–v2.0.6 released.)
+- Work the remaining `docs/TODO.md` queue: uv-strict-python LSP verification and HA MCP CI.
 
 ## Active incidents
 

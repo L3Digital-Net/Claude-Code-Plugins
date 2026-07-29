@@ -14,13 +14,15 @@ Instructions for AI agents:
 ## User tasks
 
 - From [https://github.com/L3DigitalNet/project-standards/tree/main/standards](https://github.com/L3DigitalNet/project-standards/tree/main/standards):
-  - [ ] Adopt python-tooling
+  - [x] Decide whether to adopt python-tooling at the repository root. Keep it disabled and retain the independent plugin toolchains.
 
 ## Agent tasks
 
 - [ ] Complete the `spec-pipeline` post-release follow-ups.
 
-  Run a live smoke test in a fresh session after plugin installation and cache sync. Ask the user whether to deprecate `author-master-spec` and `autonomous-phase-execution` in `agent-configs`. Remaining hygiene: add `~~~` fence support, dedicated PLAN-NO-FILE-STRUCTURE/INTERFACES/TASKS tests, consistent `plugin.json` key order, and the AC5 lint delta in `references/spec-construction.md`.
+  Run a live smoke test in a fresh session after plugin installation and cache sync. Ask the user whether to deprecate `author-master-spec` and `autonomous-phase-execution` in `agent-configs`.
+
+  Remaining hygiene: add `~~~` fence support, dedicated PLAN-NO-FILE-STRUCTURE/INTERFACES/TASKS tests, consistent `plugin.json` key order, and the AC5 lint delta in `references/spec-construction.md`.
 
 - [ ] Reconcile the two `project-standards` findings from the uv-strict-python conformance review.
 

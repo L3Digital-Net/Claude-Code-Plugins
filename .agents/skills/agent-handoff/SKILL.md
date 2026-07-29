@@ -46,7 +46,7 @@ The standard owns:
 - `.agents/skills/agent-handoff/**`;
 - the optional `.agents/hooks/agent-handoff/session_start.py`;
 - only the exact marked blocks or semantic hook entries it installed;
-- `.agents/agent-handoff/manifest.json`.
+- its entries in the central `.standards/lock.toml` inventory.
 
 Do not hand-edit standard-owned artifacts. If local intent requires a change, change the standard package or reconcile the drift explicitly before upgrade. Content outside managed markers and unrelated configuration remain consumer-owned.
 
