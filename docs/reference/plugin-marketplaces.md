@@ -8,215 +8,48 @@ keywords: [marketplace, distribution, publishing, catalog]
 
 # Plugin Marketplace Creation
 
-## Quick Reference
+See the official [plugin marketplaces guide](https://code.claude.com/docs/en/plugin-marketplaces) for source formats, marketplace schema, and installation options. Keep this repository's catalogue in `.claude-plugin/marketplace.json`.
 
-**Purpose:** Catalog of plugins and where to install them from **File:** `.claude-plugin/marketplace.json` **Format:** JSON — validated with Zod strict mode (unknown fields are rejected) **Distribution:** Git repository (GitHub/GitLab), HTTP URL, or local path
+## Current Repository Catalog
 
-**Minimum viable marketplace:**
+| Plugin               | Version  | Source                         |
+| -------------------- | -------- | ------------------------------ |
+| `home-assistant-dev` | `2.2.11` | `./plugins/home-assistant-dev` |
+| `qt-suite`           | `0.3.4`  | `./plugins/qt-suite`           |
+| `up-docs`            | `0.13.1` | `./plugins/up-docs`            |
+| `uv-strict-python`   | `0.2.1`  | `./plugins/uv-strict-python`   |
+| `spec-pipeline`      | `0.2.0`  | `./plugins/spec-pipeline`      |
 
-```bash
-mkdir -p my-marketplace/.claude-plugin
-cat > my-marketplace/.claude-plugin/marketplace.json << 'EOF'
-{
-  "name": "my-marketplace",
-  "description": "My plugin catalog",
-  "owner": { "name": "Your Name", "url": "https://github.com/your-org" },
-  "plugins": []
-}
-EOF
-```
+`qdev` remains in the working tree but is intentionally not offered by this marketplace.
 
-## marketplace.json Schema
-
-The validator uses **Zod strict mode** — unknown fields cause validation failure. Only the fields listed here are accepted.
-
-### Root Fields
-
-```json
-{
-	"name": "my-marketplace",
-	"description": "My collection of Claude Code plugins",
-	"owner": { "name": "Your Name or Org", "url": "https://github.com/your-org" },
-	"plugins": []
-}
-```
-
-**Required:** `name`, `owner`, `plugins` **Optional:** `description`
-
-`owner` accepts either `{name, url}` or `{name, email}`.
-
-**Invalid at root level** (rejected by validator): `version`, `homepage`, `repository`, `license`, `author`, `keywords`
-
-### Plugin Entry Fields
-
-```json
-{
-	"name": "plugin-name",
-	"description": "One or two sentence description.",
-	"version": "1.0.0",
-	"author": { "name": "Your Name", "url": "https://github.com/your-org" },
-	"category": "development",
-	"homepage": "https://github.com/your-org/your-repo/tree/main/plugins/plugin-name",
-	"tags": ["tag1", "tag2"],
-	"source": "./plugins/plugin-name"
-}
-```
-
-**Required:** `name`, `description`, `source` **Optional:** `version`, `author` (object), `category`, `homepage`, `tags`, `strict`
-
-**Invalid in plugin entries** (rejected by validator): `displayName`, `keywords`, `license`
-
-## Plugin Source Field
-
-The `source` field tells Claude Code where to download the plugin.
-
-### Same-repository plugin (recommended for monorepos)
-
-Use a relative path:
-
-```json
-"source": "./plugins/plugin-name"
-```
-
-### External URL
-
-Use an object with `source` and `url` keys:
-
-```json
-"source": { "source": "url", "url": "https://github.com/owner/repo" }
-```
-
-## Complete Marketplace Example
-
-This is the canonical format used by L3DigitalNet:
-
-```json
-{
-	"name": "l3digitalnet-plugins",
-	"description": "Claude Code plugins by L3DigitalNet",
-	"owner": { "name": "L3DigitalNet", "url": "https://github.com/L3DigitalNet" },
-	"plugins": [
-		{
-			"name": "home-assistant-dev",
-			"description": "Comprehensive Home Assistant integration development toolkit.",
-			"version": "2.2.11",
-			"author": { "name": "L3DigitalNet", "url": "https://github.com/L3DigitalNet" },
-			"homepage": "https://github.com/L3DigitalNet/Claude-Code-Plugins/tree/main/plugins/home-assistant-dev",
-			"source": "./plugins/home-assistant-dev"
-		},
-		{
-			"name": "external-tool",
-			"description": "An external plugin hosted in a separate repository.",
-			"version": "1.0.0",
-			"author": { "name": "Someone", "url": "https://github.com/someone" },
-			"source": { "source": "url", "url": "https://github.com/someone/external-tool" }
-		}
-	]
-}
-```
-
-## Hosting Your Marketplace
-
-### GitHub (Recommended)
-
-1. **Create repository** with `.claude-plugin/marketplace.json`
-2. **Users add with**:
-
-   ```bash
-   /plugin marketplace add username/my-marketplace
-   ```
-
-### GitLab, Bitbucket, self-hosted Git
-
-Same structure, users install with full URL:
+## Validate Before Publishing
 
 ```bash
-/plugin marketplace add https://gitlab.com/username/my-marketplace.git
-```
+# Claude Code validates the marketplace or plugin directory.
+claude plugin validate .
 
-### Static hosting
-
-Host `marketplace.json` on any web server:
-
-```bash
-/plugin marketplace add https://example.com/path/to/marketplace.json
-```
-
-### Local testing
-
-Test locally before publishing:
-
-```bash
-/plugin marketplace add /path/to/my-marketplace
-```
-
-## Validation
-
-Always validate before publishing:
-
-```bash
-# If you have the validate script (monorepo pattern):
+# Repository-specific catalogue and source-parity checks.
 ./scripts/validate-marketplace.sh
-
-# Manual JSON syntax check:
-python3 -m json.tool .claude-plugin/marketplace.json
 ```
 
-The validator uses Zod strict mode — it will reject unknown fields and missing required fields. Run validation after every change to `marketplace.json` or any `plugin.json`.
+`claude plugin validate .` is the authoritative interface validation. Add `--strict` when unrecognized manifest fields must fail instead of warn.
 
-## Installed Marketplace Cache
-
-When users add a marketplace via `/plugin marketplace add`, Claude Code clones it to:
+## Install and Reload
 
 ```text
-~/.claude/plugins/marketplaces/<name>/
+/plugin marketplace add L3DigitalNet/Claude-Code-Plugins
+/plugin install <plugin>@l3digitalnet-plugins
+/reload-plugins
 ```
 
-This cache does **not** auto-update. Users must run `/plugin marketplace update <name>` to pull changes. As a publisher, bump your plugin `version` field to signal that an update is available.
+An installation affects the active session only after `/reload-plugins` (or a restart). Choose the installation scope deliberately: project scope records `enabledPlugins` in `.claude/settings.json`, while local scope uses `.claude/settings.local.json`.
 
-## Best Practices
+## Release Discipline
 
-### Curate quality plugins
+For a released plugin, keep its marketplace entry and `plugin.json` version in sync, then follow the manual release sequence in `AGENTS.md`: commit, tag `<name>/vX.Y.Z`, push, and create the GitHub release. A routine documentation or catalogue edit is not a release.
 
-- Test plugins before adding them
-- Remove abandoned or broken plugins
-- Pin to specific versions or release tags when possible
+## Related Reference
 
-### Keep metadata minimal and accurate
-
-Only include fields the validator accepts. Don't add decorative metadata — it causes validation failures.
-
-### Provide a README.md
-
-Include a README alongside `marketplace.json` describing:
-
-- Marketplace purpose and theme
-- How to add it (`/plugin marketplace add ...`)
-- Featured plugins
-- Contribution guidelines (if accepting external plugins)
-
-## User Commands
-
-```bash
-# Add a marketplace
-/plugin marketplace add owner/repo
-/plugin marketplace add https://github.com/owner/repo
-/plugin marketplace add /path/to/local/marketplace
-
-# List marketplaces
-/plugin marketplace list
-
-# Update marketplace catalog
-/plugin marketplace update marketplace-name
-
-# Remove a marketplace
-/plugin marketplace remove marketplace-name
-```
-
-Shortcuts: `/plugin market` instead of `/plugin marketplace`, `rm` instead of `remove`, `ls` instead of `list`.
-
-## Next Steps
-
-- [Create plugins](./guides/plugins.md) to add to your marketplace
-- [Plugins reference](./plugins-reference.md) for full plugin.json schema
-- [Discover plugins](./guides/discover-plugins.md) to learn about plugin installation
+- [Plugins technical reference](./plugins-reference.md)
+- [Plugin development guide](./guides/plugins.md)
+- [Plugin discovery](./guides/discover-plugins.md)

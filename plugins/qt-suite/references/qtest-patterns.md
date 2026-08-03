@@ -51,5 +51,5 @@ Consult reference files in this directory for detailed patterns:
 
 Working examples:
 
-- **`examples/test_calculator.py`** — Complete pytest-qt example with fixtures
-- **`examples/calculator_test.cpp`** — Complete C++ QTest example with data-driven tests
+- **`qtest-patterns/test_calculator.py`** — Complete pytest-qt example with fixtures
+- **`qtest-patterns/calculator_test.cpp`** — Complete C++ QTest example with data-driven tests

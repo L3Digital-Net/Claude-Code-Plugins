@@ -9,24 +9,10 @@ FULL TEMPLATE — use when your plugin uses any of:
   persistent state files (config, queues, indexes, caches)
 
 If your plugin is commands and/or skills only, use the simpler template
-(docs/plugin-design-template-simple.md) instead.
+(docs/templates/plugin-design-template-simple.md) instead.
 -->
 
 Version: 0.1 (Draft) Status: In Progress — NOT FOR IMPLEMENTATION Last Updated: YYYY-MM-DD Authors: TBD Reviewers: TBD
-
----
-
-## Table of Contents
-
-1. [Overview & Problem Statement](#1-overview--problem-statement)
-2. [Goals & Non-Goals](#2-goals--non-goals)
-3. [Design Principles](#3-design-principles)
-4. [Plugin Architecture](#4-plugin-architecture)
-5. [Core Workflows](#5-core-workflows)
-6. [Domain-Specific Core Section](#6-domain-specific-core-section)
-7. [Testing Strategy](#7-testing-strategy)
-8. [Open Questions & Decisions Log](#8-open-questions--decisions-log)
-9. [Appendix](#9-appendix)
 
 ---
 

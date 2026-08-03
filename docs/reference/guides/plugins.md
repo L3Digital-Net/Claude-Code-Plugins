@@ -4,7 +4,6 @@ category: development
 target_platform: linux
 audience: ai_agent
 keywords: [plugins, skills, agents, hooks, mcp, development]
-version: 1.0.33+
 ---
 
 # Plugin Development
@@ -21,10 +20,10 @@ version: 1.0.33+
 
 **Architecture Comparison:**
 
-| Component  | Location          | Namespace         | Scope               |
-| ---------- | ----------------- | ----------------- | ------------------- |
-| Standalone | `.claude/`        | Global `/command` | Project-only        |
-| Plugin     | `.claude-plugin/` | `/plugin:command` | Shareable/versioned |
+| Component  | Location    | Namespace         | Scope               |
+| ---------- | ----------- | ----------------- | ------------------- |
+| Standalone | `.claude/`  | Global `/command` | Project-only        |
+| Plugin     | Plugin root | `/plugin:command` | Shareable/versioned |
 
 ## Quick Start
 
@@ -35,7 +34,7 @@ mkdir -p my-plugin/.claude-plugin
 cd my-plugin
 ```
 
-**plugin.json:**
+**Optional `plugin.json`:**
 
 ```json
 { "name": "my-plugin", "version": "1.0.0", "description": "Plugin description" }
@@ -69,29 +68,28 @@ claude --plugin-dir ./my-plugin
 ```bash
 # Verify Claude Code installation
 claude --version
-# Required: >= 1.0.33
-
 ```
 
 ## Plugin Manifest Schema
 
-**Required fields (.claude-plugin/plugin.json):**
+`plugin.json` is optional. Without it, Claude Code discovers components in their default plugin-root locations and derives the plugin name from the directory. When present, `name` is required.
 
-```json
+**Common fields (`.claude-plugin/plugin.json`):**
+
+```jsonc
 {
 	"name": "plugin-identifier", // lowercase-hyphenated
-	"version": "1.0.0", // semver
-	"description": "Brief description" // one-line summary
+	"displayName": "Plugin Identifier",
+	"version": "1.0.0",
+	"description": "Brief description",
+	"repository": "https://github.com/example/my-plugin",
+	"license": "MIT",
+	"keywords": ["example"],
+	"defaultEnabled": true,
 }
 ```
 
-**Optional fields:**
-
-```json
-{ "author": { "name": "Your Name", "url": "https://..." }, "homepage": "https://..." }
-```
-
-> **Strict mode warning:** `plugin.json` uses Zod strict validation — unknown fields are rejected on install. Invalid fields (silently dropped by local tooling but rejected at install): `keywords`, `repository`, `license`, `category`. MCP and LSP servers use separate sidecar files (`.mcp.json`, `.lsp.json`) — not `plugin.json`.
+`author` and `homepage` are also supported metadata. Unknown top-level fields warn by default; `claude plugin validate --strict` makes them errors. See the [official manifest schema](https://code.claude.com/docs/en/plugins-reference#plugin-manifest-schema) for component-path fields. MCP and LSP can use plugin-root sidecars (`.mcp.json`, `.lsp.json`).
 
 ## Component Types
 
@@ -115,8 +113,6 @@ Command instructions using $ARGUMENTS placeholder for user input.
 ---
 name: skill-name
 description: When to use this skill
-applyTo:
-  - '**/*.py'
 ---
 Skill implementation instructions.
 ```
@@ -125,7 +121,7 @@ See [skills.md](../skills.md) for complete reference.
 
 ### Agents
 
-**Location:** `agents/*.md` **Purpose:** Specialized subprocesses with tool restrictions **Invocation:** `/agent-name`
+**Location:** `agents/*.md` **Purpose:** Specialized subprocesses with tool restrictions **Invocation:** Namespaced dispatch from a command or skill
 
 See [sub-agents.md](../sub-agents.md) for complete reference.
 
@@ -160,7 +156,7 @@ See [mcp.md](../mcp.md) for complete reference.
 ```text
 plugin-name/
 ├── .claude-plugin/
-│   └── plugin.json            # Required metadata
+│   └── plugin.json            # Optional metadata and configuration
 ├── commands/                  # Optional command skills
 │   └── command-name.md
 ├── skills/                    # Optional AI skills
@@ -171,12 +167,12 @@ plugin-name/
 ├── hooks/                     # Optional hooks
 │   └── hooks.json
 ├── .lsp.json                  # Optional LSP config
-└── README.md                  # Documentation — use docs/plugin-readme-template.md
+└── README.md                  # Documentation — use docs/templates/plugin-readme-template.md
 ```
 
 **Important:** Only `plugin.json` goes inside `.claude-plugin/`. All other directories are at plugin root.
 
-Every plugin `README.md` should follow `docs/plugin-readme-template.md`. Required sections: Summary, Principles, Requirements, Installation, How It Works (Mermaid), Usage, Planned Features, Known Issues, Links. Delete optional sections (Features, Configuration, Design Decisions, etc.) that don't apply to the specific plugin.
+Every plugin `README.md` should follow `docs/templates/plugin-readme-template.md`. Required sections: Summary, Principles, Requirements, Installation, How It Works (Mermaid), Usage, Planned Features, Known Issues, Links. Delete optional sections (Features, Configuration, Design Decisions, etc.) that don't apply to the specific plugin.
 
 ## Development Workflow
 
@@ -222,12 +218,10 @@ EOF
 claude --plugin-dir ./my-plugin
 ```
 
-### 4, Update and Reload
+### 4. Update and Reload
 
 ```bash
 # Make changes
-# Restart Claude to reload
-claude --plugin-dir ./my-plugin
+# Activate source changes in the active session
+/reload-plugins
 ```
-
-## Testing

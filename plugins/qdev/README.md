@@ -1,10 +1,12 @@
-# qdev
+# qdev (retired)
+
+> **Retired marketplace plugin.** `qdev` is not listed in `.claude-plugin/marketplace.json` and cannot be installed from this marketplace. Its v2.0.6 source remains for reference and local inspection only.
 
 Deep web research before you design or build.
 
 ## Summary
 
-The enemy of a good design decision is stale or incorrect knowledge. `qdev` addresses that with one focused command: `/research` runs a structured, dual-source web sweep and persists a cited report you can hand to design, planning, or review. It is user-initiated — it never fires contextually. For the lightweight, agent-automatic web lookups that used to live here (the old grounding skill), use the standalone `web-search` skill instead.
+The source implements one focused command: `/qdev:research` runs a structured, dual-source web sweep and persists a cited report for design, planning, or review. It is user-initiated and never fires contextually.
 
 ## Principles
 
@@ -22,14 +24,9 @@ The enemy of a good design decision is stale or incorrect knowledge. `qdev` addr
 - `serper-search` MCP server (Google-operator queries: `site:`, `filetype:`)
 - `context7` MCP server (recommended; library/framework documentation gating)
 
-## Installation
+## Local inspection
 
-```bash
-/plugin marketplace add L3DigitalNet/Claude-Code-Plugins
-/plugin install qdev@l3digitalnet-plugins
-```
-
-For local development:
+The retired plugin can be loaded from this source tree for inspection or development:
 
 ```bash
 claude --plugin-dir ./plugins/qdev
@@ -107,10 +104,7 @@ Research a topic, technology, or problem space before designing or building, by 
 | You want to | Use |
 | --- | --- |
 | Research before design — output feeds `superpowers:brainstorming` | `/qdev:research` |
-| A lightweight, in-the-loop web lookup mid-task (no saved report) | `web-search` skill |
-| Compare options or answer a current-events question with citations | global `research` skill |
 | Look up a specific library API quickly | Context7 directly |
-| Pull clean Markdown from a known URL | global `extract` skill |
 
 `/qdev:research` is opinionated for development decisions: fixed coverage angles, footgun corroboration, and frontmatter/index-backed persistence under `docs/research/`.
 
@@ -123,17 +117,8 @@ Research a topic, technology, or problem space before designing or building, by 
 
 Reports are not auto-cleaned. The dedup cycle updates, relates, or supersedes overlapping research; stale reports can still be removed manually when they are no longer useful.
 
-## Planned Features
-
-- Support for additional research angles (e.g. licensing/compliance scans)
-- Query-level dedup: skip sweep queries already answered by a recent report _before_ searching (the existing dedup cycle reconciles reports only at write time, after the sweep has run)
-
-## Known Issues
-
-None.
-
 ## Links
 
-- [Design spec](https://github.com/L3DigitalNet/Claude-Code-Plugins/blob/main/docs/superpowers/specs/2026-04-13-qdev-design.md)
-- [Search decoupling spec](https://github.com/L3DigitalNet/Claude-Code-Plugins/blob/main/docs/superpowers/specs/2026-06-07-qdev-search-decoupling-design.md)
+- [Design spec](https://github.com/L3DigitalNet/Claude-Code-Plugins/blob/main/docs/specs/2026-04-13-qdev-design.md)
+- [Search decoupling spec](https://github.com/L3DigitalNet/Claude-Code-Plugins/blob/main/docs/specs/2026-06-07-qdev-search-decoupling-design.md)
 - [Source](https://github.com/L3DigitalNet/Claude-Code-Plugins/tree/main/plugins/qdev)

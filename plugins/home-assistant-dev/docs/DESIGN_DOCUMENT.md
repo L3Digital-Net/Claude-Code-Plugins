@@ -1,9 +1,8 @@
 # Home Assistant Development Plugin for Claude Code
 
-## Design Document v2.2
+## Design Document v2.2.11
 
-**Document Version:** 2.2 **Plugin Version:** 2.2.10 **Last Updated:** February 2026  
-**Status:** Snapshot as of v2.2.10 — see CHANGELOG.md for current state
+**Document Version:** 2.2.11 **Plugin Version:** 2.2.11 **Last Updated:** August 2026 **Status:** Current implementation snapshot. See `CHANGELOG.md` for per-release history and `[Unreleased]` work.
 
 ---
 
@@ -20,7 +19,7 @@
 9. [Testing Infrastructure](#9-testing-infrastructure)
 10. [Design Decisions](#10-design-decisions)
 11. [Quality Assurance](#11-quality-assurance)
-12. [Installation & Usage](#12-installation--usage)
+12. [Installation and Usage](#12-installation-and-usage)
 13. [Future Roadmap](#13-future-roadmap)
 14. [Appendices](#14-appendices)
 
@@ -51,7 +50,7 @@ A Claude Code plugin providing:
 
 - **27 specialized skills** covering all development aspects
 - **3 workflow agents** for end-to-end tasks
-- **5 validation scripts** with real-time feedback
+- **3 validation scripts** with real-time feedback and **3 manual development helpers**
 - **3 example integrations** at Bronze, Silver, Gold tiers
 - **MCP server** for live Home Assistant connectivity
 - **Comprehensive test infrastructure** for self-validation
@@ -60,12 +59,10 @@ A Claude Code plugin providing:
 
 | Metric        | Value                |
 | ------------- | -------------------- |
-| Total Files   | 116                  |
 | Skills        | 27                   |
 | IQS Coverage  | 100% (52/52 rules)   |
 | Example Tiers | Bronze, Silver, Gold |
 | MCP Tools     | 12                   |
-| Test Cases    | 42                   |
 
 ---
 
@@ -143,12 +140,10 @@ A Claude Code plugin providing:
 ### 3.2 Directory Structure
 
 ```text
-ha-dev-plugin-v2/
+home-assistant-dev/
 ├── .claude-plugin/
 │   └── plugin.json              # Plugin manifest
-├── .github/
-│   └── workflows/
-│       └── test.yml             # CI/CD pipeline
+├── .mcp.json                    # Bundled MCP registration
 ├── skills/                      # 27 skill definitions
 │   ├── ha-architecture/
 │   │   └── SKILL.md
@@ -219,7 +214,7 @@ ha-dev-plugin-v2/
 │   └── generate-integration.md
 ├── hooks/
 │   └── hooks.json               # File-change hooks
-├── scripts/                     # 5 validation scripts
+├── scripts/                     # Validators and development helpers
 │   ├── validate-manifest.py
 │   ├── validate-strings.py
 │   ├── check-patterns.py
@@ -381,6 +376,7 @@ Each skill follows Claude Code's Agent Skills format:
 ---
 name: ha-skill-name
 description: Trigger description for context matching
+# Present only when the skill requires explicit invocation.
 disable-model-invocation: true
 ---
 
@@ -559,10 +555,14 @@ interface MCPConfig {
 		allowServiceCalls: boolean // Default: false
 		requireDryRun: boolean // Default: true
 		blockedServices: string[] // Additional blocks
-		safeDomains: string[] // Bypass dry-run
 	}
 	cache: {
 		statesTtlSeconds: number // Default: 30
+	}
+	features: {
+		enableDocsTools: boolean // Default: true
+		enableHaTools: boolean // Default: true
+		enableValidationTools: boolean // Default: true
 	}
 }
 ```
@@ -611,7 +611,7 @@ Mode: Custom Integration (HACS)
 
 **Purpose:** Detect deprecated and anti-patterns
 
-**Patterns Detected (21 total):**
+**Checks:** 21 line-pattern checks plus two file-level checks for missing future annotations and entity unique IDs.
 
 | Category | Pattern | Severity |
 | --- | --- | --- |
@@ -757,27 +757,26 @@ tests/
 
 ### 9.2 Test Matrix
 
-| Component            | Test Type   | Tool   | Tests  |
-| -------------------- | ----------- | ------ | ------ |
-| validate-manifest.py | Unit        | pytest | 9      |
-| check-patterns.py    | Unit        | pytest | 10     |
-| IQS documentation    | Validation  | pytest | 14     |
-| Scripts vs examples  | Integration | bash   | 9      |
-| MCP safety.ts        | Unit        | Jest   | 12     |
-| **Total**            |             |        | **54** |
+| Component                 | Test Type   | Tool    | Tests                            |
+| ------------------------- | ----------- | ------- | -------------------------------- |
+| Python validation scripts | Unit        | pytest  | `tests/scripts/`                 |
+| IQS documentation         | Validation  | pytest  | `tests/validation/`              |
+| Plugin structure          | Structural  | pytest  | `tests/test_plugin_structure.py` |
+| Scripts vs examples       | Integration | Bash    | `tests/integration/`             |
+| MCP server                | Unit        | Jest    | `mcp-server/__tests__/`          |
+| Live Home Assistant       | E2E         | Node.js | `tests/e2e/`                     |
 
 ### 9.3 CI/CD Pipeline
 
-**File:** `.github/workflows/test.yml`
+**File:** `.github/workflows/ha-dev-plugin-tests.yml`
 
 **Jobs:**
 
-1. `python-unit-tests` - pytest on scripts/validation
-2. `typescript-tests` - Jest + typecheck + build
-3. `integration-tests` - Scripts against examples
-4. `validate-examples` - Matrix test all 3 examples
-5. `lint` - Ruff on Python code
-6. `skill-validation` - Frontmatter and consistency
+1. `python-tests` - pytest for scripts, validation, and structure
+2. `integration-tests` - Scripts against examples and example manifests
+3. `typescript-tests` - Jest coverage, typecheck, build, and bundle freshness
+4. `structural-validation` - Plugin structure, skill frontmatter, and hooks JSON
+5. `mcp-e2e-tests` - Home Assistant container tests on `main` or an explicitly labelled pull request
 
 ### 9.4 Self-Testing Protocol
 
@@ -888,42 +887,20 @@ Automated tests verify:
 
 ---
 
-## 12. Installation & Usage
+## 12. Installation and Usage
 
 ### 12.1 Installation
 
 ```bash
-# Option 1: Direct installation
-cp -r ha-dev-plugin-v2 ~/.claude/plugins/home-assistant-dev
-
-# Option 2: Symlink (recommended for development)
-ln -s /path/to/ha-dev-plugin-v2 ~/.claude/plugins/home-assistant-dev
-
-# Option 3: Claude Code CLI (future)
-claude plugins install home-assistant-dev
+/plugin marketplace add L3DigitalNet/Claude-Code-Plugins
+/plugin install home-assistant-dev@l3digitalnet-plugins
 ```
+
+For local plugin development, start Claude Code with `claude --plugin-dir ./plugins/home-assistant-dev` from the repository root.
 
 ### 12.2 MCP Server Setup
 
-```bash
-# Install globally
-cd mcp-server
-npm install -g .
-
-# Configure in Claude Desktop
-# ~/.config/claude/claude_desktop_config.json
-{
-  "mcpServers": {
-    "ha-dev": {
-      "command": "ha-dev-mcp-server",
-      "env": {
-        "HA_DEV_MCP_URL": "ws://homeassistant.local:8123/api/websocket",
-        "HA_DEV_MCP_TOKEN": "your-long-lived-access-token"
-      }
-    }
-  }
-}
-```
+The plugin registers its bundled `mcp-server/dist/server.bundle.cjs` as `ha-dev-mcp` through `.mcp.json`. Call `ha_connect` with the Home Assistant URL and a long-lived token to establish a live connection. See `mcp-server/README.md` for standalone use and configuration.
 
 ### 12.3 Usage Examples
 
@@ -952,26 +929,7 @@ Claude: [Uses MCP ha_get_states tool to query live HA]
 
 ## 13. Future Roadmap
 
-### 13.1 Version 2.1 (Planned)
-
-- [ ] Bluetooth device trigger skill
-- [ ] Thread/Matter integration patterns
-- [ ] Voice assistant integration skill
-- [ ] Calendar entity patterns
-
-### 13.2 Version 2.2 (Planned)
-
-- [ ] GUI for MCP server configuration
-- [ ] Integration template generator (interactive)
-- [ ] HACS submission assistant
-- [ ] Changelog generator
-
-### 13.3 Version 3.0 (Future)
-
-- [ ] Multi-integration project support
-- [ ] Dependency analysis tools
-- [ ] Performance profiling integration
-- [ ] Automated PR generation for Core
+Current planned work is tracked in the `[Unreleased]` section of `CHANGELOG.md`. The historical roadmap items in earlier revisions of this document were not release commitments and are intentionally not represented as current scope.
 
 ---
 
@@ -999,6 +957,10 @@ Claude: [Uses MCP ha_get_states tool to query live HA]
 ### 14.3 Changelog Summary
 
 For the authoritative, per-release changelog see `CHANGELOG.md`. Summary of recent releases:
+
+#### v2.2.11
+
+- Documentation and validation follow-up for the released 2.2 series.
 
 #### v2.2.10
 
@@ -1043,9 +1005,10 @@ For the authoritative, per-release changelog see `CHANGELOG.md`. Summary of rece
 
 ## Document History
 
-| Version | Date     | Author | Changes                          |
-| ------- | -------- | ------ | -------------------------------- |
-| 2.2     | Jun 2026 | Claude | Re-sync to shipped v2.2.10 state |
-| 2.2     | Feb 2026 | Claude | Version sync to v2.2.1           |
-| 2.0     | Feb 2026 | Claude | Complete rewrite for v2.0        |
-| 1.0     | Feb 2026 | Claude | Initial design                   |
+| Version | Date     | Author | Changes                                        |
+| ------- | -------- | ------ | ---------------------------------------------- |
+| 2.2.11  | Aug 2026 | Claude | Re-sync to the released v2.2.11 implementation |
+| 2.2     | Jun 2026 | Claude | Re-sync to shipped v2.2.10 state               |
+| 2.2     | Feb 2026 | Claude | Version sync to v2.2.1                         |
+| 2.0     | Feb 2026 | Claude | Complete rewrite for v2.0                      |
+| 1.0     | Feb 2026 | Claude | Initial design                                 |

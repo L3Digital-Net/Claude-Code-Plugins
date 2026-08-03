@@ -1,6 +1,6 @@
 # Marketplace Checklist
 
-This checklist ensures the repository adheres to Claude Code marketplace requirements.
+This checklist reflects this marketplace's checked-in structure. Use the Claude Code validator for the current runtime schema; `scripts/validate-marketplace.sh` is the repository's supplemental consistency check.
 
 ## Required Files ✓
 
@@ -10,64 +10,61 @@ This checklist ensures the repository adheres to Claude Code marketplace require
 
 ## Marketplace JSON Structure ✓
 
-Required fields in `.claude-plugin/marketplace.json`:
+Required root fields in `.claude-plugin/marketplace.json`:
 
 - [x] `name` - Marketplace identifier
-- [x] `version` - Semantic versioning
-- [x] `description` - One-line summary
+- [x] `owner` - Object containing at least `name`
 - [x] `plugins` - Array of plugin entries
 
-Optional but recommended:
+Do not add these root fields; the checked schema rejects them:
 
-- [x] `author` - Author information
-- [x] `homepage` - Repository URL
-- [x] `repository` - Git repository URL
-- [x] `license` - License identifier
+- `version`
+- `homepage`
+- `repository`
+- `license`
 
 ## Plugin Entries ✓
 
 Each plugin in the `plugins` array must have:
 
 - [x] `name` - Plugin identifier (matches plugin manifest)
-- [x] `displayName` - Human-readable name
 - [x] `description` - Brief description
-- [x] `version` - Plugin version
-- [x] `author` - Plugin creator
-- [x] `source` - Download location with type, owner, repo
+- [x] `source` - Relative plugin path or external-source object
 
 Optional:
 
-- [x] `keywords` - Search tags
+- [x] `version` - Must match the local `plugin.json` when both are present
+- [x] `author` - Object containing plugin-author information
 - [x] `homepage` - Plugin documentation URL
-- [x] `repository` - Repository URL
-- [x] `license` - License identifier
+
+Do not use `displayName`, `keywords`, or `license` in a marketplace entry; the checked schema rejects them.
 
 ## Plugin Structure
 
-Each plugin in `plugins/` directory must have:
+Each active marketplace entry must point to a plugin directory containing:
 
-- [x] `.claude-plugin/manifest.json` (or `plugin.json`)
+- [x] `.claude-plugin/plugin.json` (or the legacy `manifest.json`)
 - [x] `README.md` - Plugin documentation
 - [ ] At least one component (commands/, skills/, agents/, hooks/)
 
-Current plugins:
+The active catalog contains:
 
-- agent-orchestrator ✓
+- `home-assistant-dev`
+- `qt-suite`
+- `up-docs`
+- `uv-strict-python`
+- `spec-pipeline`
+
+The retired `plugins/qdev/` source is intentionally retained but is not a marketplace entry.
 
 ## Validation Commands
 
 ```bash
-# Validate marketplace JSON syntax
-jq . .claude-plugin/marketplace.json
+# Validate the marketplace with the installed Claude Code runtime
+claude plugin validate .
 
-# Check required fields
-jq -e '.name and .version and .description and .plugins' .claude-plugin/marketplace.json
-
-# Validate each plugin entry
-jq -e '.plugins[] | .name and .displayName and .description and .version and .author and .source' .claude-plugin/marketplace.json
-
-# Check plugin manifest
-jq . plugins/agent-orchestrator/.claude-plugin/plugin.json
+# Check this repository's marketplace entries, local manifests, names, and versions
+./scripts/validate-marketplace.sh
 ```
 
 ## Testing Installation
@@ -76,8 +73,8 @@ jq . plugins/agent-orchestrator/.claude-plugin/plugin.json
 # Add marketplace locally
 /plugin marketplace add /path/to/Claude-Code-Plugins
 
-# Install plugin
-/plugin install agent-orchestrator@claude-code-plugins
+# Install an active plugin
+/plugin install home-assistant-dev@l3digitalnet-plugins
 
 # Verify plugin loaded
 /plugin list
@@ -89,7 +86,7 @@ Once pushed to GitHub, users can install with:
 
 ```bash
 /plugin marketplace add L3DigitalNet/Claude-Code-Plugins
-/plugin install agent-orchestrator@claude-code-plugins
+/plugin install home-assistant-dev@l3digitalnet-plugins
 ```
 
 ## Updating the Marketplace
@@ -98,9 +95,7 @@ When adding or updating plugins:
 
 1. Update plugin files in `plugins/`
 2. Update plugin entry in `.claude-plugin/marketplace.json`
-3. Bump marketplace version:
-   - **Patch** (1.0.1) - Plugin updates, fixes
-   - **Minor** (1.1.0) - New plugins added
-   - **Major** (2.0.0) - Breaking changes
-4. Update `README.md` if needed
-5. Commit and push to GitHub
+3. Keep the marketplace and plugin manifest versions identical when the marketplace entry includes a version.
+4. Update the relevant README and CHANGELOG.
+5. Run `./scripts/validate-marketplace.sh`.
+6. Commit and push to GitHub.

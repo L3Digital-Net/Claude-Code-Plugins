@@ -7,7 +7,7 @@ version: "1.0.0"
 
 Qt Pilot is a bundled MCP server that lets Claude launch, interact with, and visually test PySide6 Qt applications — without a physical display. It uses Xvfb (X Virtual Framebuffer) for headless rendering and communicates with a test harness over a Unix socket.
 
-Use `/qt:visual` to start a visual testing session.
+Use `/qt-suite:visual` to start a visual testing session.
 
 ## Architecture
 
@@ -148,4 +148,4 @@ The `gui-tester` agent saves reports to `tests/reports/gui-YYYY-MM-DD-HH-MM.md`.
 
 ## Examples
 
-- **`examples/visual_test_session.py`** — Annotated walkthrough of a complete Qt Pilot session: launch → discover → interact → verify → screenshot → close → report
+- **`qt-pilot-usage/visual_test_session.py`** — Annotated walkthrough of a complete Qt Pilot session: launch → discover → interact → verify → screenshot → close → report

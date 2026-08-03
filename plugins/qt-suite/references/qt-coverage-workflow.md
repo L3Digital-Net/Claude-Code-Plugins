@@ -23,7 +23,7 @@ run tests again → verify delta
 repeat until threshold met
 ```
 
-Use `/qt:coverage` to execute this loop. The `test-generator` agent activates automatically after `/qt:coverage` identifies gaps.
+Use `/qt-suite:coverage` to execute this loop. When gaps are found, the command offers to hand them to the `test-generator` agent.
 
 ## Python Projects (coverage.py)
 
@@ -76,7 +76,7 @@ Current coverage: 74%. Target: 80%.
 Generate tests targeting these specific lines.
 ```
 
-The `test-generator` agent activates automatically after `/qt:coverage` completes and gaps are found.
+The `test-generator` agent receives the handoff when the user accepts the command's offer (or invokes the command with `--generate`) after gaps are found.
 
 ## Additional Resources
 

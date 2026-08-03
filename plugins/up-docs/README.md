@@ -90,6 +90,8 @@ The `permissions.deny` block is enforced by Claude Code's permission engine rega
 /plugin install up-docs@l3digitalnet-plugins
 ```
 
+In the current session, run `/reload-plugins` before using the plugin's commands.
+
 For local development:
 
 ```bash

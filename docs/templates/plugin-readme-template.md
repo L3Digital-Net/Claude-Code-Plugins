@@ -224,6 +224,6 @@ other_setting: true # Why the default is what it is
 ## Links
 
 - Repository: [L3DigitalNet/Claude-Code-Plugins](https://github.com/L3DigitalNet/Claude-Code-Plugins)
-- Changelog: [`CHANGELOG.md`](../CHANGELOG.md)
+- Changelog: `CHANGELOG.md`
 - Issues and feedback: [GitHub Issues](https://github.com/L3DigitalNet/Claude-Code-Plugins/issues)
-- Design document: [`docs/DESIGN.md`](../docs/DESIGN.md) _(if one exists)_
+- Design document: `docs/DESIGN.md` _(if one exists)_

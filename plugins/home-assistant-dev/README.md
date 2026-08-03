@@ -4,7 +4,7 @@ A Claude Code plugin for Home Assistant custom integration development. Covers a
 
 ## Summary
 
-Two commands generate integrations at selectable quality tiers. Twenty-seven skills auto-activate when conversation touches relevant HA concepts, no manual invocation needed. Three subagents handle development, review, and debugging. Validation hooks fire on every write, and an optional MCP server connects to a live HA instance for state queries, service calls, and documentation search.
+Two commands generate integrations at selectable quality tiers. Twenty-seven skills auto-activate when conversation touches relevant HA concepts, no manual invocation needed. Three specialized agent definitions cover development, review, and debugging. Validation hooks fire on every write, and an optional MCP server connects to a live HA instance for state queries, service calls, and documentation search.
 
 ## Principles
 
@@ -29,6 +29,8 @@ Two commands generate integrations at selectable quality tiers. Twenty-seven ski
 /plugin marketplace add L3DigitalNet/Claude-Code-Plugins
 /plugin install home-assistant-dev@l3digitalnet-plugins
 ```
+
+Run `/reload-plugins` to activate the newly installed plugin in the current Claude Code session.
 
 For local development:
 
@@ -81,7 +83,7 @@ Use `/home-assistant-dev:generate-integration` for a guided experience with qual
 
 Skills auto-activate when conversation mentions relevant HA concepts. Discussing `DataUpdateCoordinator` loads the coordinator skill; mentioning HACS loads the HACS metadata skill.
 
-Agents spawn via commands but can also be addressed directly: "act as ha-integration-reviewer and review my config_flow.py" or "use ha-integration-debugger to diagnose this error."
+The plugin includes specialized agents for development, review, and debugging; ask Claude Code to review or diagnose an integration when those workflows are needed.
 
 Validation runs on every write via the PostToolUse hook; warnings appear inline when issues are detected. MCP tools are available as `ha-dev-mcp` once you call `ha_connect` with your HA URL and token.
 
@@ -221,7 +223,7 @@ See the [Unreleased] section of the [changelog](CHANGELOG.md) for any staged-but
 - **Live HA connection is optional.** MCP HA tools require a running Home Assistant instance and a valid long-lived access token. Skills and commands function fully without a live connection.
 - **`ha_call_service` dry-runs by default.** Set `dry_run: false` explicitly to execute service calls against a real instance.
 - **Targets HA 2025.2+ / Python 3.13.** Generated code uses modern type syntax (`list[str]`, `X | None`) and 2025 import paths. Earlier HA versions may require adjustments to generated imports (see `ha-deprecation-fixes` skill).
-- **Validation scripts require Python 3.** The PostToolUse hook calls `python3`; if your environment uses `python`, the hook silently skips validation.
+- **Validation scripts require Python 3.** The PostToolUse hook calls `python3`; if it is unavailable, the hook reports that validation was skipped but does not block the write.
 
 ## Links
 

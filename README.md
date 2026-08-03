@@ -1,6 +1,6 @@
 # Claude Code Plugins Marketplace
 
-A Claude Code plugin marketplace. Plugins cover the full development lifecycle: release automation, Home Assistant integration dev, Qt UI development, three-layer documentation propagation, and Python tooling standardization.
+A Claude Code plugin marketplace for Home Assistant integration development, Qt UI development, documentation propagation, Python tooling standardization, and spec-driven delivery.
 
 ## Table of Contents
 
@@ -13,8 +13,9 @@ A Claude Code plugin marketplace. Plugins cover the full development lifecycle: 
     - [Qt Suite](#qt-suite)
     - [qdev](#qdev)
     - [Up Docs](#up-docs)
+    - [Spec Pipeline](#spec-pipeline)
     - [uv-strict-python](#uv-strict-python)
-  - [Testing \& Validation](#testing--validation)
+  - [Testing and Validation](#testing-and-validation)
   - [Plugin Development](#plugin-development)
     - [Quick Start](#quick-start)
     - [Documentation](#documentation)
@@ -39,6 +40,8 @@ Then install individual plugins:
 ```bash
 /plugin install home-assistant-dev@l3digitalnet-plugins
 ```
+
+Run `/reload-plugins` to activate a newly installed plugin in the current session.
 
 ### Staying Up to Date
 
@@ -65,14 +68,15 @@ When auto-update is enabled, Claude Code refreshes the marketplace catalog and u
 | Plugin | Type | Command | Description |
 | --- | --- | --- | --- |
 | [Home Assistant Dev](#home-assistant-dev) | Commands + Skills + MCP | varies | Full HA integration development toolkit with 27 skills |
-| [qdev](#qdev) _(retired)_ | Commands + Agents | `/research` | Retired — no longer installable; superseded by the `qdev-research` skill |
-| [Qt Suite](#qt-suite) | MCP + Commands + Skills + Agents | `/qt-suite:scaffold`, `/qt-suite:coverage`, `/qt-suite:visual` | Complete Qt development and testing toolkit: proactive agents, 16 skills, scaffolding, and headless GUI testing |
+| [qdev](#qdev) _(retired)_ | Commands + Agents | `/research` | Retired — source retained for reference; no longer installable |
+| [Qt Suite](#qt-suite) | MCP + Commands + References + Agents | `/qt-suite:scaffold`, `/qt-suite:coverage`, `/qt-suite:visual` | Qt development and testing toolkit with 16 domain references, scaffolding, and headless GUI testing |
 | [Up Docs](#up-docs) | Skills + Agents | `/up-docs:repo`, `/up-docs:wiki`, `/up-docs:notion`, `/up-docs:all`, `/up-docs:drift` | Update documentation across three layers via dispatched sub-agents (all Sonnet: repo, wiki, Notion propagators & drift auditor) from session context, plus full infrastructure drift analysis |
 | [uv-strict-python](#uv-strict-python) | Skills | (AI-invoked) | Configures Python projects to the Python Tooling SSOT Standard (uv, Ruff, BasedPyright strict, pytest+coverage, pip-audit) |
+| [Spec Pipeline](#spec-pipeline) | Commands + Skills | `/spec-pipeline:init-project`, `/spec-pipeline:status`, `/spec-pipeline:validate` | Spec-driven development pipeline with deterministic `specpipe` validation gates |
 
 ## Principles
 
-These principles apply across all plugins in this collection. Individual plugins may define additional principles scoped to their domain.
+These are the marketplace's documented design principles. Individual plugins may define additional principles scoped to their domain.
 
 **[P1] Act on Intent**: Invoking a command is consent to its implied scope. When intent is ambiguous, clarify scope before executing, not after. When intent is clear, execute without narration or confirmation of the obvious. A confirmation gate is warranted only when an operation is both truly irreversible and its scope materially exceeds what the invocation implies, not for operations that are merely large or look dangerous. If scope materially changes mid-execution, stop and re-confirm. Routine friction is a tax, not a safeguard.
 
@@ -97,10 +101,9 @@ These principles apply across all plugins in this collection. Individual plugins
 - 27 context-aware skills covering architecture, config flows, coordinators, entities, testing, and more
 - 3 specialized agents (development, review, debugging)
 - MCP server with 12 tools for live HA connection and documentation search
-- 5 validation scripts with PostToolUse hook enforcement
-- 3 example integrations (Bronze/Silver/Gold tier)
-- 9 project templates for CI/CD, testing, and documentation
-- Full Integration Quality Scale coverage (all 52 rules)
+- Validation scripts with PostToolUse hook enforcement
+- Example integrations and project templates for CI/CD, testing, and documentation
+- Integration Quality Scale and HACS guidance
 
 **Install:**
 
@@ -114,12 +117,12 @@ These principles apply across all plugins in this collection. Individual plugins
 
 ### Qt Suite
 
-**Complete Qt development and testing toolkit**: proactive specialist agents, 16 domain skills, scaffolding commands, and headless GUI testing via the bundled Qt Pilot MCP server. Covers PySide6, PyQt6, and C++/Qt.
+**Complete Qt development and testing toolkit**: specialist agents, 16 domain references, scaffolding commands, and headless GUI testing via the bundled Qt Pilot MCP server. Covers PySide6, PyQt6, and C++/Qt.
 
 **Features:**
 
-- 4 proactive agents: development specialist, debugger, code reviewer, and UX advisor
-- 16 context-aware skills covering signals/slots, layouts, Model/View, threading, QML, styling, and more
+- Specialist agents for development, debugging, review, UX, GUI testing, and test generation
+- 16 domain references covering signals/slots, layouts, Model/View, threading, QML, styling, and more
 - `/qt-suite:scaffold`: generates a complete PySide6 project with pyproject.toml, src layout, and test config
 - `/qt-suite:generate`: scans codebase and generates unit tests for untested files
 - `/qt-suite:coverage`: gcov/lcov (C++) or coverage.py (Python) report with gap-targeted test generation
@@ -139,9 +142,7 @@ These principles apply across all plugins in this collection. Individual plugins
 
 > **Retired.** `qdev` is no longer offered by this marketplace and cannot be installed. It has been removed from `.claude-plugin/marketplace.json`; the source under `plugins/qdev/` is retained for reference and history only.
 >
-> Its capability is superseded by the `qdev-research` skill, which covers the same dual-source research sweep without the plugin packaging.
-
-**What it did**: a single user-initiated command that swept current sources before you design or build.
+> **What it did**: a single user-initiated command that swept current sources before you design or build.
 
 - `/research`: dual-source sweep (Tavily-first recall, Brave/Serper cross-checks, Context7 docs gating, footgun corroboration) persisted as a cited, frontmatter-indexed report under `docs/research/`
 
@@ -170,6 +171,27 @@ These principles apply across all plugins in this collection. Individual plugins
 
 ---
 
+### Spec Pipeline
+
+**Spec-driven delivery toolkit**: initializes a project handoff layout, reports phase progress, and validates master specifications, phase specifications, plans, and phase plans through the bundled `specpipe` CLI.
+
+**Features:**
+
+- `/spec-pipeline:init-project`: creates the minimal handoff layout without overwriting existing files
+- `/spec-pipeline:status`: renders phase status, the next available phase, and review-round counters
+- `/spec-pipeline:validate`: runs the matching structural validator for a specification, plan, or phase plan
+- Authoring and phase-execution skills for the broader workflow
+
+**Install:**
+
+```bash
+/plugin install spec-pipeline@l3digitalnet-plugins
+```
+
+**Learn more:** [plugins/spec-pipeline/README.md](plugins/spec-pipeline/README.md)
+
+---
+
 ### uv-strict-python
 
 **Python tooling standard enforcer**: configures Python projects to the Python Tooling SSOT Standard — uv for package/env management, Ruff for linting and formatting, BasedPyright strict for type checking, pytest+coverage for testing, and pip-audit for dependency auditing.
@@ -190,7 +212,7 @@ These principles apply across all plugins in this collection. Individual plugins
 
 ---
 
-## Testing & Validation
+## Testing and Validation
 
 The marketplace standardizes test frameworks per language — bats for bash, pytest for Python, Jest for TypeScript. See [docs/handoff/conventions.md](docs/handoff/conventions.md) (TEST-001) for the canonical frameworks and per-language naming conventions.
 
@@ -199,9 +221,6 @@ The marketplace standardizes test frameworks per language — bats for bash, pyt
 ```bash
 # Bash plugins
 cd plugins/up-docs && ./tests/run-bats.sh
-
-# Python plugins
-pytest plugins/home-assistant-dev/tests/ -m unit
 
 # Marketplace schema validation (always run before merging to main)
 ./scripts/validate-marketplace.sh
@@ -238,13 +257,13 @@ This repository also serves as a development workspace for creating new plugins.
 
 ### Documentation
 
-- **[docs/plugins.md](docs/reference/guides/plugins.md)** - Plugin development guide
-- **[docs/plugin-marketplaces.md](docs/reference/plugin-marketplaces.md)** - Marketplace creation
-- **[docs/plugins-reference.md](docs/reference/plugins-reference.md)** - Technical reference
-- **[docs/skills.md](docs/reference/skills.md)** - Creating AI-invoked skills
-- **[docs/sub-agents.md](docs/reference/sub-agents.md)** - Custom agent definitions
-- **[docs/hooks.md](docs/reference/hooks.md)** - Lifecycle event handlers
-- **[docs/mcp.md](docs/reference/mcp.md)** - MCP server integration
+- **[Plugin development guide](docs/reference/guides/plugins.md)**
+- **[Marketplace creation](docs/reference/plugin-marketplaces.md)**
+- **[Technical reference](docs/reference/plugins-reference.md)**
+- **[Creating AI-invoked skills](docs/reference/skills.md)**
+- **[Custom agent definitions](docs/reference/sub-agents.md)**
+- **[Lifecycle event handlers](docs/reference/hooks.md)**
+- **[MCP server integration](docs/reference/mcp.md)**
 
 ## Repository Structure
 
@@ -261,9 +280,8 @@ Claude-Code-Plugins/
 │   └── uv-strict-python/        # Python tooling standard (uv, Ruff, BasedPyright strict)
 ├── scripts/
 │   └── validate-marketplace.sh  # Marketplace validation
-├── docs/                        # Comprehensive documentation
+├── docs/                        # Reference, specifications, templates, and handoff docs
 ├── CLAUDE.md                    # Development guidance for AI agents
-├── BRANCH_PROTECTION.md         # Branch protection and workflow guide
 └── README.md                    # This file
 ```
 
@@ -275,9 +293,9 @@ To add a plugin to this marketplace:
 2. Add entry to `.claude-plugin/marketplace.json` (version must match the plugin's own `plugin.json`)
 3. Validate with `./scripts/validate-marketplace.sh`
 4. Commit directly to `main` and push
-5. To publish a tagged release: bump `plugin.json` + `marketplace.json`, update the CHANGELOG, commit, then `git tag <name>/vX.Y.Z && git push --tags && gh release create <name>/vX.Y.Z` (see [BRANCH_PROTECTION.md](BRANCH_PROTECTION.md))
+5. To publish a tagged release: bump `plugin.json` + `marketplace.json`, update the CHANGELOG, commit, then `git tag <name>/vX.Y.Z && git push --tags && gh release create <name>/vX.Y.Z`
 
-**Branch workflow:** Direct commit to `main`. There is no `testing` branch. Local pre-commit hooks (noreply email enforcement, marketplace validation) provide guardrails. See [BRANCH_PROTECTION.md](BRANCH_PROTECTION.md) for full rules.
+**Branch workflow:** Direct commit to `main`. There is no `testing` branch. Run the marketplace validation command before publishing a manifest change.
 
 ```bash
 git pull origin main

@@ -8,154 +8,37 @@ keywords: [installation, setup, authentication, basic-usage]
 
 # Quickstart
 
-## Installation (Linux)
+Install and authenticate Claude Code using the current [official quickstart](https://code.claude.com/docs/en/quickstart). This repository documents its plugin workflow below rather than duplicating version-sensitive installation or authentication steps.
 
-### Package Manager Installation
-
-```bash
-# Debian/Ubuntu
-wget <package-url>.deb
-sudo dpkg -i claude-code_*.deb
-
-# Or use npm
-npm install -g claude-code
-```
-
-### Verification
+## Use a Local Plugin
 
 ```bash
-claude --version
-# Expected output: claude version X.X.X
+claude --plugin-dir ./my-plugin
 ```
 
-### Environment Setup
+After changing an installed or locally loaded plugin, run `/reload-plugins` in the active session.
+
+## Install from This Marketplace
+
+```text
+/plugin marketplace add L3DigitalNet/Claude-Code-Plugins
+/plugin install <plugin>@l3digitalnet-plugins
+/reload-plugins
+```
+
+Use `/plugin` to inspect installed plugins and errors. Project-scope installs write `enabledPlugins` to `.claude/settings.json`; local-scope installs use `.claude/settings.local.json`.
+
+## Verify a Plugin Checkout
 
 ```bash
-# Ensure binary is in PATH
-which claude
-# Expected: /usr/local/bin/claude or /usr/bin/claude
+claude plugin validate .
 ```
 
-## Authentication
-
-```bash
-# Initial login
-claude login
-
-# Verify authentication status
-claude status
-```
-
-**Authentication Flow:**
-
-1. Command opens browser for OAuth
-2. Auth token stored in `~/.config/claude/auth`
-3. Token auto-refreshed on subsequent runs
-
-## Basic Usage
-
-```bash
-# Start interactive session
-claude
-
-# Execute single command
-claude "Analyze this codebase structure"
-
-# With specific plugin directory
-claude --plugin-dir ./my-plugins
-```
-
-## Core Capabilities
-
-**Code Analysis:**
-
-```bash
-# Query codebase structure
-"Analyze authentication implementation"
-
-# Find patterns
-"List all database query locations"
-```
-
-**Code Modification:**
-
-```bash
-# Direct changes
-"Add error handling to src/auth.py"
-
-# Refactoring
-"Extract validation logic to separate module"
-```
-
-**Command Execution:**
-
-```bash
-/test                    # Run test suite
-/build                   # Build project
-/commit                  # Create commit with AI message
-/plugin list             # List installed plugins
-```
-
-## Plugin Management
-
-```bash
-# List available plugins
-/plugin
-
-# Install plugin
-/plugin install <name>@<marketplace>
-
-# Load local plugin directory
-claude --plugin-dir /path/to/plugin
-```
-
-## Configuration
-
-### File Locations (Linux)
-
-```bash
-# User configuration
-~/.claude/settings.json
-
-# Plugin cache (installed from marketplaces)
-~/.claude/plugins/cache/
-
-# User plugins
-~/.claude/plugins/
-```
-
-### Environment Variables
-
-```bash
-export CLAUDE_API_KEY="your-key"    # Optional API key
-export DEBUG="claude:*"             # Enable debug logging
-```
+Use `--strict` if unrecognized manifest fields must fail validation.
 
 ## Further Reading
 
-- [Create plugins](./plugins.md) - Plugin development guide
-- [Plugin discovery](./discover-plugins.md) - Find and install plugins
-- [Troubleshooting](../../troubleshooting.md) - Common issues and solutions
-- [Technical reference](../plugins-reference.md) - Complete API specifications
-
-## Command Reference
-
-```bash
-# Session management
-claude                           # Start interactive session
-claude --version                 # Show version
-claude --debug                   # Run with debug output
-claude diagnose                  # Generate diagnostic report
-
-# Plugin management
-claude --plugin-dir <path>       # Load plugins from directory
-/plugin list                     # List installed plugins
-/plugin install <name>@<market>  # Install plugin
-/plugin disable <name>           # Disable plugin
-
-# Built-in commands
-/help                            # Show available commands
-/test                            # Run tests
-/build                           #Build project
-/commit                          # Create commit with AI message
-```
+- [Plugin discovery](./discover-plugins.md)
+- [Plugin development](./plugins.md)
+- [Troubleshooting](./troubleshooting.md)
+- [Plugins technical reference](../plugins-reference.md)

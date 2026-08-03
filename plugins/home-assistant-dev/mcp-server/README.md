@@ -77,7 +77,7 @@ Add to your Claude Desktop configuration:
 
 ### Configuration File (Optional)
 
-For more control, create `~/.config/ha-dev-mcp/config.json`:
+For more control, create `~/.config/ha-dev-mcp/config.json`. Configuration layers in this order: built-in defaults, this file, then environment variables. `HA_DEV_MCP_URL` and `HA_DEV_MCP_TOKEN` take precedence over the compatibility names `HA_URL` and `HA_TOKEN`.
 
 ```json
 {
@@ -88,9 +88,18 @@ For more control, create `~/.config/ha-dev-mcp/config.json`:
 	},
 	"safety": {
 		"allowServiceCalls": false,
-		"blockedServices": ["homeassistant.restart", "homeassistant.stop"],
+		"blockedServices": [
+			"homeassistant.restart",
+			"homeassistant.stop",
+			"homeassistant.reload_all",
+			"homeassistant.reload_core_config",
+			"persistent_notification.dismiss_all",
+			"system_log.clear",
+			"recorder.purge"
+		],
 		"requireDryRun": true
 	},
+	"cache": { "statesTtlSeconds": 30 },
 	"features": {
 		"enableDocsTools": true,
 		"enableHaTools": true,
@@ -98,6 +107,10 @@ For more control, create `~/.config/ha-dev-mcp/config.json`:
 	}
 }
 ```
+
+`blockedServices` is an array replacement, not an additive override. If you set it, include every service you want blocked. The three always-blocked services remain blocked regardless of this setting.
+
+Environment settings also support `HA_DEV_MCP_VERIFY_SSL=false`, `HA_DEV_MCP_ALLOW_SERVICE_CALLS=true`, and feature opt-outs: `HA_DEV_MCP_DISABLE_HA_TOOLS=true`, `HA_DEV_MCP_DISABLE_DOCS_TOOLS=true`, and `HA_DEV_MCP_DISABLE_VALIDATION_TOOLS=true`.
 
 ## Usage Examples
 
@@ -153,8 +166,8 @@ The server includes multiple layers of protection for service calls:
 
 1. **Disabled by Default**: `allowServiceCalls: false`
 2. **Dry-Run Mode**: Validates without executing (default)
-3. **Blocklist**: Always-blocked services and your configured `blockedServices` are refused; other state-changing services execute but return a warning
-4. **Safe Domains**: Any service in the helper/notification domains (`input_*`, `counter`, `timer`, `persistent_notification`) bypasses the dry-run requirement for the whole domain — these can execute with `dry_run: false` even when `requireDryRun` is enabled (always-blocked and configured services are still refused)
+3. **Blocklist**: Always-blocked services and your configured `blockedServices` are refused. Other services can execute only after service calls are enabled and any dry-run requirement is satisfied; specifically dangerous services return a warning.
+4. **Safe Domains**: The listed helper domains (`input_boolean`, `input_number`, `input_select`, `input_text`, `input_datetime`, `input_button`, `counter`, `timer`, and `persistent_notification`) bypass the dry-run requirement. They can execute with `dry_run: false` even when `requireDryRun` is enabled; always-blocked and configured services are still refused.
 
 #### Always Blocked Services
 
@@ -184,16 +197,15 @@ HA_DEV_MCP_ALLOW_SERVICE_CALLS=true
 
 ### Token Security
 
-- Tokens stored in memory only during runtime
-- Never logged or included in error messages
+- The server reads tokens from the tool call, environment, or optional config file; it does not create its own token store
+- Tokens are not deliberately logged, and service-call previews redact sensitive data fields
 - Config file should have restricted permissions: `chmod 600 config.json`
 
 ## Development
 
 ```bash
-# Clone and install
-git clone https://github.com/anthropic/ha-dev-mcp-server
-cd mcp-server
+# From the plugin checkout
+cd plugins/home-assistant-dev/mcp-server
 npm install
 
 # Build

@@ -10,3 +10,4 @@
 
 - Home Assistant MCP end-to-end CI remains red because the test container loads no demo entities;
   - 13 tests pass and 10 entity assertions fail.
+- Agent Handoff validation and drift checking are unavailable because the selected package is not reconciled.

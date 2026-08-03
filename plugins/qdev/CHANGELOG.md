@@ -123,7 +123,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - `qdev-researcher`: dropped dead Glob/Grep permissions; fixed Step 8 ordering.
 - Stale `2024` literal in the `/qdev:research` example query. The agent now derives the current year via `date +%Y` at sweep time instead of hardcoding it.
 - `find` invocation in `/qdev:research` topic inference no longer scans `node_modules`, `__pycache__`, and `.venv` (matches `/qdev:spec-update`).
-- Design spec at `docs/superpowers/specs/2026-04-13-qdev-design.md` updated via `/qdev:spec-update` to reflect commands and agents added since 2026-04-13.
+- Design spec at `docs/specs/2026-04-13-qdev-design.md` updated via `/qdev:spec-update` to reflect commands and agents added since 2026-04-13.
 
 ## [1.4.0] - 2026-05-07
 

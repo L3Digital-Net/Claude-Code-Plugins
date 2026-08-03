@@ -4,7 +4,7 @@
 
 A Model Context Protocol (MCP) server that connects Claude to Home Assistant instances and developer resources for enhanced integration development.
 
-> **As-Built Status (plugin v2.2.10):** This MCP server is **implemented and shipped** — it is no longer a forward-looking proposal. **12 of the 15 planned tools** are registered and working in `mcp-server/`. Phases 1–4 and the implemented portion of Phase 5 are delivered (checked below); the 3 remaining tools (`run_hassfest`, `scaffold_integration`, `compare_with_core`) and the "Future Enhancements" items are deferred. Treat unchecked boxes as outstanding work and the day-by-day estimates below as the original plan-of-record, not current status.
+> **As-built status (plugin v2.2.11):** This MCP server is implemented and shipped. Twelve of the fifteen planned tools are registered in `mcp-server/src/index.ts`; the remaining `run_hassfest`, `scaffold_integration`, and `compare_with_core` tools are deferred. The day-by-day estimates and unchecked items below are the original plan of record, not current delivery commitments.
 
 ---
 
@@ -18,7 +18,7 @@ Enable Claude to interact with live Home Assistant instances during integration 
 
 1. **Live Validation** — Test integrations against running HA instances
 2. **Real-time Context** — Query current entity states, services, device registry
-3. **Dynamic Docs** — Fetch latest HA developer documentation
+3. **Bundled Docs** — Search the shipped Home Assistant developer-documentation index
 4. **Service Testing** — Safely test service calls in development mode
 5. **Log Analysis** — Parse and analyze HA logs for debugging
 
@@ -61,12 +61,12 @@ Enable Claude to interact with live Home Assistant instances during integration 
 
 ### Technology Stack
 
-| Component     | Technology           | Rationale                     |
-| ------------- | -------------------- | ----------------------------- |
-| MCP Server    | TypeScript + MCP SDK | Official SDK, type safety     |
-| HA Connection | WebSocket API        | Real-time, bidirectional      |
-| Caching       | In-memory + file     | Fast lookups, offline support |
-| Config        | JSON/YAML            | User-friendly                 |
+| Component     | Technology            | Rationale                           |
+| ------------- | --------------------- | ----------------------------------- |
+| MCP Server    | TypeScript + MCP SDK  | Official SDK, type safety           |
+| HA Connection | WebSocket API         | Real-time, bidirectional            |
+| Caching       | In-memory state cache | Reduces repeated live state queries |
+| Config        | JSON                  | User-friendly                       |
 
 ---
 
@@ -167,7 +167,7 @@ interface HaCallServiceOutput {
 - `dry_run: true` by default
 - **Always blocked** (cannot be called even when service calls are enabled): `homeassistant.stop`, `hassio.host_shutdown`, `hassio.host_reboot`
 - **Dangerous (warn-but-allow** when calls are enabled): `homeassistant.restart`, `homeassistant.reload_*`, `recorder.purge*`, `system_log.clear`, `logbook.log` — these are not hard-blocked; the call proceeds with a warning
-- Requires explicit confirmation for state-changing calls
+- Execution requires `dry_run: false` and must pass the configured safety checks
 
 #### Tool: `ha_get_devices`
 
@@ -221,7 +221,7 @@ Search Home Assistant developer documentation.
 ```typescript
 interface DocsSearchInput {
 	query: string
-	section?: 'core' | 'frontend' | 'architecture' | 'api'
+	section?: 'core'
 	limit?: number // Default: 5
 }
 
@@ -418,7 +418,7 @@ The loader (`mcp-server/src/config.ts`) reads **camelCase** keys via a strict Zo
 {
 	"homeAssistant": {
 		"url": "http://192.168.1.100:8123",
-		"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+		"token": "<long-lived-access-token>",
 		"verifySsl": true
 	},
 	"safety": {
@@ -444,7 +444,7 @@ The loader (`mcp-server/src/config.ts`) reads **camelCase** keys via a strict Zo
 ```bash
 # Alternative to config file
 HA_DEV_MCP_URL=http://192.168.1.100:8123
-HA_DEV_MCP_TOKEN=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+HA_DEV_MCP_TOKEN=<long-lived-access-token>
 HA_DEV_MCP_VERIFY_SSL=true
 ```
 
@@ -527,8 +527,7 @@ src/
 
 ```text
 src/
-├── docs-index.ts          # Doc indexing
-├── cache.ts               # Caching layer
+├── docs-index.ts          # Bundled documentation index
 └── tools/
     ├── docs-search.ts
     ├── docs-fetch.ts
@@ -575,16 +574,15 @@ src/tools/
 
 ### Service Call Safety
 
-1. **Blocked by Default**: `allow_service_calls: false`
-2. **Blocklist**: Dangerous services cannot be called even if enabled
+1. **Blocked by default**: `allowServiceCalls: false`
+2. **Blocklist**: Always-blocked and configured services cannot be called even if service calls are enabled; other dangerous services warn when permitted
 3. **Dry-Run**: Default mode validates without executing
-4. **Confirmation**: State-changing calls require explicit flag
+4. **Execution gate**: State-changing calls require `dry_run: false` and must pass the configured safety checks
 
 ### Network Security
 
 - SSL verification enabled by default
-- No sensitive data in tool outputs
-- Rate limiting to prevent API abuse
+- Service-call result and dry-run data are redacted for sensitive key names
 
 ### Data Privacy
 
@@ -598,21 +596,11 @@ src/tools/
 
 ### Unit Tests
 
-- Tool input validation
-- Safety layer checks
-- Configuration parsing
+- Configuration, documentation-index, manifest, strings, and safety checks under `mcp-server/__tests__/`
 
-### Integration Tests
+### Live E2E Tests
 
-- Mock HA WebSocket server
-- End-to-end tool flows
-- Error handling scenarios
-
-### Manual Testing
-
-- Claude Desktop integration
-- Real HA instance testing
-- Edge cases (offline, auth failure)
+- REST and WebSocket scripts under `tests/e2e/` exercise a running Home Assistant instance when available
 
 ---
 
@@ -645,21 +633,12 @@ After `npm install -g .` the `ha-dev-mcp-server` binary is on PATH; reference it
 }
 ```
 
-### Docker (Alternative)
-
-```bash
-docker run -e HA_DEV_MCP_URL=... -e HA_DEV_MCP_TOKEN=... ha-dev-mcp-server
-```
-
----
-
 ## Success Metrics
 
 ### Functionality
 
-- [ ] All 12 shipped tools implemented and working (3 dev utilities — `run_hassfest`, `scaffold_integration`, `compare_with_core` — are planned, not yet implemented)
-- [ ] Connects to HA 2024.x and 2025.x instances
-- [ ] Sub-second response time for cached operations
+- [x] Twelve registered tools implemented in the shipped server
+- [ ] Live Home Assistant compatibility and response-time targets require environment-specific E2E evidence
 
 ### Safety
 
@@ -677,12 +656,12 @@ docker run -e HA_DEV_MCP_URL=... -e HA_DEV_MCP_TOKEN=... ha-dev-mcp-server
 
 ## Risks & Mitigations
 
-| Risk               | Impact           | Mitigation                              |
-| ------------------ | ---------------- | --------------------------------------- |
-| HA API changes     | Tools break      | Version detection, graceful degradation |
-| Token compromise   | Security breach  | Memory-only storage, permission checks  |
-| Network issues     | Poor UX          | Caching, offline mode for docs          |
-| Docker requirement | Limited adoption | hassfest optional, clear error          |
+| Risk | Impact | Mitigation |
+| --- | --- | --- |
+| HA API changes | Tools break | Version detection, source updates, and rebuilds |
+| Token compromise | Security breach | Caller-controlled token storage and restricted config-file permissions |
+| Network issues | Poor UX | Clear connection errors; bundled docs and local validation remain available |
+| Docker requirement | Limited adoption | hassfest optional, clear error |
 
 ---
 

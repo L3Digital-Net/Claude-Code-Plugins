@@ -1,16 +1,16 @@
 # qt-suite
 
-Complete Qt development and testing toolkit: proactive specialist agents, 16 domain skills, scaffolding commands, and headless GUI testing via the bundled Qt Pilot MCP server. Covers PySide6, PyQt6, and C++/Qt.
+Complete Qt development and testing toolkit: proactive specialist agents, 16 domain references, scaffolding commands, and headless GUI testing via the bundled Qt Pilot MCP server. Covers PySide6, PyQt6, and C++/Qt.
 
 ## Summary
 
 Qt GUI development involves many interacting systems (signals and slots, layout managers, Model/View architecture, threading constraints, and platform packaging), each with non-obvious pitfalls. On the testing side, Qt applications present unique challenges: C++ templates make unit test scaffolding awkward, coverage tools differ between Python and C++ builds, and GUI components require a live display server or headless substitute.
 
-`qt-suite` handles both sides. Domain skills load at the right moment; specialist agents activate proactively during development and after code changes. Six commands cover project scaffolding, component generation, test generation, test execution, coverage analysis, and headless visual verification.
+`qt-suite` handles both sides. Domain references are read on demand; specialist agents activate proactively during development and after code changes. Six commands cover project scaffolding, component generation, test generation, test execution, coverage analysis, and headless visual verification.
 
 ## Principles
 
-**[P1] Right knowledge at the right moment**: Skills load contextually; agents trigger proactively. Domain knowledge appears when needed without requiring explicit invocation.
+**[P1] Right knowledge at the right moment**: References load contextually; agents trigger proactively. Domain knowledge appears when needed without requiring explicit invocation.
 
 **[P2] Testability is a first-class concern**: Every generated component includes `setObjectName()` calls and MVP-compatible structure so the `gui-tester` can find and interact with all widgets without modification.
 
@@ -41,6 +41,12 @@ Run `bash <plugin-root>/scripts/check-prerequisites.sh` to verify your setup.
 ```bash
 /plugin marketplace add L3DigitalNet/Claude-Code-Plugins
 /plugin install qt-suite@l3digitalnet-plugins
+```
+
+Activate the newly installed plugin in the current session:
+
+```text
+/reload-plugins
 ```
 
 For local development:
@@ -157,7 +163,7 @@ No planned features at this time.
 ## Known Issues
 
 - `/qt-suite:scaffold` and `/qt-suite:new-component` generate Python/PySide6 code only; no C++ template support yet.
-- C++/Qt skill coverage is partial; primary focus is Python bindings.
+- C++/Qt reference coverage is partial; primary focus is Python bindings.
 - `qt-packaging` covers PyInstaller and Briefcase; Nuitka not yet covered.
 - C++/Qt coverage requires a CMake-configured build directory; set `build_dir` in `.qt-test.json` manually for custom build systems.
 - `pyside6-rcc` is not invoked automatically; pre-compile `.qrc` resources before running tests.

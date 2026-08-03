@@ -7,7 +7,7 @@ Examples of simple plugins: a slash command that wraps a git workflow, a skill t
 loads domain knowledge contextually, a command that audits a specific file type.
 
 If your plugin requires hooks, agents, scripts, or external state, use the full
-template (docs/plugin-design-template-full.md) instead.
+template (docs/templates/plugin-design-template-full.md) instead.
 -->
 
 Version: 0.1 (Draft) Status: In Progress — NOT FOR IMPLEMENTATION Last Updated: YYYY-MM-DD

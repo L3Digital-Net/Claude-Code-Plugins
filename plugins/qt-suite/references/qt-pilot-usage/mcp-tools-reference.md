@@ -21,7 +21,7 @@ Launch a PySide6 application headlessly via Xvfb.
 }
 ```
 
-- Use `script_path` **or** `module` — not both.
+- Provide `script_path` or `module`. When both are provided, `script_path` is used.
 - `module` mode requires `working_dir`.
 - `python_paths` adds to `sys.path` inside the harness — useful for monorepos.
 - `timeout`: seconds to wait for the app window to appear (default 10).
