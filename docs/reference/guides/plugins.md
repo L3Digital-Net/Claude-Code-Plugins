@@ -121,25 +121,25 @@ applyTo:
 Skill implementation instructions.
 ```
 
-See [skills.md](./skills.md) for complete reference.
+See [skills.md](../skills.md) for complete reference.
 
 ### Agents
 
 **Location:** `agents/*.md` **Purpose:** Specialized subprocesses with tool restrictions **Invocation:** `/agent-name`
 
-See [sub-agents.md](./sub-agents.md) for complete reference.
+See [sub-agents.md](../sub-agents.md) for complete reference.
 
 ### Hooks
 
 **Location:** `hooks/hooks.json` **Purpose:** Lifecycle event handlers **Events:** SessionStart, SessionEnd, PreToolUse, PostToolUse, etc.
 
-See [hooks.md](./hooks.md) for complete reference.
+See [hooks.md](../hooks.md) for complete reference.
 
 ### MCP Servers
 
 **Location:** Configured in `.mcp.json` at plugin root **Purpose:** External tool integrations via Model Context Protocol
 
-See [mcp.md](./mcp.md) for complete reference.
+See [mcp.md](../mcp.md) for complete reference.
 
 ### LSP Servers
 

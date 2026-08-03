@@ -1,0 +1,11 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Format documentation",
+			"type": "shell",
+			"command": "ruff format docs && npx --no-install prettier --write docs",
+			"problemMatcher": []
+		}
+	]
+}

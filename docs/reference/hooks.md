@@ -306,7 +306,7 @@ echo "[DEBUG] FILE_PATH=$FILE_PATH" >&2
 
 ## Next Steps
 
-- [Plugins development guide](./plugins.md) — plugin structure and workflow
-- [Sub-agents](./sub-agents.md) — isolated agent execution
-- [Skills](./skills.md) — context-triggered knowledge injection
-- [Plugins reference](./plugins-reference.md) — full manifest schema
+- [Plugins development guide](../plugins.md) — plugin structure and workflow
+- [Sub-agents](../sub-agents.md) — isolated agent execution
+- [Skills](../skills.md) — context-triggered knowledge injection
+- [Plugins reference](../plugins-reference.md) — full manifest schema

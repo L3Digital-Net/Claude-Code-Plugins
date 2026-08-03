@@ -345,7 +345,7 @@ Common errors:
 
 5. **Iterate**: Make changes and restart Claude Code to reload
 
-6. **Distribute** via marketplace (see [Plugin marketplaces](./plugin-marketplaces.md))
+6. **Distribute** via marketplace (see [Plugin marketplaces](../plugin-marketplaces.md))
 
 ## Best practices
 
@@ -387,4 +387,4 @@ Include a README.md with:
 - [Build custom agents](./sub-agents.md) for specialized tasks
 - [Add hooks](./hooks.md) to customize behavior
 - [Bundle MCP servers](./mcp.md) for external integrations
-- [Distribute via marketplace](./plugin-marketplaces.md) to share your plugin
+- [Distribute via marketplace](../plugin-marketplaces.md) to share your plugin

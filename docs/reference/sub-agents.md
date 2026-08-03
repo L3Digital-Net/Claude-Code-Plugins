@@ -631,7 +631,7 @@ Check:
 
 ## Next steps
 
-- [Skills](./skills.md) for domain knowledge
+- [Skills](../skills.md) for domain knowledge
 - [Hooks](./hooks.md) to trigger agents automatically
-- [Plugins reference](./plugins-reference.md) for technical details
-- [Create plugins](./plugins.md) to package and distribute agents
+- [Plugins reference](../plugins-reference.md) for technical details
+- [Create plugins](../plugins.md) to package and distribute agents

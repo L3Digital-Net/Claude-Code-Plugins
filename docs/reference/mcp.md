@@ -722,7 +722,7 @@ def complex_operation(
 
 ## Next steps
 
-- [Create plugins](./plugins.md) to bundle MCP servers
-- [Plugins reference](./plugins-reference.md) for technical details
-- [Discover plugins](./discover-plugins.md) to find existing integrations
+- [Create plugins](../plugins.md) to bundle MCP servers
+- [Plugins reference](../plugins-reference.md) for technical details
+- [Discover plugins](../discover-plugins.md) to find existing integrations
 - [MCP documentation](https://modelcontextprotocol.io) for protocol details

@@ -734,8 +734,8 @@ claude
 
 ## Reference
 
-- [Plugins Reference](./plugins-reference.md) - Technical specifications
+- [Plugins Reference](../plugins-reference.md) - Technical specifications
 - [Discover Plugins](./discover-plugins.md) - Installation guide
 - [Create Plugins](./plugins.md) - Development guide
-- [MCP](./mcp.md) - MCP server configuration
-- [Skills](./skills.md) - Skill development
+- [MCP](../mcp.md) - MCP server configuration
+- [Skills](../skills.md) - Skill development

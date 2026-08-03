@@ -11,7 +11,7 @@ A Claude Code plugin marketplace. Plugins cover the full development lifecycle: 
   - [Principles](#principles)
     - [Home Assistant Dev](#home-assistant-dev)
     - [Qt Suite](#qt-suite)
-    - [qdev](#qdev) (retired)
+    - [qdev](#qdev)
     - [Up Docs](#up-docs)
     - [uv-strict-python](#uv-strict-python)
   - [Testing \& Validation](#testing--validation)
@@ -238,13 +238,13 @@ This repository also serves as a development workspace for creating new plugins.
 
 ### Documentation
 
-- **[docs/plugins.md](docs/plugins.md)** - Plugin development guide
-- **[docs/plugin-marketplaces.md](docs/plugin-marketplaces.md)** - Marketplace creation
-- **[docs/plugins-reference.md](docs/plugins-reference.md)** - Technical reference
-- **[docs/skills.md](docs/skills.md)** - Creating AI-invoked skills
-- **[docs/sub-agents.md](docs/sub-agents.md)** - Custom agent definitions
-- **[docs/hooks.md](docs/hooks.md)** - Lifecycle event handlers
-- **[docs/mcp.md](docs/mcp.md)** - MCP server integration
+- **[docs/plugins.md](docs/reference/guides/plugins.md)** - Plugin development guide
+- **[docs/plugin-marketplaces.md](docs/reference/plugin-marketplaces.md)** - Marketplace creation
+- **[docs/plugins-reference.md](docs/reference/plugins-reference.md)** - Technical reference
+- **[docs/skills.md](docs/reference/skills.md)** - Creating AI-invoked skills
+- **[docs/sub-agents.md](docs/reference/sub-agents.md)** - Custom agent definitions
+- **[docs/hooks.md](docs/reference/hooks.md)** - Lifecycle event handlers
+- **[docs/mcp.md](docs/reference/mcp.md)** - MCP server integration
 
 ## Repository Structure
 

@@ -135,8 +135,8 @@ export DEBUG="claude:*"             # Enable debug logging
 
 - [Create plugins](./plugins.md) - Plugin development guide
 - [Plugin discovery](./discover-plugins.md) - Find and install plugins
-- [Troubleshooting](./troubleshooting.md) - Common issues and solutions
-- [Technical reference](./plugins-reference.md) - Complete API specifications
+- [Troubleshooting](../../troubleshooting.md) - Common issues and solutions
+- [Technical reference](../plugins-reference.md) - Complete API specifications
 
 ## Command Reference
 

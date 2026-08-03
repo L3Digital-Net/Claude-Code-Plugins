@@ -417,7 +417,7 @@ Skills are shared through plugins:
 3. Publish plugin to marketplace
 4. Users install and skills are available
 
-See [Plugin marketplaces](./plugin-marketplaces.md) for distribution.
+See [Plugin marketplaces](../plugin-marketplaces.md) for distribution.
 
 ## Debugging skills
 
@@ -448,7 +448,7 @@ python -c "import yaml; yaml.safe_load(open('skill.md').read().split('---')[1])"
 
 ## Next steps
 
-- [Create plugins](./plugins.md) to package and distribute skills
+- [Create plugins](../plugins.md) to package and distribute skills
 - [Sub-agents](./sub-agents.md) to run skills in controlled environments
 - [Hooks](./hooks.md) to trigger skills at specific lifecycle points
-- [Plugin marketplaces](./plugin-marketplaces.md) to share your skills
+- [Plugin marketplaces](../plugin-marketplaces.md) to share your skills

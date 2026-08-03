@@ -76,7 +76,7 @@ go install golang.org/x/tools/gopls@latest
 /plugin install go@claude-plugins-official
 ```
 
-**Configuration:** See [plugins-reference.md](./plugins-reference.md#lsp-servers)
+**Configuration:** See [plugins-reference.md](../plugins-reference.md#lsp-servers)
 
 #### MCP Integrations
 
@@ -96,7 +96,7 @@ go install golang.org/x/tools/gopls@latest
 | `supabase`  | Supabase        | `/plugin install supabase@claude-plugins-official`  |
 | `sentry`    | Sentry          | `/plugin install sentry@claude-plugins-official`    |
 
-**Configuration:** See [mcp.md](./mcp.md)
+**Configuration:** See [mcp.md](../mcp.md)
 
 #### Development Workflows
 
@@ -216,10 +216,10 @@ If you see "unknown command" or the `/plugin` command doesn't appear:
 - **Plugin installation failures**: Check that plugin source URLs are accessible
 - **Files not found after installation**: Plugins are copied to a cache, so paths referencing files outside the plugin directory won't work
 
-For detailed troubleshooting, see [Troubleshooting](./troubleshooting.md).
+For detailed troubleshooting, see [Troubleshooting](../../troubleshooting.md).
 
 ## Next steps
 
-- **Build your own plugins**: See [Plugins](./plugins.md) to create skills, agents, and hooks
-- **Create a marketplace**: See [Create a plugin marketplace](./plugin-marketplaces.md) to distribute plugins
-- **Technical reference**: See [Plugins reference](./plugins-reference.md) for complete specifications
+- **Build your own plugins**: See [Plugins](../../plugins.md) to create skills, agents, and hooks
+- **Create a marketplace**: See [Create a plugin marketplace](../../plugin-marketplaces.md) to distribute plugins
+- **Technical reference**: See [Plugins reference](../plugins-reference.md) for complete specifications

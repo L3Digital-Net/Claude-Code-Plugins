@@ -217,6 +217,6 @@ Shortcuts: `/plugin market` instead of `/plugin marketplace`, `rm` instead of `r
 
 ## Next Steps
 
-- [Create plugins](./plugins.md) to add to your marketplace
+- [Create plugins](./guides/plugins.md) to add to your marketplace
 - [Plugins reference](./plugins-reference.md) for full plugin.json schema
-- [Discover plugins](./discover-plugins.md) to learn about plugin installation
+- [Discover plugins](./guides/discover-plugins.md) to learn about plugin installation
