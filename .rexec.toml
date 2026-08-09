@@ -1,0 +1,16 @@
+# rexec repository configuration. See `rexec help config`.
+#
+# Caches are intentionally left at their remote defaults: uv, Go and pnpm all
+# cache outside the synchronized worktree and share one content-addressed store
+# across every workspace on the host. Pinning them to {remote_cache} would
+# fragment that store per repository, not protect anything.
+
+[provision.tools]
+# Probed, never installed: `rexec setup` names a missing toolchain up front
+# instead of letting the run fail as "command not found" mid-suite.
+
+[provision.tools.node]
+probe = "node --version"
+
+[provision.tools.npm]
+probe = "npm --version"
