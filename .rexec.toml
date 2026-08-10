@@ -1,16 +1,62 @@
-# rexec repository configuration. See `rexec help config`.
+# rexec repository configuration (.rexec.toml), committed with the repository.
 #
-# Caches are intentionally left at their remote defaults: uv, Go and pnpm all
-# cache outside the synchronized worktree and share one content-addressed store
-# across every workspace on the host. Pinning them to {remote_cache} would
-# fragment that store per repository, not protect anything.
+# Schema-1 migration of this repository's full effective v0.1.3 configuration
+# (rexec v0.2.0 cutover, 2026-08-10). Deliberate changes from v0.1.3 are
+# recorded in the release evidence under remote-execution
+# docs/evidence/rexec-v0.2/.
 
-[provision.tools]
-# Probed, never installed: `rexec setup` names a missing toolchain up front
-# instead of letting the run fail as "command not found" mid-suite.
+schema = 1
 
-[provision.tools.node]
-probe = "node --version"
+[remote]
 
-[provision.tools.npm]
-probe = "npm --version"
+# Effective v0.1.3 host: "rexec", set explicitly by the user-level [default] table
+# and identical to the v0.1.3 compiled default. schema 1 has no default for it, so
+# it must be declared here.
+host = "rexec"
+
+[provision.debian]
+
+# The full effective v0.1.3 Debian package list, in effective order: the
+# user-level baseline followed by this repository's own additions, unioned exactly
+# as the released Load did. schema 1 has no user layer, so the whole list is
+# restated here to keep `rexec setup` converging exactly what it converged before.
+packages = [
+  "rsync",
+  "git",
+  "git-lfs",
+  "make",
+  "build-essential",
+  "pkg-config",
+  "cmake",
+  "ninja-build",
+  "curl",
+  "ca-certificates",
+  "jq",
+  "sqlite3",
+  "unzip",
+  "zip",
+  "xz-utils",
+  "shellcheck",
+  "shfmt",
+  "ripgrep",
+  "python3-dev",
+  "python3-venv",
+  "libffi-dev",
+  "libssl-dev",
+  "zlib1g-dev",
+  "libbz2-dev",
+  "liblzma-dev",
+  "libsqlite3-dev",
+  "libreadline-dev",
+  "libyaml-dev",
+  "libjpeg-dev",
+  "libfreetype-dev",
+  "libpng-dev",
+  "libxml2-dev",
+  "libxslt1-dev",
+  "libpq-dev",
+  "default-libmysqlclient-dev",
+  "libopenblas-dev",
+  "liblapack-dev",
+  "gfortran",
+]
