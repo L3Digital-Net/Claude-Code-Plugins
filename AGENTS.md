@@ -73,6 +73,28 @@ Markdown scope: `**/*.md`.
 Structured-config scope: `**/*.json`, `**/*.jsonc`, `**/*.yml`, `**/*.yaml`.
 Lint additionally skips generated directories: `.pytest_cache/**`, `.ruff_cache/**`, `.venv/**`, `node_modules/**`.
 
+Check formatting over exactly that scope, with Git as the corpus authority:
+
+```bash
+git ls-files -z -- ':(glob)**/*.md' ':(glob)**/*.json' ':(glob)**/*.jsonc' ':(glob)**/*.yml' ':(glob)**/*.yaml' | xargs -0 -r npx prettier --check --
+```
+
+Without Git, bound the same scope by glob instead:
+
+```bash
+npx prettier --check --no-error-on-unmatched-pattern -- '**/*.md' '**/*.json' '**/*.jsonc' '**/*.yml' '**/*.yaml'
+```
+
+Never check or write with a bare `.`: it reaches undeclared languages and Git-excluded scratch.
+
+Lint Markdown structure over the same Git-tracked scope:
+
+```bash
+git ls-files -z -- ':(glob)**/*.md' ':(glob,exclude).pytest_cache/**' ':(glob,exclude).ruff_cache/**' ':(glob,exclude).venv/**' ':(glob,exclude)node_modules/**' | sed -z 's|^|:|' | xargs -0 -r npx markdownlint-cli2 --no-globs
+```
+
+Never lint a bare recursive glob: it descends into any independent Git repository checked out below this one.
+
 Run the enabled checks before claiming completion.
 <!-- markdownlint-enable MD025 -->
 <!-- END project-standards:markdown-tooling -->

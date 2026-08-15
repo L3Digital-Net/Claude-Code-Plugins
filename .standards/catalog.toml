@@ -1,13 +1,13 @@
 [project_standards]
 schema_version = "1.0"
 catalog = "5"
-release = "5.11.0"
-digest = "sha256:492b1cc8a18b5e14974282bd8a797f27595398c27ad983a0934bdfc4562876e9"
+release = "5.19.0"
+digest = "sha256:bb54690420ec4ef718d88565522497a3e150250afd753503cdfd9cca77db9cbe"
 
 [standards.adr]
 status = "active"
-available = ["1.1", "1.2", "1.3"]
-default = "1.3"
+available = ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6"]
+default = "1.6"
 candidates = []
 
 [standards.adr.versions."1.1"]
@@ -21,14 +21,29 @@ availability = "consumer"
 payload_digest = "sha256:5b36e6f63a2477f2c7c5bcef647edc8b674366eb64937aba646aefc65d8a6f21"
 
 [standards.adr.versions."1.3"]
-channel = "stable"
+channel = "retained"
 availability = "consumer"
 payload_digest = "sha256:6c5d8da41c80658cb701b5aedd17a93149aab5e8dab4caa58f8e0047bf645d1f"
 
+[standards.adr.versions."1.4"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:d23b7f6c66d7684f716ef2f3dd778d9be3de39e5914d91d6481997cc9d5184e3"
+
+[standards.adr.versions."1.5"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:52be37d8f0d26ed41971de6a508dae5a6a4cd796c8e31945f06e000a11c31b92"
+
+[standards.adr.versions."1.6"]
+channel = "stable"
+availability = "consumer"
+payload_digest = "sha256:12b9490be7cf3284bfb7f510b03b2cd555ab7c57f0a7628c9f95c659c241ba42"
+
 [standards.agent-handoff]
 status = "active"
-available = ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6"]
-default = "1.6"
+available = ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10", "1.11", "1.12"]
+default = "1.12"
 candidates = []
 
 [standards.agent-handoff.versions."1.1"]
@@ -57,14 +72,44 @@ availability = "consumer"
 payload_digest = "sha256:4acf48a8dbb987088700c558128d9b180718e1001a8bc7d4364950b0f05dc3da"
 
 [standards.agent-handoff.versions."1.6"]
-channel = "stable"
+channel = "retained"
 availability = "consumer"
 payload_digest = "sha256:97041fb9a47c28cf0e2dd38c2de32be827af4b079de3943d6b74675bf52d81f8"
 
+[standards.agent-handoff.versions."1.7"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:a9e432a0ad5531d75791bbb72293af9d571471e976a950952151617dd23b1217"
+
+[standards.agent-handoff.versions."1.8"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:65eccfe9b6b51f39ade2c3c45d9a01b4cb2b5c86557c848e3000b736707de6ce"
+
+[standards.agent-handoff.versions."1.9"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:4ee3187635bada1fdf9a1fcb5966fbbe5eecc56c84a2ccce220adfa595edbc99"
+
+[standards.agent-handoff.versions."1.10"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:ea1fbc843a8d9bb627dda4c4c8d12d15b59be9361ae5c312dac3101e01c8d56f"
+
+[standards.agent-handoff.versions."1.11"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:570cc7cf345fc953d535e1fab8f7ad52bcea5d81eaf3d5a3641d1b40580c9ea2"
+
+[standards.agent-handoff.versions."1.12"]
+channel = "stable"
+availability = "consumer"
+payload_digest = "sha256:176dceeca8b02df1eebd468eec26bc0e2713ed17cd67f4ff0651646795e43b7f"
+
 [standards.cli-documentation]
 status = "active"
-available = ["1.1", "1.2", "1.3", "1.4", "1.5"]
-default = "1.5"
+available = ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6"]
+default = "1.6"
 candidates = []
 
 [standards.cli-documentation.versions."1.1"]
@@ -88,14 +133,40 @@ availability = "consumer"
 payload_digest = "sha256:8c2f1e9cd6538954d8ace67146133c6864a149ae0a1a97d6aba75560d5ecf346"
 
 [standards.cli-documentation.versions."1.5"]
-channel = "stable"
+channel = "retained"
 availability = "consumer"
 payload_digest = "sha256:90bd59f457ec467da0990bbf89667f534753768be79530c7bfdde9c791d3b618"
 
+[standards.cli-documentation.versions."1.6"]
+channel = "stable"
+availability = "consumer"
+payload_digest = "sha256:7c6e609bdccdf526cb1426b817b26efcc5622552138ac5e826d917aad91c09ba"
+
+[standards.github-workflow]
+status = "active"
+available = ["1.0", "1.1", "1.2"]
+default = "1.2"
+candidates = []
+
+[standards.github-workflow.versions."1.0"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:65afb66cd3aaf1e0fa9bb896e63b2275290e93aa8fff6d4e0fb5129b9fb99d86"
+
+[standards.github-workflow.versions."1.1"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:a6ad7da622a3f7f56f87521be787c7f36761e476029ed2ac009c32db82a5fad6"
+
+[standards.github-workflow.versions."1.2"]
+channel = "stable"
+availability = "consumer"
+payload_digest = "sha256:06041b632e15eee8258d7eaf311dfd0560f15d54d34ed2ac44076a069228d13f"
+
 [standards.markdown-frontmatter]
 status = "active"
-available = ["1.2", "1.3", "1.4", "1.5", "1.6"]
-default = "1.6"
+available = ["1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10", "1.11"]
+default = "1.11"
 candidates = []
 
 [standards.markdown-frontmatter.versions."1.2"]
@@ -119,14 +190,39 @@ availability = "consumer"
 payload_digest = "sha256:b31b9a97edb48334bbb6af2988272baf071449a457a303e218dbb8c6436a540c"
 
 [standards.markdown-frontmatter.versions."1.6"]
-channel = "stable"
+channel = "retained"
 availability = "consumer"
 payload_digest = "sha256:cf1e2c975d5f139f1b3864090e6fcc0e45dcb895a97dd07113c0eeb7af0d0f32"
 
+[standards.markdown-frontmatter.versions."1.7"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:d61d35208e6e2f1c1772ce994459ab1d4b8fd8174b5d22a9caebfdce531eb518"
+
+[standards.markdown-frontmatter.versions."1.8"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:79410e07c98f8f9fcc69e1c31b8b2971134c8d19b855fe81008c296fb6850470"
+
+[standards.markdown-frontmatter.versions."1.9"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:5f08a86214605fb25db4bc48f78ccb68bae52a707506e0adf28117d3ae1d76a5"
+
+[standards.markdown-frontmatter.versions."1.10"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:d893620234a47e02dd2252a933829520b4366fb64cc802fc1f7c83a762dce111"
+
+[standards.markdown-frontmatter.versions."1.11"]
+channel = "stable"
+availability = "consumer"
+payload_digest = "sha256:7eb63ac167668b5b0e0d5d79fbb83ae256c8bb73be5153e9ce81f9d8442fa32f"
+
 [standards.markdown-tooling]
 status = "active"
-available = ["1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10"]
-default = "1.10"
+available = ["1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10", "1.11", "1.12", "1.13", "1.14", "1.15"]
+default = "1.15"
 candidates = []
 
 [standards.markdown-tooling.versions."1.2"]
@@ -170,14 +266,39 @@ availability = "consumer"
 payload_digest = "sha256:2952838b146eddf054cc2f81c05e8cd931ff4e5de1a1e2b120760aca50927456"
 
 [standards.markdown-tooling.versions."1.10"]
-channel = "stable"
+channel = "retained"
 availability = "consumer"
 payload_digest = "sha256:db6b97d120ac9f31ab589c2d48926acb5713b840738dd13b6460d34632e4fc9b"
 
+[standards.markdown-tooling.versions."1.11"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:3bf59aa23a857174bfcaf604de07318b61ec177b9fab1f016ad4c6516e4ff882"
+
+[standards.markdown-tooling.versions."1.12"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:105d742c188f78cd908cd715a396722912d031114ea1e5e6445d1dc879a1e7b8"
+
+[standards.markdown-tooling.versions."1.13"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:271cfbb5e5abde80439cb1f90b9d2eb55720fd52bff3d78f51057efa72aabfba"
+
+[standards.markdown-tooling.versions."1.14"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:25a8b52890c056f50fc424a76fe63d46fac68bdeee0c7e79d58ab440c9520999"
+
+[standards.markdown-tooling.versions."1.15"]
+channel = "stable"
+availability = "consumer"
+payload_digest = "sha256:aa3e3ae249cf2720355b1b33c987af11a546be4bf456c9e977903e5f9fe00f03"
+
 [standards.project-spec]
 status = "active"
-available = ["1.1", "1.2", "1.3", "1.4", "1.5"]
-default = "1.5"
+available = ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9"]
+default = "1.9"
 candidates = []
 
 [standards.project-spec.versions."1.1"]
@@ -201,9 +322,29 @@ availability = "consumer"
 payload_digest = "sha256:8ea9d9a5f82156c1f177defa4bd78d5f55693013ced2ab9d07cabce63969e845"
 
 [standards.project-spec.versions."1.5"]
-channel = "stable"
+channel = "retained"
 availability = "consumer"
 payload_digest = "sha256:e4286963cf591e3ee1454e5be317519b6610d3257dc61eb08de489d47ba407e1"
+
+[standards.project-spec.versions."1.6"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:0f3bc8952fe4ef58e7619fecf1476ebd863a6cbb4eddf93bdbdea758f835be4c"
+
+[standards.project-spec.versions."1.7"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:2d012e3de7699dc44bdf4ee8605cf350caca3ba05b0c490b8ff795ce5014df8f"
+
+[standards.project-spec.versions."1.8"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:dc7c7f7c91d70717675c0de5bcd5759b498c6431db62f38f51ea060637a286d2"
+
+[standards.project-spec.versions."1.9"]
+channel = "stable"
+availability = "consumer"
+payload_digest = "sha256:980f922a3980de82e1302db6d2d22ec88ca2457b2affd64876ada4dc09ab669e"
 
 [standards.python-coding]
 status = "draft"
@@ -222,8 +363,8 @@ payload_digest = "sha256:a4c4d6f0d61f81beeabefe48a8ef29f9789b55d7159ab01bb64b1da
 
 [standards.python-tooling]
 status = "active"
-available = ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10"]
-default = "1.10"
+available = ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10", "1.11", "1.12", "1.13", "1.14"]
+default = "1.14"
 candidates = []
 
 [standards.python-tooling.versions."1.1"]
@@ -272,9 +413,29 @@ availability = "consumer"
 payload_digest = "sha256:299356c05185ce85d015abc04ad34c1c476d77b41e400377aa2aa942dbe7ad23"
 
 [standards.python-tooling.versions."1.10"]
-channel = "stable"
+channel = "retained"
 availability = "consumer"
 payload_digest = "sha256:1f397497be8e925d79f46003d7297813a7d02ea7ff0112cf523354e0a4300398"
+
+[standards.python-tooling.versions."1.11"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:8d288645905cbf8954f246e3631d8636353ac590d62eacc70e68ae75e1057fb2"
+
+[standards.python-tooling.versions."1.12"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:7595019e39b209fb700817b0563aa2e5db50d368c3c5042eeb714e234076de5f"
+
+[standards.python-tooling.versions."1.13"]
+channel = "retained"
+availability = "consumer"
+payload_digest = "sha256:1bb7b7d11e41fccb6faa658d97130b01c754b36faf69cff508a6908c199e36d8"
+
+[standards.python-tooling.versions."1.14"]
+channel = "stable"
+availability = "consumer"
+payload_digest = "sha256:50f96c72d73253d7bd2016a374a3e46e31b6da51bba8a2dd79a56041fe2937db"
 
 [standards.standard-bundle-authoring]
 status = "active"

@@ -44,7 +44,7 @@ Knowledge files under `docs/` belong to the consumer after creation. Preserve th
 The standard owns:
 
 - `.agents/skills/agent-handoff/**`;
-- the optional `.agents/hooks/agent-handoff/session_start.py`;
+- the optional `.agents/hooks/agent-handoff/session-start`;
 - only the exact marked blocks or semantic hook entries it installed;
 - its entries in the central `.standards/lock.toml` inventory.
 

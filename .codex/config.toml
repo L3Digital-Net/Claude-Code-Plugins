@@ -2,6 +2,6 @@
 matcher = "startup|resume|clear|compact"
 [[hooks.SessionStart.hooks]]
 type = "command"
-command = '"$(git rev-parse --show-toplevel)/.agents/hooks/agent-handoff/session_start.py"'
+command = "\"$(git rev-parse --show-toplevel)/.agents/hooks/agent-handoff/session-start\""
 timeout = 10
 statusMessage = "Loading agent handoff state..."
