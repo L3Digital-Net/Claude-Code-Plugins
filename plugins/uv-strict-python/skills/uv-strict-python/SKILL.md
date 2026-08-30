@@ -3,7 +3,7 @@ name: uv-strict-python
 description: Configures Python projects to the Python Tooling SSOT Standard (uv, Ruff, BasedPyright strict, pytest+coverage, pip-audit). Use when creating projects, writing standalone scripts, configuring pyproject.toml, migrating from pip/Poetry/mypy/black/flake8, or auditing a project for conformance to the standard.
 compatibility: Claude Code and Codex CLI
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
 ---
 
 # uv-strict-python
@@ -28,9 +28,14 @@ This skill operationalizes the **Python Tooling** standard — toolchain, layout
 - **Documented project exception applies**: a project may pin a lower `requires-python`, add scanners, or keep mypy if an ADR records why.
 - **Non-Python projects**: mixed codebases where Python isn't primary.
 
-## The two commands that matter
+## Which gate to run
 
-**Verification gate** — the non-mutating proof the repo is clean. Code is not complete until this passes (or the response says exactly what failed and why):
+Decide before running anything — the two paths are not interchangeable:
+
+- **Repository adopts the standard** (`.standards/config.toml` selects `python-tooling`, the generated `AGENTS.md`/`CLAUDE.md` carries the Python tooling block, `scripts/check.py` exists): the repository-owned gate **is** the gate. Run `uv run python scripts/check.py`, or the generated block's own commands scoped to their declared roots. Never substitute a repository-wide `.` sweep in an adopting repo — it reaches paths the repository deliberately excluded.
+- **Non-adopting project or standalone script with no repository gate**: use the **fallback gate** below. It is complete as-is and is the normal path for scripts and projects that never adopted Catalog 5.
+
+**Fallback gate (no repository-owned gate)** — the non-mutating proof the tree is clean. Code is not complete until this passes (or the response says exactly what failed and why):
 
 ```bash
 uv run ruff format --check .
@@ -41,7 +46,7 @@ uv run coverage report
 uv run pip-audit
 ```
 
-**Fix pass** — allowed to modify source; run it first when changing code:
+**Fix pass** — allowed to modify source; run it first when changing code, in either path:
 
 ```bash
 uv run ruff format .
@@ -321,12 +326,12 @@ For uv mechanics beyond this table (flags, Docker/CI patterns, workspaces, migra
 
 ## Enforcement Layers (optional, per-harness)
 
-This skill's guidance stands alone — nothing below is required for the skill to work. The bundled [shims/](./shims/) directory carries PATH shims that make bare `python`/`pip`/`pipx` (and mutating `uv pip`) invocations fail with the correct `uv` alternative; `uv run` is unaffected because it prepends its venv `bin/` ahead of them. They are activated per harness:
+This skill's guidance stands alone — nothing below is required for the skill to work. Enforcement now has two independent layers with different defaults; both are activated by Python markers at the working tree (`pyproject.toml`, `.python-version`, or `uv.lock`).
 
-- **Claude Code:** the `uv-strict-python` plugin's `SessionStart` hook (plugin-side machinery; carries its own byte-identical shim copy).
-- **Codex CLI:** the `codex-bao` launch wrapper prepends the deployed `~/.codex/skills/uv-strict-python/shims` when the launch directory has Python markers (`pyproject.toml`, `.python-version`, or `uv.lock`). Codex hooks cannot mutate the environment (context-only output contract, verified 2026-07-12), so the wrapper is the injection point.
+- **`python-command-guard` (default, agent-facing):** a PreToolUse hook (Claude Bash tool; Codex PreToolUse where supported), deployed by `scripts/global/install-globals.sh`, that denies direct agent invocation of bare `python`/`python3`/`pip`/`pip3`/`pipx` and mutating `uv pip` commands. It inspects only the agent's command text, never `PATH` — shebangs, `command -v`, validator subprocesses, and nested scripts are unaffected, so it cannot reproduce the shim's cross-process failures (bugs 003/010/011). `-V`/`--version` and read-only `uv pip list`/`show`/`tree`/`check` pass through. A per-repo override file, `.claude/uv-strict-python.local.md` (Claude) or `.codex/uv-strict-python.local.md` (Codex), sets `enforcement: auto|always|never`.
+- **Bundled PATH shims ([shims/](./shims/), opt-in):** shims that make bare `python`/`pip`/`pipx` (and mutating `uv pip`) fail for every child process in the session, not just direct agent calls — their documented cost is exactly that breadth (bugs 003/010/011). They remain shipped, and their per-harness activation mechanism is unchanged (Claude Code: the `uv-strict-python` plugin's `SessionStart` hook; Codex CLI: the `codex-bao` launch wrapper), but neither harness prepends them by default anymore; set `shims: always` in the same per-repo override file to opt back in.
 
-If the shims are not active in a session, the rules in this skill still apply — the shims are a tripwire, not the standard.
+If neither layer is active in a session, the rules in this skill still apply — enforcement is a tripwire, not the standard.
 
 ## Read Next
 
