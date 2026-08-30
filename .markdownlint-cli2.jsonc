@@ -7,7 +7,16 @@
 	// the non-recursive `*.{md,markdown}`.
 	"globs": ["**/*.md"],
 	"gitignore": true,
-	// docs/codex-reviews/ holds verbatim Codex audit output (codex-review skill,
-	// read-only passes); kept as evidence, not authored prose — exempt from style rules.
-	"ignores": ["docs/codex-reviews/**"]
+	"ignores": [
+		// docs/codex-reviews/ holds verbatim Codex audit output (codex-review skill,
+		// read-only passes); kept as evidence, not authored prose — exempt from style rules.
+		"docs/codex-reviews/**",
+		// Byte mirror of the canonical uv-strict-python skill in agent-configs
+		// (skills/active/uv-strict-python), whose own Markdown stack exempts skills/**.
+		// Findings here name style choices that repository cannot accept a fix for:
+		// editing them locally would break the byte sync the plugin's
+		// check-standard-sync.sh and the upstream re-sync both depend on.
+		// (Also Prettier-ignored, for the same reason.)
+		"plugins/uv-strict-python/skills/uv-strict-python/**"
+	]
 }

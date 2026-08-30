@@ -20,3 +20,11 @@ CLAUDE.md
 .agents/skills/agent-handoff/
 docs/STATUS.md
 docs/TODO.md
+
+# Byte mirror of the canonical uv-strict-python skill in agent-configs
+# (skills/active/uv-strict-python), which exempts skills/ from Prettier and
+# therefore hard-wraps its prose. proseWrap: "never" would unwrap every
+# paragraph here, so the copy would stop matching canonical and each upstream
+# re-sync would land as a formatting conflict. Update the payload by re-copying
+# canonical, never by reformatting it locally.
+plugins/uv-strict-python/skills/uv-strict-python/

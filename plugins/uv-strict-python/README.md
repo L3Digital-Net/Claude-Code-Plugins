@@ -36,11 +36,19 @@ It operationalizes the **Python Tooling** standard (toolchain, layout, gate) and
 
 This plugin operationalizes the Python Tooling SSOT Standard. Where a project must deviate, record an ADR exception rather than weakening the toolchain silently.
 
-## Hook: Legacy Command Interception
+## Hook: Legacy Command Interception (opt-in)
 
-This plugin includes a `SessionStart` hook that prepends PATH shims for `python`, `pip`, `pipx`, and `uv`. When Claude runs a bare `python`, `pip`, or `pipx` command, the shell resolves to the shim, which prints an error with the correct `uv` alternative and exits non-zero. `uv run` is unaffected because it prepends its managed virtualenv's `bin/` to PATH, shadowing the shims.
+This plugin ships PATH shims for `python`, `pip`, `pipx`, and `uv`. When a shim is on PATH and something runs a bare `python`, `pip`, or `pipx` command, the shell resolves to the shim, which prints an error with the correct `uv` alternative and exits non-zero. `uv run` is unaffected because it prepends its managed virtualenv's `bin/` to PATH, shadowing the shims.
 
-**Scope gating:** the standard is repository-scoped, so the shims activate only when the project root looks like a Python project (`pyproject.toml`, `.python-version`, or `uv.lock` present). Override per project in `.claude/uv-strict-python.local.md` frontmatter — `shims: always` forces them on (e.g. a polyglot repo whose Python lives in subdirectories), `shims: never` keeps them off, `shims: auto` (default) lets the markers decide.
+**The shims are off by default and are not the enforcement layer for the agent's own commands.** Enforcement belongs to the `python-command-guard` PreToolUse hook (deployed separately from `agent-configs` to `~/.claude/hooks/python-command-guard`), which inspects the command Claude is about to run and blocks it before execution — with no effect on anything else in the session.
+
+The shims remain available as an opt-in tripwire for invocations a PreToolUse hook cannot see, such as a subshell, a Makefile, or a test harness. Their known cost is that they impersonate the interpreter for the whole process tree: a `#!/usr/bin/env python3` shebang and any child process started from the session resolve to the shim rather than a real interpreter, so unrelated tooling can break far from the shim. Opt in per project in `.claude/uv-strict-python.local.md` frontmatter:
+
+```yaml
+shims: always
+```
+
+Any other value, and the absence of the file, leaves the shims uninstalled. Python project markers (`pyproject.toml`, `.python-version`, `uv.lock`) no longer install them on their own.
 
 | Intercepted Command       | Suggested Alternative                      |
 | ------------------------- | ------------------------------------------ |
@@ -80,4 +88,4 @@ Do not enable a second Python language server (Pyright, Pylance, python-lsp-serv
 plugins/uv-strict-python/tests/run.sh
 ```
 
-The wrapper runs the bats suites (shims, hook gating, LSP launcher), then `check-standard-sync.sh` — which fails when the `project-standards` repo has moved past the sync pin recorded in SKILL.md or a template no longer byte-matches its adopt-bundle artifact — and `validate-fenced-blocks.sh`, which parses every fenced `toml`/`json`/`yaml` block in the skill content. Always use the wrapper, never bare `bats` (it hardens PATH against this workstation's find/grep shims).
+The wrapper runs the bats suites (shims, hook gating, LSP launcher), then `check-standard-sync.sh` — which requires the pinned `project-standards` release on PATH and fails when its provenance, the Python Tooling payload digest, the SKILL.md sync pin, or the three byte-identical template resources disagree — and `validate-fenced-blocks.sh`, which parses every fenced `toml`/`json`/`yaml` block in the skill content. Always use the wrapper, never bare `bats` (it hardens PATH against this workstation's find/grep shims).

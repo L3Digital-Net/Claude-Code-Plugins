@@ -1,132 +1,88 @@
 # Migration Checklist
 
-Step-by-step migration of an existing project to the Python Tooling SSOT Standard. Stage the adoption — new code meets the standard immediately; messy legacy code can ratchet toward it — but never weaken the final standard to make migration easy.
+Migrate through the Catalog 5 control plane. Stage legacy cleanup, preserve
+repository intent, and never weaken the final standard to make migration pass.
 
 ## Before migration
 
-- [ ] **Inventory** current state: Python versions, package manager, lockfiles, formatter, linter, type checker, test framework, CI checks, VS Code settings, existing agent instructions.
-- [ ] **Decide layout**: `src/` (required for importable products) vs flat.
-- [ ] **Decide uv.lock strategy**: application (commit) vs library (`.gitignore`).
-- [ ] **Backup**: create a branch or tag before starting.
+- [ ] Inventory Python versions, package manager, lockfiles, build backend,
+  source/test roots, tooling, CI, editor settings, and agent instructions.
+- [ ] Decide `src` or flat layout and any additional first-party roots.
+- [ ] Decide whether the workflow and check script are managed or
+  consumer-owned.
+- [ ] Decide the application/internal versus reusable-library `uv.lock` policy.
+- [ ] Preview from a branch or other recoverable Git state.
 
-## Step 1 — Add uv without changing behavior
+## V4 to Catalog 5
 
-```bash
-uv init --bare
-uv sync
-```
-
-## Step 2 — Add Ruff
-
-```bash
-uv add --dev ruff
-uv run ruff format .
-uv run ruff check . --fix
-```
-
-Add the curated config (see [ruff-config.md](./ruff-config.md)). Do not start from `select = ["ALL"]`.
-
-## Step 3 — Add pytest + coverage
+Do not hand-create unified control-plane state. Express supported migration
+choices under `python_tooling:` in `.project-standards.yml`, then run:
 
 ```bash
-uv add --dev pytest "coverage[toml]" pytest-cov
-uv run coverage run -m pytest
-uv run coverage report
+project-standards init --catalog 5 --migrate
+project-standards init --catalog 5 --migrate --apply
+project-standards reconcile --check --json
 ```
 
-## Step 4 — Add BasedPyright
+The preview must be applicable before apply. Modified shared configuration and
+instruction files are preserved with bounded-takeover warnings. A modified
+workflow or check script requires the matching `consumer-owned` decision;
+other modified recognized whole files block until their known bytes are
+restored.
+
+## Fresh Catalog 5 adoption
 
 ```bash
-uv add --dev basedpyright
-uv run basedpyright
+project-standards init --catalog 5
+# Add the Python Tooling selection and options to .standards/config.toml.
+project-standards reconcile --check
+project-standards reconcile --apply
+uv lock
+uv run python scripts/check.py
+project-standards reconcile --check --json
 ```
 
-Configure `[tool.basedpyright]` with `typeCheckingMode = "strict"`. For codebases with many existing errors, adopt strictness in stages using BasedPyright **baselines** rather than lowering the final bar:
+The final JSON check must report `ok: true`, `drift: false`, and no findings.
+
+## Legacy dependency migration
+
+Review dependency identities, then change them only through uv:
 
 ```bash
-uv run basedpyright --writebaseline   # snapshot existing errors into .basedpyright/baseline.json
+uv add requests rich
+uv remove mypy pyright ty black isort flake8
 ```
 
-- Commit `.basedpyright/baseline.json` — baselined (pre-existing) errors stop failing the gate, while **new** code is held to full strict immediately.
-- Fixing a file removes its entries on the next `--writebaseline`; re-run it after cleanup sessions so the baseline only ever shrinks.
-- Never re-run `--writebaseline` to absorb _new_ errors — that is the type-weakening anti-pattern the standard prohibits.
+Python Tooling’s selected development tools are reconciled from package
+options; do not hand-edit that dependency group. Remove legacy dependency
+files, package-manager state, and environments only after the replacement is
+materialized and verified.
 
-## Step 5 — Add pip-audit
+## Cleanup after reconciliation
+
+Remove superseded files only when their replacement is active:
+
+- [ ] `requirements*.txt`, `setup.py`, `setup.cfg`, and `MANIFEST.in`;
+- [ ] `.flake8`, `mypy.ini`, `pyrightconfig.json`, and `ty` configuration;
+- [ ] obsolete Poetry, Pipenv, PDM, tox, nox, or virtual-environment artifacts;
+- [ ] overlapping Python gate hooks;
+- [ ] obsolete Black, isort, Flake8, Pylint, mypy, Pyright, ty, or pytest-cov
+  configuration.
+
+Do not delete consumer-owned settings, tasks, extension recommendations, or
+instruction content. Catalog 5 owns bounded semantic units on those shared
+surfaces.
+
+## Verification and publication set
 
 ```bash
-uv add --dev pip-audit
-uv run pip-audit
+uv run python scripts/check.py
+project-standards reconcile --check --json
 ```
 
-## Step 6 — Add editor + CI config
-
-- [ ] `.editorconfig`
-- [ ] `.vscode/extensions.json`, `settings.json`, `tasks.json`
-- [ ] `.github/workflows/check.yml` (CI uses `uv sync --locked --all-groups`)
-
-See [pyproject.md](./pyproject.md) for all four.
-
-## Step 7 — Add agent instruction entry points
-
-- [ ] `AGENTS.md` and `CLAUDE.md` — full instructions or a thin pointer to the project's canonical session-memory/handoff source. A fresh CLI or VS Code agent must be able to discover the verification gate, fix pass, and the dependency/typing/testing/security rules before editing. Copy from [templates/AGENTS.md](../templates/AGENTS.md), [templates/AGENTS.pointer.md](../templates/AGENTS.pointer.md), or [templates/CLAUDE.md](../templates/CLAUDE.md).
-
-## Cleanup: remove legacy artifacts
-
-Find old linter pragmas and missing packages:
-
-```bash
-rg "# pylint:|# noqa:|# type: ignore" --files-with-matches
-uv run ruff check . --select INP001    # missing __init__.py
-```
-
-Remove these files after migration:
-
-- [ ] `requirements.txt`, `requirements-dev.txt`
-- [ ] `setup.py`, `setup.cfg`, `MANIFEST.in`
-- [ ] `.flake8`, `mypy.ini`, `pyrightconfig.json`, any `ty` config
-- [ ] `tox.ini`, `Pipfile`, `Pipfile.lock` (if not needed)
-- [ ] Old virtual environments (`venv/`, `.venv/`)
-- [ ] `.pre-commit-config.yaml` (the gate replaces pre-commit/prek)
-
-Remove these `pyproject.toml` sections:
-
-- [ ] `[tool.black]`, `[tool.isort]`, `[tool.mypy]`, `[tool.pyright]`, `[tool.ty]`, `[tool.pylint]`, `[tool.flake8]`
-
-## .gitignore
-
-```gitignore
-__pycache__/
-*.py[cod]
-.venv/
-.ruff_cache/
-.pytest_cache/
-.coverage
-# uv.lock — commit for apps; ignore only for libraries
-```
-
-## Post-migration easy wins
-
-```bash
-uv run ruff check . --select UP --fix     # modernize typing/syntax
-uv run ruff check . --select RET --fix    # return-value cleanups
-uv run ruff check . --select SIM --fix    # simplifications
-```
-
-## Ratchet strictness
-
-Once the project is stable: reduce ignores, improve type specificity, raise coverage _quality_ (not just the number), remove legacy tooling, and document any remaining exceptions as ADRs.
-
-## Verification
-
-After migration, the full gate must pass:
-
-```bash
-uv run ruff format --check .
-uv run ruff check .
-uv run basedpyright
-uv run coverage run -m pytest
-uv run coverage report
-uv run pip-audit
-```
-
-See [security-setup.md](./security-setup.md) for the pip-audit baseline and Dependabot.
+- [ ] The local verification gate passes.
+- [ ] Reconciliation reports `ok: true`, `drift: false`, and no findings.
+- [ ] `.standards/config.toml`, `.standards/catalog.toml`, and
+  `.standards/lock.toml` are included together.
+- [ ] `uv.lock` reflects the reconciled development dependency set.
+- [ ] Managed outputs and deliberate consumer-owned exceptions are reviewed.

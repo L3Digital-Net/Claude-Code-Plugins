@@ -1,205 +1,37 @@
-# uv Command Reference
+# uv Commands — Mechanics SSOT and Standard Overlay
 
-`uv` is an extremely fast Python package and project manager written in Rust. It replaces pip, virtualenv, pip-tools, pipx, and pyenv.
+**Tool mechanics belong to the `uv-package-manager` skill, if it is deployed in your harness** — read `~/.claude/skills/uv-package-manager/SKILL.md` (Claude) or `~/.codex/skills/uv-package-manager/SKILL.md` (Codex) for command syntax, flags, Docker/CI recipes, workspaces, lockfile/export details, and migration mechanics. That skill is not deployed by default; where it is present it is verified against the official uv docs on its own cadence, and duplicating its content here would drift. Otherwise use the Fallback below.
 
-**Key principle:** Always use `uv run` to execute commands. Never manually activate virtual environments.
+This file records only what the **Python Tooling SSOT Standard** adds on top. Where the neutral reference and this standard disagree, **the standard wins inside standard-adopting repos** (the neutral reference documents tools the standard forbids — `hatchling`, pre-commit, `[project.optional-dependencies]` for dev tools, ad-hoc `uv pip install`; see the Anti-Patterns table in [SKILL.md](../SKILL.md)).
 
-## Installation
+## Standard overlay (rules the neutral reference does not impose)
 
-```bash
-# macOS/Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
+- **Never bootstrap uv via pip or pipx** — this standard replaces both with uv itself. Use the standalone installer or a system package manager.
+- **Python baseline is 3.14** (`requires-python = ">=3.14"`, `.python-version` = `3.14`). Do not change a project's Python version unless the task explicitly requires it; pinning lower needs a documented ADR exception.
+- **The dev group is always the full standard toolchain** — the stack is non-negotiable, only its scope is tunable:
 
-# Windows
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+  ```bash
+  uv add --dev basedpyright "coverage[toml]" pip-audit pytest ruff
+  ```
 
-# Homebrew
-brew install uv
-```
+- **CI must use `uv sync --locked --all-groups`** — it fails when the lockfile is stale, which is the point. Do **not** substitute `--frozen`, which skips that check (`--frozen` is for Docker layers where `pyproject.toml` and `uv.lock` ship as a unit).
+- **`uv add`/`uv remove` only** — never hand-edit dependencies in `pyproject.toml`, never `uv pip install` into a project (read-only `uv pip list|show|tree|check` diagnostics are fine).
+- **`uv run` everything** — never activate a venv manually.
+- **`[dependency-groups]` (PEP 735) for dev/test tools**, not `[project.optional-dependencies]` (which is published metadata for real consumer extras).
+- **Build backend is `uv_build`**, not hatchling (see [pyproject.md](./pyproject.md)).
 
-(Do not bootstrap uv via pip or pipx — this standard replaces both with uv itself.)
+## Container/host split venvs
 
-## Project Commands
-
-### Initialize Projects
-
-| Command                    | Description                                   |
-| -------------------------- | --------------------------------------------- |
-| `uv init`                  | Create new project (application)              |
-| `uv init --package`        | Create distributable package with src/ layout |
-| `uv init --lib`            | Create library package                        |
-| `uv init --script file.py` | Create script with PEP 723 metadata           |
-
-### Dependency Management
-
-| Command                           | Description                         |
-| --------------------------------- | ----------------------------------- |
-| `uv add <pkg>`                    | Add dependency to project           |
-| `uv add <pkg> --group dev`        | Add to dependency group             |
-| `uv add <pkg> --optional feature` | Add to optional dependency          |
-| `uv remove <pkg>`                 | Remove dependency                   |
-| `uv lock`                         | Update lock file without installing |
-
-### Environment Management
-
-uv manages virtual environments automatically. Do not manually create or activate venvs.
-
-| Command | Description |
-| --- | --- |
-| `uv sync` | Install dependencies (creates venv if needed) |
-| `uv sync --all-groups` | Install all dependency groups |
-| `uv sync --group dev` | Install specific group |
-| `uv sync --locked --all-groups` | CI install — fails if the lockfile is stale (the standard's CI rule) |
-| `uv sync --frozen` | Install from lockfile without the staleness check (not for CI) |
-
-### Running Code
-
-| Command                   | Description                   |
-| ------------------------- | ----------------------------- |
-| `uv run <cmd>`            | Run command in project venv   |
-| `uv run python script.py` | Run Python script             |
-| `uv run pytest`           | Run pytest                    |
-| `uv run --with pkg cmd`   | Run with temporary dependency |
-
-### Building & Publishing
-
-| Command                     | Description            |
-| --------------------------- | ---------------------- |
-| `uv build`                  | Build wheel and sdist  |
-| `uv build --wheel`          | Build wheel only       |
-| `uv build --sdist`          | Build sdist only       |
-| `uv publish`                | Publish to PyPI        |
-| `uv publish --token $TOKEN` | Publish with API token |
-
-## Tool Commands
-
-Run Python tools without installing globally:
+When developing on a host machine while also running in containers, separate venvs avoid rebuilding on each context switch:
 
 ```bash
-# Run any tool
-uv tool run ruff check .
-uvx ruff check .  # shorthand
-
-# Install tool globally
-uv tool install ruff
-
-# List installed tools
-uv tool list
-
-# Upgrade tool
-uv tool upgrade ruff
-```
-
-## Python Version Management
-
-The standard's baseline is **Python 3.14** (`requires-python = ">=3.14"`, `.python-version` = `3.14`). Do not change a project's Python version unless the task explicitly requires it; pinning lower needs a documented exception.
-
-```bash
-# Install Python version
-uv python install 3.14
-
-# List available versions
-uv python list
-
-# Pin project to Python version
-uv python pin 3.14
-
-# Run against a specific interpreter (e.g. verifying a documented lower pin)
-uv run --python 3.14 pytest
-```
-
-## Script Commands (PEP 723)
-
-```bash
-# Create script with inline metadata
-uv init --script myscript.py
-
-# Add dependency to script
-uv add --script myscript.py requests
-
-# Run script (auto-installs deps)
-uv run myscript.py
-```
-
-## Common Workflows
-
-### New Application Project
-
-The dev group is always the full standard toolchain — the stack is non-negotiable, only its scope is tunable:
-
-```bash
-uv init --package myapp
-cd myapp
-uv add fastapi uvicorn
-uv add --dev basedpyright "coverage[toml]" pip-audit pytest pytest-cov ruff
-uv sync --all-groups
-uv run uvicorn myapp:app
-```
-
-### New Library Package
-
-```bash
-uv init --package mylib
-cd mylib
-uv add --dev basedpyright "coverage[toml]" pip-audit pytest pytest-cov ruff
-uv add --group docs sphinx
-uv sync --all-groups
-uv run pytest
-uv build
-```
-
-### Add Tool to Existing Project
-
-```bash
-cd existing-project
-uv add --group dev ruff
-uv run ruff check .
-```
-
-### One-off Script Execution
-
-```bash
-# Run script with dependencies (no project needed)
-uv run --with requests --with rich script.py
-
-# Or use PEP 723 inline metadata
-uv run script_with_metadata.py
-```
-
-## Environment Variables
-
-| Variable                 | Description                               |
-| ------------------------ | ----------------------------------------- |
-| `UV_CACHE_DIR`           | Cache directory location                  |
-| `UV_NO_CACHE`            | Disable caching                           |
-| `UV_PYTHON`              | Default Python version                    |
-| `UV_PROJECT`             | Project directory path                    |
-| `UV_PROJECT_ENVIRONMENT` | Custom venv directory (e.g., `.venv-dev`) |
-| `UV_SYSTEM_PYTHON`       | Use system Python                         |
-
-## Container/Host Development
-
-When developing on a host machine while also running in containers, you can use separate venvs to avoid rebuilding on each context switch:
-
-```bash
-# On host machine (add to shell profile or .envrc)
+# On host machine (shell profile or .envrc)
 export UV_PROJECT_ENVIRONMENT=.venv-dev
-
-# Now host uses .venv-dev, containers use default .venv
-uv sync  # creates .venv-dev on host
+# Host uses .venv-dev, containers use default .venv
 ```
 
-Add both to `.gitignore`:
+Add both `.venv/` and `.venv-dev/` to `.gitignore`.
 
-```gitignore
-.venv/
-.venv-dev/
-```
+## Fallback
 
-This avoids rebuilding the venv when switching between host and container (different OS, Python versions, or native dependencies).
-
-## Performance Tips
-
-- uv caches aggressively; first install may be slower
-- CI must use `uv sync --locked --all-groups` — it fails when the lockfile is stale, which is the point (do **not** substitute `--frozen`, which skips that check)
-- Use `uv cache clean` if cache grows too large
+The `uv-package-manager` skill is not deployed by default, so this is the normal path, not the exception: when it is absent from the current environment, use `uv <command> --help` and the official docs (https://docs.astral.sh/uv/) for mechanics — do not guess flags from memory; uv moves fast.

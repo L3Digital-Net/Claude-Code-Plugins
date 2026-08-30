@@ -1,0 +1,6 @@
+interface:
+  display_name: "uv Strict Python"
+  short_description: "Use when creating Python projects, writing standalone scripts, configuring pyproject.toml, migrating from pip/Poetry/mypy/black/flake8, or auditing a project against the Python Tooling SSOT Standard (uv, Ruff, BasedPyright strict, pytest+coverage, pip-audit)."
+
+policy:
+  allow_implicit_invocation: true

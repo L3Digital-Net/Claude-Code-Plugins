@@ -1,15 +1,18 @@
 ---
 name: uv-strict-python
 description: Configures Python projects to the Python Tooling SSOT Standard (uv, Ruff, BasedPyright strict, pytest+coverage, pip-audit). Use when creating projects, writing standalone scripts, configuring pyproject.toml, migrating from pip/Poetry/mypy/black/flake8, or auditing a project for conformance to the standard.
+compatibility: Claude Code and Codex CLI
+metadata:
+  version: '1.1.0'
 ---
 
 # uv-strict-python
 
 Operational guide for the **Python Tooling SSOT Standard**: one small, strict, boring toolchain that behaves identically in CLI, VS Code, and CI. The standard prefers a few non-overlapping authorities over many competing tools, because contradictory feedback is expensive for coding agents.
 
-This plugin operationalizes the **Python Tooling** standard — toolchain, layout, and the verification gate. Code _shape_ and agent-behavior rules (error handling, side-effect boundaries, trust boundaries, prohibited behaviors) live in the companion **Python Coding** standard, summarized in [coding-standard.md](./references/coding-standard.md). A green gate on badly shaped code is not done — read both.
+This skill operationalizes the **Python Tooling** standard — toolchain, layout, and the verification gate. Code _shape_ and agent-behavior rules (error handling, side-effect boundaries, trust boundaries, prohibited behaviors) live in the companion **Python Coding** standard, summarized in [coding-standard.md](./references/coding-standard.md). A green gate on badly shaped code is not done — read both.
 
-> **Sync pin:** mirrors `project-standards` python-tooling (contract v1.0, README at commit `6cf2228`, 2026-07-01) and the python-coding draft v0.4 (commit `6cf2228`). The standards repo is canonical; if it has moved past these commits, prefer it and re-sync this plugin.
+> **Sync pin:** mirrors Project Standards v5.25.0 (peeled commit `b2f73d9dee080a7579a7900168093dabf4c52b5b`) and Python Tooling 1.16 (`sha256:60d3a68c9973942b7a92f7affcd3fbac553b3c79c31bcd63b723e1186bd3c734`). The immutable released payload is canonical. This skill retains exactly three byte-identical whole-file resources and delegates semantic units to Catalog 5 reconciliation.
 
 ## When to Use This Skill
 
@@ -76,7 +79,7 @@ uv run ruff check . --fix
 What are you doing?
 │
 ├─ Single-file script with dependencies?
-│   └─ Use PEP 723 inline metadata (./references/pep723-scripts.md — plugin
+│   └─ Use PEP 723 inline metadata (./references/pep723-scripts.md — skill
 │      extension; the standard governs script *projects*, not single files)
 │
 ├─ New importable project or package?
@@ -114,170 +117,129 @@ cd myproject
 # Runtime dependencies
 uv add requests rich
 
-# Standard dev toolchain (flat dev group)
-uv add --dev basedpyright "coverage[toml]" pip-audit pytest ruff
-
-# Run code and tools through uv (never activate the venv)
-uv run python -m myproject
-uv run ruff check .
-uv run basedpyright
-uv run coverage run -m pytest && uv run coverage report
+# Initialize the V5 control plane, configure Python Tooling, then reconcile.
+project-standards init --catalog 5
+# Edit .standards/config.toml using the package block below.
+project-standards reconcile --check
+project-standards reconcile --apply
+uv lock
+uv run python scripts/check.py
 ```
 
 ## Full Project Setup
 
-**Prefer the adopt CLI when the standards repo is reachable** — it materializes the scaffolds (`.python-version`, `check.yml`, `scripts/check.py`, `AGENTS.md`/`CLAUDE.md`, `.editorconfig`, `.vscode/extensions.json`) and prints the `pyproject.toml` sections to copy:
-
-```bash
-uvx --from 'git+https://github.com/L3DigitalNet/project-standards@v3' \
-  project-standards adopt python-tooling
-```
-
-The steps below produce the same result manually.
-
-### 1. Create Project Structure
+### 1. Create the project and control plane
 
 ```bash
 uv init --package myproject
 cd myproject
+project-standards init --catalog 5
 ```
 
-Target layout (importable code under `src/`, tooling/scripts outside it):
+### 2. Select Python Tooling
 
-```text
-myproject/
-├── pyproject.toml
-├── uv.lock
-├── .python-version
-├── .editorconfig
-├── README.md
-├── AGENTS.md            # full instructions or pointer to the canonical source
-├── CLAUDE.md            # Claude-specific notes or pointer
-├── .github/workflows/check.yml
-├── .vscode/             # extensions.json, settings.json, tasks.json
-├── src/
-│   └── myproject/
-│       ├── __init__.py
-│       └── py.typed     # for packages exposing typed interfaces
-├── tests/
-│   ├── unit/
-│   └── integration/
-└── scripts/
-    └── check.py
-```
-
-`src/` governs the **importable product only**. Repo tooling (`scripts/check.py`, automation under `scripts/`) MAY live outside `src/`; it is still linted and formatted and SHOULD carry basic typing, but is not held to the strict-`src/` bar.
-
-### 2. Configure pyproject.toml
-
-See [pyproject.md](./references/pyproject.md) for the complete baseline. The canonical starting point:
+Add this package configuration to `.standards/config.toml`. Change an option
+only to preserve deliberate repository intent; the selected immutable payload,
+not copied snippets, owns the resulting semantic units.
 
 ```toml
-[project]
-name = "myproject"
-version = "0.1.0"
-description = "Short project description."
-readme = "README.md"
-requires-python = ">=3.14"
-dependencies = []
+[standards.python-tooling]
+enabled = true
+version = "latest"
 
-[dependency-groups]
-# pytest floor backs minversion; ruff floor matches the adopt-CLI bundle
-dev = ["basedpyright", "coverage[toml]", "pip-audit", "pytest>=9.0", "ruff>=0.14"]
+[standards.python-tooling.config]
+contract_version = "1.1"
+python_version = "3.14"
+build_backend = "uv_build"
+source_layout = "src"
+additional_source_roots = []
+additional_dev_dependencies = []
+workflow_ownership = "managed"
+script_ownership = "managed"
 
-[build-system]
-requires = ["uv_build>=0.11,<0.12"]
-build-backend = "uv_build"
+[standards.python-tooling.config.ruff]
+line_length = 100
+extend_exclude = [".claude", ".agents", ".codex", ".continue"]
+extend_include = []
+extend_select = []
+extend_ignore = []
 
-[tool.ruff]
-target-version = "py314"
-line-length = 100
-src = ["src", "tests"]
-extend-exclude = [".claude", ".agents", ".codex", ".continue"]
+[standards.python-tooling.config.type_checker]
+name = "basedpyright"
+mode = "strict"
 
-[tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP", "SIM", "C4", "PIE", "PTH", "RET", "RUF"]
-ignore = ["E501"]  # formatter owns line wrapping
-
-[tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101"]
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-docstring-code-format = true
-
-[tool.basedpyright]
-include = ["src", "tests"]
-typeCheckingMode = "strict"
-pythonVersion = "3.14"
-pythonPlatform = "All"
-failOnWarnings = true
-
-[tool.pytest.ini_options]
-minversion = "9.0"
-testpaths = ["tests"]
-addopts = ["-ra", "--strict-markers", "--strict-config"]
-
-[tool.coverage.run]
-branch = true
-source = ["src"]
-
-[tool.coverage.report]
-show_missing = true
-skip_covered = true
+[standards.python-tooling.config.pytest]
 fail_under = 85
+markers = []
+coverage_exclude_also = []
+test_paths = ["tests"]
+
+[standards.python-tooling.config.coverage]
+parallel = false
+patch = []
+omit = []
+
+[standards.python-tooling.config.pip_audit]
+ignore_vulnerabilities = []
+
+[standards.python-tooling.config.ci]
+enabled = true
+performance = false
+
+[standards.python-tooling.config.vscode]
+format_on_save = true
+
+[standards.python-tooling.config.agent_instructions]
+include_fix_commands = true
 ```
 
-### 3. Install Dependencies
+See [pyproject.md](./references/pyproject.md) for option effects and semantic
+ownership boundaries.
+
+### 3. Preview, apply, and verify
 
 ```bash
-uv sync --all-groups
+project-standards reconcile --check
+project-standards reconcile --apply
+uv lock
+uv run python scripts/check.py
+project-standards reconcile --check --json
 ```
 
-### 4. Wire the gate (not a Makefile)
+The final JSON check must report `ok: true`, `drift: false`, and no findings.
+Commit `.standards/config.toml`, `.standards/catalog.toml`,
+`.standards/lock.toml`, `uv.lock`, and reconciled outputs together.
 
-The standard runs the gate three ways — all the same `uv run` commands — so CLI, editor, and CI never diverge:
+### Resource ownership
 
-- **`scripts/check.py`** — a small Python wrapper that runs the gate in order (see §18 of the standard).
-- **`.vscode/tasks.json`** — tasks `check`, `fix`, `test`, `typecheck`, `audit`.
-- **`.github/workflows/check.yml`** — the same sequence in CI on `uv sync --locked --all-groups`.
+Catalog 5 composes `pyproject.toml`, `.editorconfig`, `.vscode/*`, `AGENTS.md`,
+and `CLAUDE.md` as bounded semantic units while preserving unrelated consumer
+content. Do not copy or merge whole-file templates for those surfaces.
 
-```bash
-uv run python -m scripts.check   # if using the wrapper
-```
+This skill retains exactly three byte-identical package resources for inspection:
 
-See [pyproject.md](./references/pyproject.md) for VS Code and CI specifics.
+| Resource | Reconciled destination |
+| --- | --- |
+| [check.py](./templates/check.py) | `scripts/check.py` |
+| [check.yml](./templates/check.yml) | `.github/workflows/check.yml` |
+| [python-version](./templates/python-version) | `.python-version` |
 
-**Copy scaffolds from [templates/](./templates/) instead of transcribing fenced blocks** — transcription is where typos and drift creep in:
-
-| Template | Destination | Source |
-| --- | --- | --- |
-| [check.py](./templates/check.py) | `scripts/check.py` | adopt-CLI bundle (byte-identical) |
-| [check.yml](./templates/check.yml) | `.github/workflows/check.yml` | adopt-CLI bundle (byte-identical) |
-| [python-version](./templates/python-version) | `.python-version` | adopt-CLI bundle (byte-identical) |
-| [pyproject.python-tooling.toml](./templates/pyproject.python-tooling.toml) | merge into `pyproject.toml` | adopt-CLI bundle (byte-identical) |
-| [editorconfig](./templates/editorconfig) | `.editorconfig` | shared superset (byte-identical) |
-| [vscode-extensions.json](./templates/vscode-extensions.json) | `.vscode/extensions.json` | shared superset (byte-identical) |
-| [vscode-settings.json](./templates/vscode-settings.json) | `.vscode/settings.json` | standard §13 |
-| [vscode-tasks.json](./templates/vscode-tasks.json) | `.vscode/tasks.json` | standard §13 |
-| [adr-python-tooling-exception.md](./templates/adr-python-tooling-exception.md) | `docs/decisions/adr-NNNN-python-tooling-exception.md` | standard §20 skeleton |
-
-The byte-identical templates are enforced against the standards repo by this plugin's `tests/check-standard-sync.sh`.
-
-### 5. Agent instruction entry points
-
-`AGENTS.md` and `CLAUDE.md` are part of the repo contract, not optional docs — a fresh CLI or VS Code agent must discover the gate, fix pass, and the dependency/typing/testing/security rules before editing. Copy a template:
-
-- [templates/AGENTS.md](./templates/AGENTS.md) — full cross-agent instructions
-- [templates/AGENTS.pointer.md](./templates/AGENTS.pointer.md) — thin pointer when the canonical contract lives in a session-memory/handoff system
-- [templates/CLAUDE.md](./templates/CLAUDE.md) — Claude-specific block that defers to `AGENTS.md`
-
-A pointer file is valid only when the resolved source preserves this standard and is discoverable from a fresh session; if it can't be resolved, the agent must stop and report rather than guess.
+The control plane remains the adoption authority even for these resources. The
+supplemental Dependabot and ADR examples are skill guidance, not Python Tooling
+payload resources.
 
 ## Migration Guide
 
 When a user requests migration from legacy tooling (stage it; do not weaken the final standard):
+
+For a V4 consumer, preview and apply the Catalog 5 migration before manual
+cleanup:
+
+```bash
+project-standards init --catalog 5 --migrate
+project-standards init --catalog 5 --migrate --apply
+project-standards reconcile --check --json
+```
 
 ### From requirements.txt + pip
 
@@ -343,7 +305,7 @@ uv run --with httpx python script.py   # project deps + httpx, not added to the 
 - `uv add`: package is a real project dependency (lands in `pyproject.toml`/`uv.lock`).
 - `--with`: one-off usage or a script outside a project context.
 
-See [uv-commands.md](./references/uv-commands.md) for the complete reference.
+For uv mechanics beyond this table (flags, Docker/CI patterns, workspaces, migration mechanics), use the `uv-package-manager` skill **if it is deployed** in your harness (`~/.claude/skills/uv-package-manager/SKILL.md` on Claude, `~/.codex/skills/uv-package-manager/SKILL.md` on Codex) — it is the tool-mechanics SSOT, verified against the official uv docs. It is not deployed by default; otherwise use `uv <command> --help` and the official docs (https://docs.astral.sh/uv/) — do not guess flags from memory. This standard constrains **which** of those commands are allowed (see Anti-Patterns above); where the two disagree, this standard wins inside standard-adopting repos. [uv-commands.md](./references/uv-commands.md) records that contract. The deployed python-expert skill states this same toolchain policy in condensed router form; on any conflict inside standard-adopting repos, this standard and canon govern.
 
 ## Best Practices Checklist
 
@@ -357,13 +319,22 @@ See [uv-commands.md](./references/uv-commands.md) for the complete reference.
 - [ ] `[dependency-groups]` for dev tools, `uv.lock` committed (apps)
 - [ ] Verification gate green before claiming completion
 
+## Enforcement Layers (optional, per-harness)
+
+This skill's guidance stands alone — nothing below is required for the skill to work. The bundled [shims/](./shims/) directory carries PATH shims that make bare `python`/`pip`/`pipx` (and mutating `uv pip`) invocations fail with the correct `uv` alternative; `uv run` is unaffected because it prepends its venv `bin/` ahead of them. They are activated per harness:
+
+- **Claude Code:** the `uv-strict-python` plugin's `SessionStart` hook (plugin-side machinery; carries its own byte-identical shim copy).
+- **Codex CLI:** the `codex-bao` launch wrapper prepends the deployed `~/.codex/skills/uv-strict-python/shims` when the launch directory has Python markers (`pyproject.toml`, `.python-version`, or `uv.lock`). Codex hooks cannot mutate the environment (context-only output contract, verified 2026-07-12), so the wrapper is the injection point.
+
+If the shims are not active in a session, the rules in this skill still apply — the shims are a tripwire, not the standard.
+
 ## Read Next
 
 - [coding-standard.md](./references/coding-standard.md) — **companion**: compact summary of the Python Coding standard (code shape + agent behavior)
 - [pyproject.md](./references/pyproject.md) — complete `pyproject.toml`, VS Code, and CI baseline
 - [ruff-config.md](./references/ruff-config.md) — curated Ruff lint/format configuration
 - [testing.md](./references/testing.md) — pytest + coverage (the standard's gate form)
-- [uv-commands.md](./references/uv-commands.md) — uv command reference
+- [uv-commands.md](./references/uv-commands.md) — mechanics-SSOT contract with `uv-package-manager` + the standard's uv rules
 - [pep723-scripts.md](./references/pep723-scripts.md) — PEP 723 inline script metadata
 - [security-setup.md](./references/security-setup.md) — pip-audit baseline + Dependabot
 - [dependabot.md](./references/dependabot.md) — automated dependency updates
